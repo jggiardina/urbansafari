@@ -6,7 +6,7 @@ libs = -L../lib -ldagame
 all: $(targets)
 .PHONY: all
 server: $(objs) ../lib/libdagame.a
-	gcc $(CFLAGS) -o server $(objs) $(libs)
+	gcc $(CFLAGS) -o server $(objs) $(libs) -lpthread
 $(objs) : $(src)
 clean:
 	rm $(objs) $(targets)

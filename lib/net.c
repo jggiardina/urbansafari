@@ -1,4 +1,5 @@
-Copyright (C) 2011 by Jonathan Appavoo, Boston University
+/******************************************************************************
+*   Copyright (C) 2011 by Jonathan Appavoo, Boston University
 *
 * * Permission is hereby granted, free of charge, to any person obtaining a copy
 * * of this software and associated documentation files (the "Software"), to deal
