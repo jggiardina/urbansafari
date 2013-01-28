@@ -127,8 +127,6 @@ doConnect(void)
 		globals.server, globals.port);
       } else {
 	globals.connected=1;
-	fprintf(stderr, "connected server=%s port=%d\n",
-		globals.server, globals.port);
 	VPRINTF("connected serverFD=%d\n", globals.serverFD);
       }
     }
