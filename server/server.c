@@ -58,7 +58,7 @@ str_echo(int sockfd)
       break;
     } 
     //WHAT DOES THE NEXT LINE DO?
-      len = ntohl(len);//from network byte order to host byte order
+      len = ntohl(len);//from network byte order to host byte order -- swaps the bite order 
     if (len) {
       buf = (char *)malloc(len);
       n = net_readn(sockfd, buf, len);
