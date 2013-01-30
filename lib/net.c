@@ -195,7 +195,7 @@ net_readn(FDType fd, void *vptr, size_t n)
   char    *ptr;
 
   ptr = vptr;
-  nleft = n; // this may be an issue -JG
+  nleft = n;
   while (nleft > 0) {
 #ifndef __APPLE__
     if ( (nread = recv(fd, ptr, nleft, MSG_NOSIGNAL)) < 0) {
