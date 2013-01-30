@@ -91,6 +91,19 @@ main(int argc, char **argv)
   int listenfd, port=0;
   long connfd;
   pthread_t tid;
+  
+  // set port number if it is passed as a command line arg
+  int newport = 0;
+  if (argc == 2) {
+    // check here for valid/acceptable port number
+    newport = atoi(argv[1]);
+    if (newport > 5000 && newport < 49152)
+      port = newport;
+    else {
+      fprintf(stderr, "port number %d INVALID! Must be greater than 5000 and less than 49152\n", newport); 
+      exit(-1);
+    }
+  }
 
   bzero(&globals, sizeof(globals));
 
