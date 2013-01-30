@@ -50,8 +50,7 @@ str_echo(int sockfd)
   char *buf;
   
   while (1) {
-    len = MAXLINE;
-    n = sizeof(len);
+    n = net_readn(sockfd, &len, sizeof(int));
     if (n != sizeof(int)) {
       fprintf(stderr, "%s: ERROR failed to read len: %d!=%d"
 	      " ... closing connection\n", __func__, n, (int)sizeof(int));
