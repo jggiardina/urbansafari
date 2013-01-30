@@ -164,7 +164,7 @@ net_writen(FDType fd, const void *vptr, size_t n)
   size_t		nleft;
   ssize_t		nwritten;
   const char	*ptr;
-  nleft = n;
+  
   ptr = vptr;
   nleft = n;
   while (nleft > 0) {
