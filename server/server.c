@@ -51,11 +51,17 @@ str_echo(int sockfd)
   
   while (1) {
     n = net_readn(sockfd, &len, sizeof(int));
-    if (n != sizeof(int)) {
+    if (n != sizeof(int) && n != 0) { // The length cannot be for a valid message, if it is 0, we know a client disconnected abruptly.
       fprintf(stderr, "%s: ERROR failed to read len: %d!=%d"
 	      " ... closing connection\n", __func__, n, (int)sizeof(int));
       break;
-    } 
+    }
+    /*Display that client closed the connection and return the child*/
+    else if (n == 0) {
+      fprintf(stderr, "Client closed on socket: %d. GOODBYE!\n", sockfd);
+      break;
+    }
+ 
     //WHAT DOES THE NEXT LINE DO?
       len = ntohl(len);//from network byte order to host byte order -- swaps the bite order 
     if (len) {

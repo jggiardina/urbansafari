@@ -195,6 +195,8 @@ doSend(void)
 int
 doQuit(void)
 {
+  //globals.connected = 0;
+  //close(globals.serverFD);
   return -1;
 }
 
