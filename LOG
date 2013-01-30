@@ -1,11 +1,345 @@
-<output from date command>
-Attendees: <list of members>
+1/28/13
+
+Attendees:
+Ryan Conrad
+William Ang
+Jeffrey Giardina
+
 Questions:
-<enumerate list of questions that came up>
+
+How do we get the length of the input from what the client sent?  It writes twice so does the server read twice?
+
+How do we input a port so the server can read it and use it?
+
 Decisions:
-<enumerated list of any decisions made>
+
+For the line missing for what len should be, we must read at an address of &len, because that is what the client sent, the length at that address location.
+
+To input a port we used argsc, which includes the number of inputs, and argsv is the inputs, so we converted the string input of the port in argsv to an integer and then only allowed it to be between 5000 and 49000 otherwise an error arises.
+
 Todo:
-<enumerated list of things that are to be done
-each item should have an owner>
+
+Read assigned Chapter and give feedback. 
+Assigned: 
+Ryan C. - Chap 3
+Will Ang - Chap 4
+Jeff G. - Chap 5
+*NOTES ON CHAPTER ARE AT BOTTOM*
+
+Do dummy code and inital set-up.  Assigned: Ryan C.
+
+Get the general gist of the code and fiddle around. Assigned: All Team Members
+
+Try and get the server to echo. Assigned: All Team Members
+
+Change most of the missing lines to what they should be. Assigned: Will Ang
+
+Get the command line input for port for the server. Assigned: Jeffrey Giardina
+
+Run tests and make sure code is solid and well-practiced syntax. Assigned: All Team Members
+
 Comments/Notes:
-<general summary and notes of meet>
+
+Emails sent in team thread to do work on project: 30
+
+We worked on Tuesday night together to try and get the echo working after Will filled in some of the lines that were missing on last Friday.  We met for about 3 or 4 hours and could not get it to work because some of the lines inputted were wrong and led us on a chase of addresses.  We then worked on it last night at out homes and figured out that we needed the length, so the len was set equal to the read &len, so we got the correct length and then everything worked out.  Then Jeff changed the server port input on Wednesday and Ryan wrote up all of the descriptions and logs afterwards after working all together and testing all code.
+
+********************************************************************************
+Client.c Functions Explanation
+
+(1) getInput()
+
+This code first has a length for input and ret variable for the line being read.
+
+The bzero will zero the bits for the input data in the global variable, and a newline is set to 0.
+
+The line is then read in from the console input and saved in ret.  len is then set to 0 if ret is NULL or the length of the input data if it is not NULL.
+
+The next if removes newline characters is they exist by searching the end of the lines length, and then once removed the length is adjusted accordingly and returned.
+
+-------------------------------------------------------------------------------
+(2) sendStr(char *str, int fd)
+
+The function takes in a string pointer to the start of a string and a socket identifier.
+
+It sets len (length), nlen (network length), and buf (buffer for string).
+
+It gets the length of the string passed and if its 0 it returns, otherwise it will reverse the bits of len and writes the network size of the string (the flipped bits).
+
+It then writes the string to the server after it sent the length.
+
+It gets memory freed up for buf according to how big len is and then attempts to read the echoed data from the server into buf.  Once read it outputs it and frees buf, unless the size read was incorrect then it returns -1 and frees buf.
+
+********************************************************************************
+Server.c
+
+WHAT DOES THE NEXT LINE DO?
+len = ntohl(len);
+
+This line takes in the len (length) of the string written to the server and converts it from network byte order to host byte order by reversing the bits pretty much (last becomes first, first becomes last, like changing the endian-ness)
+
+-------------------------------------------------------------------------------
+
+server.c:127-128
+//EXPLAIN WHAT IS HAPPENING HERE IN YOUR LOG
+      pthread_create(&tid, NULL, &doit, (void *)connfd);
+
+Spawns a new thread (child) and passes it an address to write the thread id to, NULL to assign it the default thread attributes, the address of the handler/function that will execute upon the threads creation (doit), and a pointer to the socket connect handle.
+
+*******************************************************************************
+CHAPTER 3
+
+Section 2
+This Section addresses the structs of the sockets.  
+They have an in_addr which holds the 32 bit IPV4 address and then the sockaddr_in which is the socket structure which has in_addr inside of it.  Section goes into detail of the bytes sizes and the uses of the fields in sockaddr_in structure.
+Structure looks like this:
+struct in_addr { 
+  in_addr_t s_addr; /* 32-bit IPv4 address */
+  /* network byte ordered */ 
+}; 
+struct sockaddr_in { 
+  uint8_t sin_len; /* length of structure (16) */
+ sa_family_t sin_family; /* AF_INET */
+ in_port_t sin_port; /* 16-bit TCP or UDP port number */
+ /* network byte ordered */
+ struct in_addr sin_addr; /* 32-bit IPv4 address */
+ /* network byte ordered */
+ char sin_zero[8]; /* unused */
+ }; 
+
+Section 3
+This Section talks about how a socket process is transfered along the OS.
+Three functions, bind, connect, and sendto, pass a socket address structure from the process to the kernel
+Four functions, accept, recvfrom, getsockname, and getpeername, pass a socket address structure from the kernel to the process.
+
+Section 4
+This Section discusses how little endian and big endian play a factor in the byte ordering for the socket structure.  It gives a sample program to determine what the host byte order is.
+
+Section 5
+This Section discusses Byte Manipulation to be able to play with sockets and their addresses.  
+The most common functions to use to alter the bytes at a memory location are:
+void bzero(void *dest, size_t nbytes);
+void bcopy(const void *src, void *dest, size_t nbytes);
+int bcmp(const void *ptr1, const void *ptr2, size_t nbytes);
+
+The most common for memory setting and copying are:
+ void *memset(void *dest, int c, size_t len);
+void *memcpy(void *dest, const void *src, size_t nbytes);
+int memcmp(const void *ptr1, const void *ptr2, size_t nbytes);
+
+Section 6
+This Section discusses functions that convert Internet addresses between ASCII strings (what humans prefer to use) and network byte ordered binary values (values that are stored in socket address structures).
+First, inet_aton, inet_ntoa, and inet_addr convert an IPv4 address from a dotted-decimal string ("111.111.111.111") to its 32-bit network byte ordered binary value.
+Newer functions like inet_pton and inet_ntop, handle both IPv4 and IPv6 addresses, which are also discussed in Section 7, so lets move to Section 8.
+
+Section 8
+This Section discusses the fallbacks of inet_ntop because the address is normally contained in a socket address structure, requiring the caller to know the format of the structure and the address family
+We use a function named sock_ntop that takes a pointer to a socket address structure, looks inside the structure, and calls the appropriate function to return the presentation format of the address.
+
+Section 9
+This Section talks about how you can use the read, write, and readline functions to take in data from a stream/connection and either read or write back on the connection so a complete communication can be established.
+
+
+*******************************************************************************
+CHAPTER 4
+
+The first step to performing network I/O is calling the socket function, which specifies the communication type (this applies to both client and server)
+
+Servers call 'bind', which assigns a local protocol address to a socket. After that, they call 'listen', which converts an unconnected socket into a passive socket, which allows it to accept incoming connection requests (from the client 'connect' function).
+
+Clients use 'connect' (which takes the socket descriptor from 'socket', the socket address structure, and the size of said structure), which causes the client TCP to send a SYN segment which tells the intial sequence number for future data (contains IP header, TCP header, and possible TCP options). This segment is added onto the incomplete connection queue, and the server responds to the client with an acknowledgement of the client's SYN, and it's own SYN. The client will then respond back with it's own acknowledgement and the is added to end of the completed connection queue. (This process is known as the three-way handshake)
+
+The server then calls 'accept', which returns the next completed connection from the front of the completed connection queue.
+
+In order to handle multiple clients, we must fork child processes. The 'fork' function creates child process from a parent, returning twice: once with the parent id and the other with '0' to indicate that it is a child process (cannot get child id since parent can have many children). We can use this to handle multiple clients by accepting connections sent to the listening socket through 'accept', then forking a child process to deal with the client. Once the process is done, we kill it, and the parent closes the associated socket.
+
+To close a socket, we use the 'close' function
+
+*******************************************************************************
+CHAPTER 5
+
+5.1
+Intro to chapter about writing a complete TCP clinet/server example which consists of the following:
+1. Client reads a line of text from its standard input and writes the line to the server
+2. Server reads the line from its network input and echoes the line back to the client
+3. Client reads the echoed line and prints it on its standard output.
+
+Will examine boundary conditions: client/server start up, normal and abnormal terminations, server crashing, etc...
+
+
+5.2
+TCP Echo Server: 'main' function outline
+- Create socket, bind server's well-known port (should be greater than 1023 if dont need a reserved port, greater than 5000 to avoid conflict with ephemeral ports, and less than 49152 to avoid conflict with the "correct" range of ephemeral ports)
+- Wait for client connection to complete
+- Concurrent Server
+  - for each client, a new child is spawned to handle the new connection
+  - the child closes the listening socket and the parent closes the connected socket
+  - calls 'str_echo' to handle the client
+a sample is given of the main function
+
+
+5.3
+TCP Echo Server: 'str_echo' function => perfeorms the server processing for each client
+- Read a buffer and echo the buffer
+  - reads data from socket and line is echoed back to the client.
+  - if client closes the connection (normally) the function returns and terminates the child.
+
+
+5.4
+TCP Echo Client: 'main' function outline
+sample str_echo function is given here
+sample is given of the main function
+- Create socket, fill in Internet socket address structure (filled in with server's IP address and port number)
+- Connect to server
+- calls 'str_cli' to handle rest of client processing
+
+
+5.5
+TCP Echo Client: 'str_cli' function
+Handles the client processing loop
+- Reads line of text from std in
+- Writes to server
+- Reads back server's echo and outputs to std out
+
+sample included
+
+
+5.6
+Normal Startup
+- Server starts in the background (calls socket, bind, listen, and accept, where it blocks)
+  - i.e.: linux % tcpserv01 &
+          [1] 17870
+
+- run netstat program to verify the state of the server's listening socket
+  - i.e.: linux % netstat -a
+
+- Start client
+  - i.e.: linux % tcpcli01 127.0.0.1
+  - calls socket and connect (causing TCP's three-way handshake) when connect finishes, accept returns in the server
+  - then following takes place:
+  1. client calls str_cli, blocks on the call to fgets (waits for input)
+  2. when accept returns on the server, it calls fork and the child calls str_echo (blocks and waits for line from client)
+  3. server parent calls accept again and blocks for another connection
+
+- At this point the client, server parent, and server child are all blocked.
+- running netstat now will show these 3 connections (since we run client and server on same host)
+
+
+5.7
+Normal Termination
+^D is the EOF character
+Defined by following steps:
+1. entering EOF character causes str_cli to return
+2. main terminates by calling exit
+3. client socket closed by the kernel, sending a FIN to server, server responds with ACK
+server socket enters CLOSE_WAIT state, client socket enters FIN_WAIT_2 state
+4. when the server receives the FIN, the server child returns, str_echo returns to main
+5. server child terminates by calling exit
+6. FIN from server client and ACK from client. connection is now compeltely terminated. client socket enters TIME_WAIT state
+7. SIGCHILD sent to the parent when the server child terminates, b/c we don't catch this, the child enters zombie state
+
+
+5.8
+POSIX Signal Handling
+signal - a notification to a process that an event has occurred. Also called 'software interrupts'. Usually occur asynchronously.
+- signals can be sent
+  - by one process to another (or itself)
+  - by the kernel to a process
+
+SIGCHILD - a signal sent by the kernel whenever a process terminates, to the parent of the terminating process
+- Every signal has a disposition, which is also called the action associated with the signal
+- There are 3 choices of dispositions:
+1. provide a function that is called whenever a specific signal occurs -> signal hangler 
+2. ignore a signal by setting its disposition to SIG_IGN
+3. set the default disposition for a sginal by setting its disposition to SIG_DEL. defualt is normally to terminate a process on receipt of a signal
+
+POSIX Signal Semantics
+- once a signal handler is installed, it remains installed
+- while a signal handler is executing, the signal being delivered is blocked
+- if a signal is generated one or more times while it is blocked, it is normally delivered only one time after the signal is unblocked
+- it is possible to selectively block and unblock a set of signals using the sigprocmask function
+
+
+5.9
+Handling 'SIGCHILD' Signals
+- Zombie state maintains info about the child for the parent to fetch at some later time (ID, termination status etc...)
+Handling Zombies
+- Don't want to leave zombies around and when we fork children we must call 'wait', so we establish a signal handler to catch SIGCHILD and call 'wait'.
+- i.e.: Signal (SIGCHILD, sig_chld);
+
+
+5.10
+wait and waitpid Functions
+- handles terminated child
+- both return 2 vals: process ID of terminated child and the termination status.
+- 3 scenarios we can encounter:
+1. we must catch the SIGCHILD signal when forking child processes
+2. we must handle interrupted system calls when we catch signals
+3. a SIGCHILD handler must be coded correctly using waitpid to prevent any zombies from being left around
+
+
+5.11
+Connection Abort before accept Returns
+- There is another condition similar to the interrupted system call example in the previous section that can cause accept
+to return a nonfatal error, in which case we should just call accept again.
+
+
+5.12
+Termination of Server Process
+We can simulate the crashing of the server process by killing the server child process (as opposed to the server host)
+see for details and instructions on how to execute this
+
+
+5.13
+'SIGPIPE' Signal
+Necessary for controlling the client from writing more data to the server (ignoring the error returned from readline)
+- The rule that applies is: When a process writes to a socket that has received an RST, the SIGPIPE signal is sent to the process. The default action of this signal is to terminate the process, so the process must catch the signal to avoid being involuntarily terminated.
+
+
+5.14
+Crashing of Server Host
+We can simulate the crashing of the server host
+- We must run the client and server on different hosts
+- start the server, start the client, type in a line to the client and verify connection
+- disconnect the server host from the network, and type another line
+- covers the scenario of the server host being unreachable when the client sends data
+
+
+5.15
+Crashing and Rebooting of Server Host
+- it is important for our client to detect the crashing server host
+- see detailed instructions on how to recreate
+
+
+5.16
+Shutdown of Server Host
+- Discusses what happens if the server host is shut down by an operator while our server process is running on that host
+- still important for client to detect the server host termination
+  - use select or poll function in client
+
+
+5.17
+Summary of TCP Example
+1. Summary of TCP client/server from client's perspective (see image)
+2. Summary of TCP client/server from server's perspective (see image)
+
+
+5.18
+Data Format
+- our example relies on the use of a newline character in str_echo, but this is not the rule
+normally we must worry about the format of the data exchanged
+- example of str_echo that adds 2 numbers
+- can also pass binary structures between client and server
+2 Common solution to the data format problem:
+1. Pass all numeric data as text strings. This assumes that both hosts have the same character set.
+2. Explicitly define the binary formats of the supported datatypes (number of bits, big- or little-endian) and pass all data between the client and server in this format.
+RPC packages normally use this technique. RFC 1832 [Srinivasan 1995] describes the External Data Representation (XDR) standard that is used with the Sun RPC package. 
+
+
+5.19
+Summary
+The example client/server is short (about 150 lines) but provides lots of details to examine.
+- first problem: zombie children. (SIGCHLD signal, waitpid (instead of wait, because Unix signals are not queued, POSIX handling)
+- next problem: client not being notified when the server process terminated (use select or poll)
+- also discovered if the server host crashes, we do not detect this until the client sends data to the server
+- sending text is okay, but sending numerical data can lead to a new set of problems
