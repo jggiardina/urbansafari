@@ -110,8 +110,7 @@ doConnect(void)
   VPRINTF("BEGIN: %s\n", globals.in.data);
 
   if (globals.connected==1) {
-     fprintf(stderr, "Already connected to server=%s port=%d\n", 
-		globals.server, globals.port);
+     fprintf(stderr, "Already connected to server");
   } else {
     for (i=0; i<len; i++) if (globals.in.data[i]==':') globals.in.data[i]=' ';
     sscanf(globals.in.data, "%*s %" XSTR(STRLEN) "s %d", globals.server,
