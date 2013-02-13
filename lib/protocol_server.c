@@ -75,8 +75,9 @@ proto_server_set_req_handler(Proto_Msg_Types mt, Proto_MT_Handler h)
   if (mt>PROTO_MT_REQ_BASE_RESERVED_FIRST &&
       mt<PROTO_MT_REQ_BASE_RESERVED_LAST) {
     i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
-
-    ADD CODE
+    
+    //ADD CODE: Adding the set handle code with the correct handler index -RC
+    Proto_Server.base_req_handlers[i];
     return 1;
   } else {
     return -1;
@@ -91,16 +92,20 @@ proto_server_record_event_subscriber(int fd, int *num)
 
   pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
 
+  //Goes through and sees if this is the first subscriber -RC
   if (Proto_Server.EventLastSubscriber < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS
       && Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber]
       ==-1) {
-    ADD CODE
+    //ADD CODE: Set the first subscriber -RC
+    Proto_Server.EventLastSubscriber = 0; 
+    Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = fd;
     rc = 1;
   } else {
     int i;
     for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
       if (Proto_Server.EventSubscribers[i]==-1) {
-	ADD CODE
+	//ADD CODE: Set the last subscriber ????? -RC
+        Proto_Server.EventLastSubscriber = i;
 	*num=i;
 	rc=1;
       }
@@ -124,14 +129,15 @@ proto_server_event_listen(void *arg)
   }
 
   for (;;) {
-    connfd = ADD CODE
+    connfd = net_accept(fd); //ADD CODE:  Accept the event listener here - RC
     if (connfd < 0) {
       fprintf(stderr, "Error: EventListen accept failed (%d)\n", errno);
     } else {
       int i;
       fprintf(stderr, "EventListen: connfd=%d -> ", connfd);
 
-      if (ADD CODE<0) {
+      /*Below ADD CODE: I call the function event subscriber to add a new subscriber -RC*/
+      if (proto_server_record_event_subscriber(connfd, &i)<0) {
 	fprintf(stderr, "oops no space for any more event subscribers\n");
 	close(connfd);
       } else {
@@ -194,7 +200,12 @@ proto_server_req_dispatcher(void * arg)
 
   for (;;) {
     if (proto_session_rcv_msg(&s)==1) {
-      ADD CODE
+        //ADD CODE: Very similar to the dispatcher from client - RC
+        mt = proto_session_hdr_unmarshall_type(s);
+        if(mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST &&
+           mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
+        i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
+        hdlr = Proto_Server.base_req_handlers(i); 
 	if (hdlr(&s)<0) goto leave;
       }
     } else {
@@ -202,7 +213,8 @@ proto_server_req_dispatcher(void * arg)
     }
   }
  leave:
-  Proto_Server.ADD CODE
+  //Proto_Server.ADD CODE Not sure but I think that we need to nullify with a -1 the eventsession.fd because we close the session next -RC
+  Proto_Server.EventSession.fd = -1;
   close(s.fd);
   return NULL;
 }
@@ -221,7 +233,7 @@ proto_server_rpc_listen(void *arg)
   }
 
   for (;;) {
-    connfd = ADD CODE
+    connfd = net_accept(fd); //ADD CODE This is accepting the connection instead of establishing one I beleive -RC
     if (connfd < 0) {
       fprintf(stderr, "Error: proto_server_rpc_listen accept failed (%d)\n", errno);
     } else {
