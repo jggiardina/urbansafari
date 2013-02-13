@@ -73,7 +73,8 @@ proto_client_set_event_handler(Proto_Client_Handle ch, Proto_Msg_Types mt,
   if (mt>PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
       mt<PROTO_MT_EVENT_BASE_RESERVED_LAST) {
     i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
-    ADD CODE
+    //ADD CODE: Added this line to set the proper handler based on the message type. - JG
+    c->base_event_handlers[i] = h;
     return 1;
   } else {
     return -1;
@@ -109,19 +110,23 @@ proto_client_event_dispatcher(void * arg)
 
   pthread_detach(pthread_self());
 
-  c = ADD CODE
-  s = ADD CODE
+  c = arg; //ADD CODE: arg passed here on pthread_create is Proto_Client *. -JG
+  s = proto_client_event_session(c); //ADD CODE: set the Proto_Session, event_session is only Proto_Session, so we need it's address here. -JG
 
   for (;;) {
     if (proto_session_rcv_msg(s)==1) {
       mt = proto_session_hdr_unmarshall_type(s);
       if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST && 
 	  mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
-	ADD CODE
-	if (hdlr(s)<0) goto leave;
+	//ADD CODE: Probably want to set hdlr with c->base_event_handlers[i], where i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1; -JG
+	i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
+        hdlr = c->base_event_handlers[i];
+        if (hdlr(s)<0) goto leave;
       }
     } else {
-      ADD CODE
+      //ADD CODE: maybe set the sessions_lost handler but not sure. -JG
+      proto_client_set_session_lost_handler(c,
+                                proto_client_session_lost_default_hdlr);
       goto leave;
     }
   }
@@ -145,8 +150,8 @@ proto_client_init(Proto_Client_Handle *ch)
 
   for (mt=PROTO_MT_EVENT_BASE_RESERVED_FIRST+1;
        mt<PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
-    ADD CODE
-
+    //ADD CODE: probably looping through the base_event_handlers and initializing them to null here
+    proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
   *ch = c;
   return 1;
 }
@@ -191,16 +196,17 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   Proto_Session *s;
   Proto_Client *c = ch;
 
-  s = ADD CODE
+  s = proto_client_rpc_session(c); //ADD CODE: set the Proto_Session, rpc_session is only Proto_Session, so we need it's address here. -JG
+  
   // marshall
 
   marshall_mtonly(s, mt);
-  rc = proto_session_ADD CODE
+  rc = proto_session_send_msg(s, 1/*pass 1 to reset the send? -JG*/); //ADD CODE: possibly send_msg. -JG
 
   if (rc==1) {
     proto_session_body_unmarshall_int(s, 0, &rc);
   } else {
-    ADD CODE
+    ADD CODE // send_msg communication failed so do what? -JG
   }
   
   return rc;
