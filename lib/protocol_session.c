@@ -67,52 +67,86 @@ proto_session_reset_receive(Proto_Session *s)
 static void
 proto_session_hdr_marshall_sver(Proto_Session *s, Proto_StateVersion v)
 {
-  s->shdr.sver.raw = htonll(v.raw);
+	if (proto_session_body_marshall_ll(s, v.raw) >= 0) {;//given this function to marshall data into buffer to send. My main concern is that the original version of this code didn't need the proto_session_body_marshall_ll function (there was no ADD CODE), but I thought it was necessary -WA
+  		s->shdr.sver.raw = htonll(v.raw);
+	}
 }
 
 static void
 proto_session_hdr_unmarshall_sver(Proto_Session *s, Proto_StateVersion *v)
 {
-  v->raw = ntohll(s->rhdr.sver.raw);
+  	 if (proto_session_body_unmarshall_ll(s, someoffsett, &v.raw) >= 0) {;//given this function to unmarshall data from recieved buffer, need to figure out how to calculate offset -WA
+	v.raw = ntohll(s->rhdr.sver.raw);
 }
 
 static void
 proto_session_hdr_marshall_pstate(Proto_Session *s, Proto_Player_State *ps)
-{
-    s->shdr.pstate.v0.raw  = htonl(ps->v0.raw);
-  ADD CODE 
+{	
+	//so my understanding of this is: whenever we want do an rpc, we marshall the data to be sent. 
+	//This data is stored in the sbuf, which is then written to whatever socket
+	//the recieving end then unmarshalls the data into the datastructures.
+	//the important thing is that sbuf and rbuf are being written to whenever is sending or reading respectively
+	proto_session_body_marshall_int(s, ps->v0.raw)
+        proto_session_body_marshall_int(s, ps->v1.raw)
+        proto_session_body_marshall_int(s, ps->v2.raw) 
+        proto_session_body_marshall_int(s, ps->v3.raw)
+    	s->shdr.pstate.v0.raw  = htonl(ps->v0.raw);
+    	s->shdr.pstate.v1.raw  = htonl(ps->v1.raw);
+	s->shdr.pstate.v2.raw  = htonl(ps->v2.raw);
+	s->shdr.pstate.v3.raw  = htonl(ps->v3.raw);
 
 }
 
 static void
 proto_session_hdr_unmarshall_pstate(Proto_Session *s, Proto_Player_State *ps)
-{
-  ADD CODE 
+{	
+	proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.pstate.v0.raw) 
+        proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.pstate.v1.raw) 
+	proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.pstate.v2.raw) 
+        proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.pstate.v3.raw)
 
+	ps->v0.raw = s->rhdr.pstate.v0.raw;
+	ps->v1.raw = s->rhdr.pstate.v1.raw;
+	ps->v2.raw = s->rhdr.pstate.v2.raw;
+	ps->v3.raw = s->rhdr.pstate.v3.raw;
 }
 
 static void
 proto_session_hdr_marshall_gstate(Proto_Session *s, Proto_Game_State *gs)
 {
-  ADD CODE 
+	proto_session_body_marshall_int(s, gs->v0.raw)
+        proto_session_body_marshall_int(s, gs->v1.raw)
+        proto_session_body_marshall_int(s, gs->v2.raw)
+        s->shdr.gstate.v0.raw  = htonl(gs->v0.raw);
+        s->shdr.gstate.v1.raw  = htonl(gs->v1.raw);
+        s->shdr.gstate.v2.raw  = htonl(gs->v2.raw);
+
 }
 
 static void
 proto_session_hdr_unmarshall_gstate(Proto_Session *s, Proto_Game_State *gs)
 {
-  ADD CODE 
-}
+	proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.gstate.v0.raw) 
+        proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.gstate.v1.raw)
+        proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.gstate.v2.raw)
 
+        gs->v0.raw = s->rhdr.gstate.v0.raw;
+        gs->v1.raw = s->rhdr.gstate.v1.raw;
+        gs->v2.raw = s->rhdr.gstate.v2.raw;
+        gs->v3.raw = s->rhdr.gstate.v3.raw;
+}
 static int
 proto_session_hdr_unmarshall_blen(Proto_Session *s)
 {
-  ADD CODE 
+
+  proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.blen);
+	
 }
 
 static void
 proto_session_hdr_marshall_type(Proto_Session *s, Proto_Msg_Types t)
 {
-  ADD CODE 
+  ADD CODE
 }
 
 static int
@@ -271,7 +305,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
 
   // write request
   ADD CODE
-  
+  //here we'll need to write to the socket or something the content of sbuf
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
     proto_session_dump(s);
@@ -291,7 +325,7 @@ proto_session_rcv_msg(Proto_Session *s)
 
   // read reply
   ADD CODE
-
+	//we'll read from the socket the recieved bytes, which we'll store in rbuf, and then unmarshall	
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
     proto_session_dump(s);
@@ -305,7 +339,8 @@ proto_session_rpc(Proto_Session *s)
   int rc;
   
   ADD CODE
-
+	//find some way to switch between send and rcv
+	//most likely, we'll read from s->shdr.types to determine what the appropriate action to take is.
   return rc;
 }
 
