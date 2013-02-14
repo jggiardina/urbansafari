@@ -161,12 +161,13 @@ proto_server_post_event(void)
     Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
     if (Proto_Server.EventSession.fd != -1) {
       num--;
-      if (ADD CODE)<0) {
+      if (/*ADD CODE)*/1<0) {
 	// must have lost an event connection
 	close(Proto_Server.EventSession.fd);
 	Proto_Server.EventSubscribers[i]=-1;
 	Proto_Server.EventNumSubscribers--;
-	Proto_Server.ADD CODE
+	//Proto_Server.ADD CODE
+	
       } 
       // FIXME: add ack message here to ensure that game is updated 
       // correctly everywhere... at the risk of making server dependent
@@ -300,7 +301,7 @@ proto_server_init(void)
 				     proto_session_lost_default_handler);
   for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
        i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
-    ADD CODE
+    //ADD CODE
   }
 
 
