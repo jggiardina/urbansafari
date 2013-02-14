@@ -30,7 +30,7 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_client.h"
-
+#include "misc.h"
 
 typedef struct {
   Proto_Session rpc_session;
@@ -206,7 +206,8 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   if (rc==1) {
     proto_session_body_unmarshall_int(s, 0, &rc);
   } else {
-    ADD CODE // send_msg communication failed so do what? -JG
+    //ADD CODE // send_msg communication failed so do what? -JG
+    NYI; assert(0);
   }
   
   return rc;
