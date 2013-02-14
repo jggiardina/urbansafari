@@ -77,7 +77,7 @@ static void
 proto_session_hdr_unmarshall_sver(Proto_Session *s, Proto_StateVersion *v)
 {
   	 //if (proto_session_body_unmarshall_ll(s, someoffsett, &v.raw) >= 0) {;//given this function to unmarshall data from recieved buffer, need to figure out how to calculate offset -WA
-	v.raw = ntohll(s->rhdr.sver.raw);
+	v->raw = ntohll(s->rhdr.sver.raw);
 }
 
 static void
