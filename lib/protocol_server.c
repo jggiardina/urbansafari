@@ -31,7 +31,7 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_server.h"
-
+#include "misc.h"
 #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
 
 struct {
@@ -167,7 +167,7 @@ proto_server_post_event(void)
 	Proto_Server.EventSubscribers[i]=-1;
 	Proto_Server.EventNumSubscribers--;
 	//Proto_Server.ADD CODE
-	
+	NYI; assert(0);
       } 
       // FIXME: add ack message here to ensure that game is updated 
       // correctly everywhere... at the risk of making server dependent
@@ -202,11 +202,12 @@ proto_server_req_dispatcher(void * arg)
   for (;;) {
     if (proto_session_rcv_msg(&s)==1) {
         //ADD CODE: Very similar to the dispatcher from client - RC
-        mt = proto_session_hdr_unmarshall_type(s);
+	NYI; assert(0);
+        mt = 0;//proto_session_hdr_unmarshall_type(s);
         if(mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST &&
            mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
         i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
-        hdlr = Proto_Server.base_req_handlers(i); 
+        hdlr = Proto_Server.base_req_handlers[i]; 
 	if (hdlr(&s)<0) goto leave;
       }
     } else {
@@ -302,6 +303,7 @@ proto_server_init(void)
   for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
        i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
     //ADD CODE
+    NYI; assert(0);
   }
 
 
