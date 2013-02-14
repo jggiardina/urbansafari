@@ -86,7 +86,7 @@ proto_session_hdr_marshall_pstate(Proto_Session *s, Proto_Player_State *ps)
 	//so my understanding of this is: whenever we want do an rpc, we marshall the data to be sent. 
 	//This data is stored in the sbuf, which is then written to whatever socket
 	//the recieving end then unmarshalls the data into the datastructures.
-	//the important thing is that sbuf and rbuf are being written to whenever is sending or reading respectively
+	//the important thing is that sbuf and rbuf are being written to whenever is sending or reading respectively -WA
 	/*proto_session_body_marshall_int(s, ps->v0.raw)
         proto_session_body_marshall_int(s, ps->v1.raw)
         proto_session_body_marshall_int(s, ps->v2.raw) 
@@ -109,7 +109,7 @@ proto_session_hdr_unmarshall_pstate(Proto_Session *s, Proto_Player_State *ps)
 	ps->v0.raw = s->rhdr.pstate.v0.raw;
 	ps->v1.raw = s->rhdr.pstate.v1.raw;
 	ps->v2.raw = s->rhdr.pstate.v2.raw;
-	ps->v3.raw = s->rhdr.pstate.v3.raw;*/
+	ps->v3.raw = s->rhdr.pstate.v3.raw; -WA*/
 	NYI;assert(0);
 }
 
@@ -143,7 +143,7 @@ proto_session_hdr_unmarshall_blen(Proto_Session *s)
 {
 
   //proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.blen);
-	NYI;assert(0);return(0);	
+	NYI;assert(0);
 }
 
 static void
@@ -155,13 +155,13 @@ proto_session_hdr_marshall_type(Proto_Session *s, Proto_Msg_Types t)
 static int
 proto_session_hdr_unmarshall_version(Proto_Session *s)
 {
-  NYI;assert(0);return 0;
+  NYI;assert(0);
 }
 
 extern Proto_Msg_Types
 proto_session_hdr_unmarshall_type(Proto_Session *s)
 {
-  NYI;assert(0);return 0;
+  NYI;assert(0);
 }
 
 extern void
@@ -307,8 +307,8 @@ proto_session_send_msg(Proto_Session *s, int reset)
   s->shdr.blen = htonl(s->slen);
 
   // write request
-  NYI;assert(0);return(0);
-  //here we'll need to write to the socket or something the content of sbuf
+  NYI;assert(0);
+  //here we'll need to write to the socket or something the content of sbuf-WA
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
     proto_session_dump(s);
@@ -327,8 +327,8 @@ proto_session_rcv_msg(Proto_Session *s)
   proto_session_reset_receive(s);
 
   // read reply
-  NYI;assert(0);return 0;
-	//we'll read from the socket the recieved bytes, which we'll store in rbuf, and then unmarshall	
+  NYI;assert(0);
+	//we'll read from the socket the recieved bytes, which we'll store in rbuf, and then unmarshall	-WA
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
     proto_session_dump(s);
@@ -341,7 +341,7 @@ proto_session_rpc(Proto_Session *s)
 {
   int rc;
   
-  NYI;assert(0);return 0;
+  NYI;assert(0);
 	//find some way to switch between send and rcv
 	//most likely, we'll read from s->shdr.types to determine what the appropriate action to take is.
   return rc;
