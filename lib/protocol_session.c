@@ -77,7 +77,7 @@ static void
 proto_session_hdr_unmarshall_sver(Proto_Session *s, Proto_StateVersion *v)
 {
   	 //if (proto_session_body_unmarshall_ll(s, someoffsett, &v.raw) >= 0) {;//given this function to unmarshall data from recieved buffer, need to figure out how to calculate offset -WA
-	v.raw = ntohll(s->rhdr.sver.raw);
+	v->raw = ntohll(s->rhdr.sver.raw);
 }
 
 static void
@@ -143,7 +143,7 @@ proto_session_hdr_unmarshall_blen(Proto_Session *s)
 {
 
   //proto_session_body_unmarshall_int(s, someoffset, &s->rhdr.blen);
-	NYI;assert(0);return(0);	
+	NYI;assert(0);	
 }
 
 static void
@@ -155,13 +155,13 @@ proto_session_hdr_marshall_type(Proto_Session *s, Proto_Msg_Types t)
 static int
 proto_session_hdr_unmarshall_version(Proto_Session *s)
 {
-  NYI;assert(0);return 0;
+  NYI;assert(0);
 }
 
 extern Proto_Msg_Types
 proto_session_hdr_unmarshall_type(Proto_Session *s)
 {
-  NYI;assert(0);return 0;
+  NYI;assert(0);
 }
 
 extern void
@@ -307,7 +307,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
   s->shdr.blen = htonl(s->slen);
 
   // write request
-  NYI;assert(0);return(0);
+  NYI;assert(0);
   //here we'll need to write to the socket or something the content of sbuf
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
@@ -327,7 +327,7 @@ proto_session_rcv_msg(Proto_Session *s)
   proto_session_reset_receive(s);
 
   // read reply
-  NYI;assert(0);return 0;
+  NYI;assert(0);
 	//we'll read from the socket the recieved bytes, which we'll store in rbuf, and then unmarshall	
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
@@ -341,7 +341,7 @@ proto_session_rpc(Proto_Session *s)
 {
   int rc;
   
-  NYI;assert(0);return 0;
+  NYI;assert(0);
 	//find some way to switch between send and rcv
 	//most likely, we'll read from s->shdr.types to determine what the appropriate action to take is.
   return rc;
