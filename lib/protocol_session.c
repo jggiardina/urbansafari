@@ -26,6 +26,7 @@
 #include <strings.h>
 #include <errno.h>
 #include <pthread.h>
+#include <assert.h>
 
 #include "misc.h"
 #include "net.h"
