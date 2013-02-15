@@ -328,8 +328,21 @@ proto_session_rcv_msg(Proto_Session *s)
   proto_session_reset_receive(s);
 
   // read reply
-  NYI;assert(0);
-	//we'll read from the socket the recieved bytes, which we'll store in rbuf, and then unmarshall	-WA
+
+  //Start added code
+  //NYI;assert(0);
+  int n;
+  int len;
+  n = net_readn(s->fd, &len, sizeof(int));
+  len = ntohl(len);
+
+  if(len){
+    *s->rbuf = (char *)malloc(len);
+    n = net_readn(s->fd, s->rbuf, sizeof(s->rbuf)); 
+    s->rlen = len;
+  } 
+  //end added code
+  //we'll read from the socket the recieved bytes, which we'll store in rbuf, and then unmarshall -WA
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
     proto_session_dump(s);
