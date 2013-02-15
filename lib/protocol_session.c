@@ -300,7 +300,8 @@ proto_session_send_msg(Proto_Session *s, int reset)
 
   net_writen(s->fd, &nlen, sizeof(int));
 
-  
+  //TODO: WE NEED TO WRITE SOMETHING TO SBUF TO SEND 
+ 
   net_writen(s->fd, s->sbuf, len);
   //end of added code
   //here we'll need to write to the socket or something the content of sbuf-WA
