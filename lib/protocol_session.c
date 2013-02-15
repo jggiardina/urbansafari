@@ -292,7 +292,17 @@ proto_session_send_msg(Proto_Session *s, int reset)
   s->shdr.blen = htonl(s->slen);
 
   // write request
-  NYI;assert(0);
+  
+  //Start of added code
+  //NYI;assert(0);
+  int len = s->slen;
+  int nlen = s->shdr.blen;
+
+  net_writen(s->fd, &nlen, sizeof(int));
+
+  
+  net_writen(s->fd, s->sbuf, len);
+  //end of added code
   //here we'll need to write to the socket or something the content of sbuf-WA
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
