@@ -151,7 +151,7 @@ proto_client_init(Proto_Client_Handle *ch)
 
   for (mt=PROTO_MT_EVENT_BASE_RESERVED_FIRST+1;
        mt<PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
-    //ADD CODE: probably looping through the base_event_handlers and initializing them to null here
+    //ADD CODE: probably looping through the base_event_handlers and initializing them to null here. -JG
     proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
   *ch = c;
   return 1;
