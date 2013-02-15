@@ -203,8 +203,8 @@ proto_server_req_dispatcher(void * arg)
   for (;;) {
     if (proto_session_rcv_msg(&s)==1) {
         //ADD CODE: Very similar to the dispatcher from client - RC
-	NYI; assert(0);
-        mt = 0;//proto_session_hdr_unmarshall_type(s);
+	//NYI; assert(0);
+        mt = proto_session_hdr_unmarshall_type(&s);
         if(mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST &&
            mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
         i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
