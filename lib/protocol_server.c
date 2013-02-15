@@ -303,8 +303,9 @@ proto_server_init(void)
 				     proto_session_lost_default_handler);
   for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
        i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
-    //ADD CODE
-    NYI; assert(0);
+    //ADD CODE: Looping through the req's and setting them to the null handler -RC
+    proto_server_set_req_handler(i, proto_server_mt_null_handler);
+    //NYI; assert(0);
   }
 
 
