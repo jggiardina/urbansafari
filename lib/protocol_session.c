@@ -295,16 +295,13 @@ proto_session_send_msg(Proto_Session *s, int reset)
   
   //Start of added code
   //NYI;assert(0);
-  int len = s->slen;
-  int nlen = s->shdr.blen;
-
-  net_writen(s->fd, &nlen, sizeof(int));
-
-  //TODO: WE NEED TO WRITE SOMETHING TO SBUF TO SEND 
- 
-  net_writen(s->fd, s->sbuf, len);
-  //end of added code
-  //here we'll need to write to the socket or something the content of sbuf-WA
+	int header_length = (sizeof(int) * 10) + sizeof (long long);//length of header; refer to protocol.h for format.-WA
+//TO-DO: We will need to add a line to put body data into sbuf; not sure what body data to put though. -WA
+	net_writen(s->fd, &s->shdr, header_length);//write header to body-WA
+	if (s->slen){
+  		net_writen(s->fd, s->sbuf, s->slen);//write body (if it exists) to socket
+//heres what is sent in total- HDR:BODY. blen refers to extra body data we may or may not send. this format is found in protocol.h. if you want extra clarification, read pg 133 in the DS book. -WA
+ 	} //end of added code
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
     proto_session_dump(s);
@@ -319,25 +316,19 @@ proto_session_send_msg(Proto_Session *s, int reset)
 extern int
 proto_session_rcv_msg(Proto_Session *s)
 {
-  
-  proto_session_reset_receive(s);
-
-  // read reply
-
-  //Start added code
-  //NYI;assert(0);
-  int n;
-  int len;
-  n = net_readn(s->fd, &len, sizeof(int));
-  len = ntohl(len);
-
-  if(len){
-    *s->rbuf = (char *)malloc(len);
-    n = net_readn(s->fd, s->rbuf, sizeof(s->rbuf)); 
-    s->rlen = len;
-  } 
+  	proto_session_reset_receive(s);
+  	// read reply
+  	//Start added code
+  	//NYI;assert(0);
+  	int n;
+	int header_length = (sizeof(int) * 10) + sizeof(long long);//define header length; it is always a given. -WA
+	n = net_readn(s->fd, &s->rhdr, header_length);//read the header into rhdr -WA
+	if (s->rhdr.blen){
+    		n = net_readn(s->fd, s->rbuf, s->rhdr.blen); //if a body exists, read it in -WA
+    		s->rlen = s->rhdr.blen;
+	}
   //end added code
-  //we'll read from the socket the recieved bytes, which we'll store in rbuf, and then unmarshall -WA
+
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
     proto_session_dump(s);
@@ -349,10 +340,8 @@ extern int
 proto_session_rpc(Proto_Session *s)
 {
   int rc;
-  
-  NYI;assert(0);
-	//find some way to switch between send and rcv
-	//most likely, we'll read from s->shdr.types to determine what the appropriate action to take is.
+  rc = proto_session_send_msg(s, 0);//we send the message to the server -WA
+  rc = proto_session_rcv_msg(s);//until we recieve a reply, this function will continue to wait. once the server is done it's business, it will send us a reply back, allowing this rpc function to complete.
   return rc;
 }
 

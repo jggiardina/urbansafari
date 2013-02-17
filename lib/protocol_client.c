@@ -202,8 +202,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   // marshall
 
   marshall_mtonly(s, mt);
-  rc = proto_session_send_msg(s, 1/*pass 1 to reset the send? -JG*/); //ADD CODE: possibly send_msg. -JG
-
+  rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
     proto_session_body_unmarshall_int(s, 0, &rc);
   } else {
