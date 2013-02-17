@@ -132,7 +132,11 @@ doRPCCmd(Client *C, char c)
     rc = proto_client_move(C->ph, c);
     break;
   case 'g':
-    rc = proto_client_goodbye(C->ph);
+    { // Added the following code to match case 'h':
+      rc = proto_client_goodbye(C->ph);
+      printf("goodbye: rc=%x\n", rc);
+      if (rc > 0) game_process_reply(C);
+    }
     break;
   default:
     printf("%s: unknown command %c\n", __func__, c);
