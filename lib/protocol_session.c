@@ -69,7 +69,6 @@ proto_session_reset_receive(Proto_Session *s)
 static void
 proto_session_hdr_marshall_sver(Proto_Session *s, Proto_StateVersion v)
 {
-	//if (proto_session_body_marshall_ll(s, v.raw) >= 0) {;//given this function to marshall data into buffer to send. My main concern is that the original version of this code didn't need the proto_session_body_marshall_ll function (there was no ADD CODE), but I thought it was necessary -WA
   		s->shdr.sver.raw = htonll(v.raw);//added by appavoo
 	
 }
@@ -77,7 +76,6 @@ proto_session_hdr_marshall_sver(Proto_Session *s, Proto_StateVersion v)
 static void
 proto_session_hdr_unmarshall_sver(Proto_Session *s, Proto_StateVersion *v)
 {
-  	 //if (proto_session_body_unmarshall_ll(s, someoffsett, &v.raw) >= 0) {;//given this function to unmarshall data from recieved buffer, need to figure out how to calculate offset -WA
 	v->raw = ntohll(s->rhdr.sver.raw);//added by appavoo
 }
 
@@ -298,7 +296,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
 	int header_length = (sizeof(int) * 10) + sizeof (long long);//length of header; refer to protocol.h for format.-WA
 	net_writen(s->fd, &s->shdr, header_length);//write header to body-WA
 	if (s->slen){
-  		net_writen(s->fd, s->sbuf, s->slen);//write body (if it exists) to socket
+  		net_writen(s->fd, &s->sbuf, s->slen);//write body (if it exists) to socket
 //heres what is sent in total- HDR:BODY. blen refers to extra body data we may or may not send. this format is found in protocol.h. if you want extra clarification, read pg 133 in the DS book. -WA
  	} //end of added code
   if (proto_debug()) {
@@ -322,9 +320,9 @@ proto_session_rcv_msg(Proto_Session *s)
   	int n;
 	int header_length = (sizeof(int) * 10) + sizeof(long long);//define header length; it is always a given. -WA
 	n = net_readn(s->fd, &s->rhdr, header_length);//read the header into rhdr -WA
-	if (s->rhdr.blen){
-    		n = net_readn(s->fd, s->rbuf, s->rhdr.blen); //if a body exists, read it in -WA
-    		s->rlen = s->rhdr.blen;
+	s->rlen = ntohl(s->rhdr.blen);
+	if (s->rlen){
+    		n = net_readn(s->fd, &s->rbuf, s->rlen); //if a body exists, read it in -WA
 	}
   //end added code
 

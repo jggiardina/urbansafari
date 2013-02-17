@@ -285,7 +285,6 @@ proto_server_mt_null_handler(Proto_Session *s)
 
   // setup a dummy body that just has a return code 
   proto_session_body_marshall_int(s, 0xdeadbeef);
-
   rc=proto_session_send_msg(s,1);
 
   return rc;
