@@ -107,7 +107,8 @@ proto_server_record_event_subscriber(int fd, int *num)
     for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
       if (Proto_Server.EventSubscribers[i]==-1) {
 	//ADD CODE: Set the last subscriber ????? -RC
-        Proto_Server.EventLastSubscriber = i;
+        //Proto_Server.EventLastSubscriber = i;
+	Proto_Server.EventSubscribers[i] = fd;
 	Proto_Server.EventNumSubscribers++;
         *num=i;
 	rc=1;
