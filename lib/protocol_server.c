@@ -99,6 +99,7 @@ proto_server_record_event_subscriber(int fd, int *num)
       ==-1) {
     //ADD CODE: Set the first subscriber -RC
     Proto_Server.EventLastSubscriber = 0; 
+    Proto_Server.EventNumSubscribers++;
     Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = fd;
     rc = 1;
   } else {
@@ -107,7 +108,8 @@ proto_server_record_event_subscriber(int fd, int *num)
       if (Proto_Server.EventSubscribers[i]==-1) {
 	//ADD CODE: Set the last subscriber ????? -RC
         Proto_Server.EventLastSubscriber = i;
-	*num=i;
+	Proto_Server.EventNumSubscribers++;
+        *num=i;
 	rc=1;
       }
     }
