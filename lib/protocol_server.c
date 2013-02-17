@@ -78,7 +78,7 @@ proto_server_set_req_handler(Proto_Msg_Types mt, Proto_MT_Handler h)
     i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
     
     //ADD CODE: Adding the set handle code with the correct handler index -RC
-    Proto_Server.base_req_handlers[i];
+    Proto_Server.base_req_handlers[i] = h; // need to set the handler. -JG
     return 1;
   } else {
     return -1;
@@ -205,9 +205,9 @@ proto_server_req_dispatcher(void * arg)
         //ADD CODE: Very similar to the dispatcher from client - RC
 	//NYI; assert(0);
         mt = proto_session_hdr_unmarshall_type(&s);
-        if(mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST &&
-           mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
-        i=mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
+        if(mt > PROTO_MT_REQ_BASE_RESERVED_FIRST &&
+           mt < PROTO_MT_REQ_BASE_RESERVED_LAST) { // Changed PROTO_MT_EVENT_BASE_RESERVED_FIRST and LAST to REQ, since we are dealing with requests/rpc and not the event channel. -JG
+        i=mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
         hdlr = Proto_Server.base_req_handlers[i]; 
 	if (hdlr(&s)<0) goto leave;
       }
