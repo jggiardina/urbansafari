@@ -296,7 +296,6 @@ proto_session_send_msg(Proto_Session *s, int reset)
   //Start of added code
   //NYI;assert(0);
 	int header_length = (sizeof(int) * 10) + sizeof (long long);//length of header; refer to protocol.h for format.-WA
-//TO-DO: We will need to add a line to put body data into sbuf; not sure what body data to put though. -WA
 	net_writen(s->fd, &s->shdr, header_length);//write header to body-WA
 	if (s->slen){
   		net_writen(s->fd, s->sbuf, s->slen);//write body (if it exists) to socket
