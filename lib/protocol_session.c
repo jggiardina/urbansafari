@@ -287,17 +287,20 @@ proto_session_body_unmarshall_bytes(Proto_Session *s, int offset, int len,
 extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
-  s->shdr.blen = htonl(s->slen);
-
-  // write request
-  
-  //Start of added code
-  //NYI;assert(0);
+  	int n;
+ 	 s->shdr.blen = htonl(s->slen);
+  	// write request
+  	//Start of added code
 	int header_length = (sizeof(int) * 10) + sizeof (long long);//length of header; refer to protocol.h for format.-WA
-	net_writen(s->fd, &s->shdr, header_length);//write header to body-WA
+	n = net_writen(s->fd, &s->shdr, header_length);//write header to body-WA
+	if (n < 0 && proto_debug()) {
+		fprintf(stderr, "%p: proto_session_send_msg: write error:\n", pthread_self());
+	}
 	if (s->slen){
-  		net_writen(s->fd, &s->sbuf, s->slen);//write body (if it exists) to socket
-//heres what is sent in total- HDR:BODY. blen refers to extra body data we may or may not send. this format is found in protocol.h. if you want extra clarification, read pg 133 in the DS book. -WA
+  		n = net_writen(s->fd, &s->sbuf, s->slen);//write body (if it exists) to socket
+		if (n < 0 && proto_debug()) {
+                	fprintf(stderr, "%p: proto_session_send_msg: write error:\n", pthread_self());
+        	}
  	} //end of added code
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
@@ -320,9 +323,15 @@ proto_session_rcv_msg(Proto_Session *s)
   	int n;
 	int header_length = (sizeof(int) * 10) + sizeof(long long);//define header length; it is always a given. -WA
 	n = net_readn(s->fd, &s->rhdr, header_length);//read the header into rhdr -WA
+	if (n < 0 && proto_debug()){
+		fprintf(stderr, "%p: proto_session_rcv_msg: read error\n", pthread_self());
+	}
 	s->rlen = ntohl(s->rhdr.blen);
 	if (s->rlen){
     		n = net_readn(s->fd, &s->rbuf, s->rlen); //if a body exists, read it in -WA
+		if (n < 0 && proto_debug()){
+                	fprintf(stderr, "%p: proto_session_rcv_msg: read error\n", pthread_self());
+        	}
 	}
   //end added code
 
