@@ -228,7 +228,7 @@ doConnect(Client *C)
   //VPRINTF("END: %s %d %d\n", globals.server, globals.port, globals.serverFD);
   return 1;
 }
-
+//
 int
 doDisconnect(Client *C)
 {
