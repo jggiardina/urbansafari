@@ -184,8 +184,9 @@ proto_server_post_event(void)
 	close(Proto_Server.EventSession.fd);
 	Proto_Server.EventSubscribers[i]=-1;
 	Proto_Server.EventNumSubscribers--;
+	Proto_Server.session_lost_handler(&Proto_Server.EventSession);
 	//Proto_Server.ADD CODE
-	NYI; assert(0);
+	//NYI; assert(0);
       } else {
 	//ADDED CODE -WA
       	FD_ZERO(&fdset);//zero the set
@@ -199,9 +200,10 @@ proto_server_post_event(void)
 		//garbage; maybe check to see if header sent is the same as header recieved
 		//or check in the body for "ACK". -WA
       	}else{
-		 close(Proto_Server.EventSession.fd);
+		close(Proto_Server.EventSession.fd);
         	Proto_Server.EventSubscribers[i]=-1;
         	Proto_Server.EventNumSubscribers--;
+		Proto_Server.session_lost_handler(&Proto_Server.EventSession);
         	//Proto_Server.ADD CODE
 	}
       }
