@@ -96,7 +96,18 @@ proto_client_event_null_handler(Proto_Session *s)
   fprintf(stderr, 
 	  "proto_client_event_null_handler: invoked for session:\n");
   proto_session_dump(s);
+  Proto_Msg_Types mt;
 
+  mt = proto_session_hdr_unmarshall_type(s);
+  if (mt == PROTO_MT_EVENT_BASE_UPDATE){
+	//update client code should go here -WA
+  	proto_session_reset_send(s);//now to send back ACK message
+	Proto_Msg_Hdr h;
+	bzero(&h, sizeof(h));
+  	h.type = PROTO_MT_EVENT_BASE_UPDATE;
+  	proto_session_hdr_marshall(s, &h);
+ 	proto_session_send_msg(s, 1);
+  }
   return 1;
 }
 
