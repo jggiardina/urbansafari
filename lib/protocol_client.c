@@ -218,7 +218,9 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
     proto_session_body_unmarshall_int(s, 0, &rc);
   } else {
     //ADD CODE // send_msg communication failed so do what? -JG
-    NYI; assert(0);
+    //NYI; assert(0);
+    c->session_lost_handler(s);
+    close(s->fd);
   }
   
   return rc;
