@@ -154,7 +154,7 @@ doRPCCmd(Client *C, int c)
 {
   int rc=-1;
 
-  rc = proto_client_mark(C->ph, c);
+  rc = proto_client_move(C->ph, c); //TODO: change this to mark
   printf("mark: rc=%x\n", rc);
   if (rc > 0) game_process_reply(C);
   
