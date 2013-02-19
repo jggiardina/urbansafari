@@ -192,7 +192,7 @@ proto_server_post_event(void)
       	ready = select(Proto_Server.EventSession.fd+1, &fdset, NULL, NULL, &timeout);
 	//select function will see if there is anything to read
 	//if after timeout, there is nothing, it returns -1
-     	if (ready != -1){
+     	if (ready > 0){
          	proto_session_rcv_msg(&Proto_Server.EventSession);//recieve acknowledgement from server
 		//we'll need an additonal check to make sure the client isn't just sending back
 		//garbage; maybe check to see if header sent is the same as header recieved
