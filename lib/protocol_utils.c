@@ -75,6 +75,12 @@ proto_dump_mt(Proto_Msg_Types type)
   case PROTO_MT_EVENT_BASE_RESERVED_LAST: 
     fprintf(stderr, "PROTO_MT_EVENT_BASE_RESERVED_LAST");
     break;
+  case PROTO_MT_REQ_BASE_CONNECT:
+    fprintf(stderr, "PROTO_MT_REQ_BASE_CONNECT");
+    break;
+  case PROTO_MT_REP_BASE_CONNECT:
+    fprintf(stderr, "PROTO_MT_REP_BASE_CONNECT");
+    break;
   default:
     fprintf(stderr, "UNKNOWN=%d", type);
   }
