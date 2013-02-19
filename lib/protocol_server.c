@@ -344,13 +344,13 @@ proto_server_mt_conn_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
 
-  if(subscribers > 1){
+  if(subscribers > 2){
     proto_session_body_marshall_char(s, 'F');
     rc=proto_session_send_msg(s,1);
-  }else if(subscribers == 0){
+  }else if(subscribers == 1){
     proto_session_body_marshall_char(s, 'X');
     rc=proto_session_send_msg(s,1);  
-  }else if(subscribers == 1){
+  }else if(subscribers == 2){
     proto_session_body_marshall_char(s, 'O');
     rc=proto_session_send_msg(s,1);
   }
