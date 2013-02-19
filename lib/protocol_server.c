@@ -114,6 +114,7 @@ proto_server_record_event_subscriber(int fd, int *num)
 	Proto_Server.EventSubscribers[i] = fd;
 	Proto_Server.EventNumSubscribers++;
         *num=i;
+	i = PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; //BREAK OUT -RC
 	rc=1;
       }
     }
