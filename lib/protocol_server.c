@@ -329,6 +329,50 @@ proto_server_mt_null_handler(Proto_Session *s)
   return rc;
 }
 
+/* Handler for Connection */
+static int
+proto_server_mt_conn_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_conn_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  proto_session_hdr_marshall(s, &h);
+
+  proto_session_body_marshall_int(s, 0xdeadbeef);
+  rc=proto_session_send_msg(s,1);
+
+  return rc;
+}
+
+/* Handler for Marking Cells */
+static int
+proto_server_mt_mark_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+  Proto_Game_State gs;
+
+  fprintf(stderr, "proto_server_mt_mark_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+
+  gs = proto_session_hdr_unmarshall_gstate(s, &gs);  
+
+  proto_session_hdr_marshall(s, &h);
+
+  proto_session_body_marshall_int(s, 0xdeadbeef);
+  rc=proto_session_send_msg(s,1);
+
+  return rc;
+}
+
 extern int
 proto_server_init(void)
 {
