@@ -200,7 +200,7 @@ doConnect(Client *C)
 	   &globals.port);
     
     if (strlen(globals.host)==0 || globals.port==0) {
-      fprintf(stderr, "Not able to connect to <%s:%s>\n", globals.host, globals.port);
+      fprintf(stderr, "Not able to connect to <%s:%d>\n", globals.host, globals.port);
       return -1;
     } else {
       //VPRINTF("connecting to: server=%s port=%d...", 
@@ -214,13 +214,20 @@ doConnect(Client *C)
       }*/
       // ok startup our connection to the server
       if (startConnection(C, globals.host, globals.port, update_event_handler)<0) {
-        fprintf(stderr, "Not able to connect to <%s:%s>\n", globals.host, globals.port);
+        fprintf(stderr, "Not able to connect to <%s:%d>\n", globals.host, globals.port);
         return -1;
       } else {
         globals.connected = 1;
-        char player_type = proto_client_conn();
-        C->player_type = player_type;
-        printf("Connected to <%s:%s>: You are %c's", globals.host, globals.port, C->player_type);
+        char player_type = proto_client_conn(C->ph);
+        if (player_type == 'F')
+	{
+	  //fail, disconnect the client and print unable to connect
+	}
+	else
+	{
+	  C->player_type = player_type;
+          printf("Connected to <%s:%d>: You are %c's", globals.host, globals.port, C->player_type);
+        }
       }
     }
   }
