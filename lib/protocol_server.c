@@ -186,7 +186,6 @@ proto_server_post_event(void)
 	Proto_Server.EventNumSubscribers--;
 	Proto_Server.session_lost_handler(&Proto_Server.EventSession);
 	//Proto_Server.ADD CODE
-	//NYI; assert(0);
       } else {
 	//ADDED CODE -WA
       	FD_ZERO(&fdset);//zero the set
