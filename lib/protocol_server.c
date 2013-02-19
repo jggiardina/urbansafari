@@ -338,13 +338,23 @@ proto_server_mt_conn_handler(Proto_Session *s){
   fprintf(stderr, "proto_server_mt_conn_handler: invoked for session:\n");
   proto_session_dump(s);
 
+  int subscribers = Proto_Server.EventNumSubscribers;
+  
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
 
-  proto_session_body_marshall_int(s, 0xdeadbeef);
-  rc=proto_session_send_msg(s,1);
+  if(subscribers > 1){
+    proto_session_body_marshall_char(s, 'F');
+    rc=proto_session_send_msg(s,1);
+  }else if(subscribers == 0){
+    proto_session_body_marshall_char(s, 'X');
+    rc=proto_session_send_msg(s,1);  
+  }else if(subscribers == 1){
+    proto_session_body_marshall_char(s, 'O');
+    rc=proto_session_send_msg(s,1);
+  }
 
   return rc;
 }
@@ -363,7 +373,7 @@ proto_server_mt_mark_handler(Proto_Session *s){
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
 
-  gs = proto_session_hdr_unmarshall_gstate(s, &gs);  
+  //proto_session_hdr_unmarshall_gstate(s, &gs);  
 
   proto_session_hdr_marshall(s, &h);
 
@@ -386,7 +396,11 @@ proto_server_init(void)
   for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
        i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
     //ADD CODE: Looping through the req's and setting them to the null handler -RC
-    proto_server_set_req_handler(i, proto_server_mt_null_handler);
+    if(i == PROTO_MT_REQ_BASE_RESERVED_FIRST+2){
+      proto_server_set_req_handler(i, proto_server_mt_conn_handler);
+    }else{
+      proto_server_set_req_handler(i, proto_server_mt_null_handler);
+    }
     //NYI; assert(0);
   }
 

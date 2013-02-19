@@ -41,8 +41,11 @@ extern int proto_client_set_event_handler(Proto_Client_Handle ch,
 					  Proto_Msg_Types mt,
 					  Proto_MT_Handler h);
 
+static char proto_client_event_conn_handler(Proto_Session *s);
+
 // client side protocol rpc's
 extern int proto_client_hello(Proto_Client_Handle ch);
 extern int proto_client_move(Proto_Client_Handle ch, char d);
 extern int proto_client_goodbye(Proto_Client_Handle ch);
+extern char proto_client_conn(Proto_Client_Handle ch);
 #endif
