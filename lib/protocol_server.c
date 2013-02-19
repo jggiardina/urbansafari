@@ -27,6 +27,9 @@
 #include <errno.h>
 #include <pthread.h>
 #include <assert.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 #include "net.h"
 #include "protocol.h"
@@ -156,6 +159,14 @@ proto_server_post_event(void)
 {
   int i;
   int num;
+  //ADDED CODE
+  struct timeval timeout;//timeout struct -WA
+  int ready;//ready int to be used later -WA
+  fd_set   fdset;//fdset needed by select function -WA
+
+  timeout.tv_sec = 15;//set the time to 15 seconds; seems reasonable -WA
+  timeout.tv_usec = 0;
+  //END ADDED CODE
 
   pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
 
@@ -165,18 +176,40 @@ proto_server_post_event(void)
     Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
     if (Proto_Server.EventSession.fd != -1) {
       num--;
-      if (/*ADD CODE)*/1<0) {
+	//ADDED CODE -WA
+      if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {//here we push to the client the updated state -WA
+	//END ADDED CODE
 	// must have lost an event connection
 	close(Proto_Server.EventSession.fd);
 	Proto_Server.EventSubscribers[i]=-1;
 	Proto_Server.EventNumSubscribers--;
 	//Proto_Server.ADD CODE
 	NYI; assert(0);
-      } 
+      } else {
+	//ADDED CODE -WA
+      	FD_ZERO(&fdset);//zero the set
+      	FD_SET(Proto_Server.EventSession.fd, &fdset);//set it to the given FD_Type
+      	ready = select(Proto_Server.EventSession.fd+1, &fdset, NULL, NULL, &timeout);
+	//select function will see if there is anything to read
+	//if after timeout, there is nothing, it returns -1
+     	if (ready != -1){
+         	proto_session_rcv_msg(&Proto_Server.EventSession);//recieve acknowledgement from server
+		//we'll need an additonal check to make sure the client isn't just sending back
+		//garbage; maybe check to see if header sent is the same as header recieved
+		//or check in the body for "ACK". -WA
+      	}else{
+		 close(Proto_Server.EventSession.fd);
+        	Proto_Server.EventSubscribers[i]=-1;
+        	Proto_Server.EventNumSubscribers--;
+        	//Proto_Server.ADD CODE
+	}
+      }
+      //END ADDED CODE -WA
       // FIXME: add ack message here to ensure that game is updated 
       // correctly everywhere... at the risk of making server dependent
       // on client behaviour  (use time out to limit impact... drop
       // clients that misbehave but be carefull of introducing deadlocks
+	
     }
     i++;
   }
