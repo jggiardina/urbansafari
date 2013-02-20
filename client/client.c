@@ -49,7 +49,14 @@ typedef struct ClientState  {
   int data;
   char player_type;
   Proto_Client_Handle ph;
+  char GameBoard[9];
 } Client;
+
+void
+printGameBoard(Client *C)
+{
+  printf("\n%c|%c|%c\n-----\n%c|%c|%c\n-----\n%c|%c|%c", C->GameBoard[0], C->GameBoard[1], C->GameBoard[2], C->GameBoard[3], C->GameBoard[4], C->GameBoard[5], C->GameBoard[6], C->GameBoard[7], C->GameBoard[8], C->GameBoard[9]);
+}
 
 static int
 clientInit(Client *C)
@@ -78,13 +85,14 @@ update_event_handler(Proto_Session *s)
 }
 
 
-int 
+char 
 startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 {
   if (globals.host[0]!=0 && globals.port!=0) {
-    if (proto_client_connect(C->ph, host, port)!=0) {
-      fprintf(stderr, "failed to connect\n");
-      return -1;
+    char player_type = proto_client_connect(C->ph, host, port);
+    if (player_type == 'F') {
+      //fprintf(stderr, "failed to connect\n");
+      return player_type;
     }
     proto_session_set_data(proto_client_event_session(C->ph), C);
 #if 0
@@ -93,8 +101,19 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 				     h);
     }
 #endif
-    return 1;
+    return player_type;
   }
+  return 'F';
+}
+
+int
+startDisconnection(Client *C, char *host, PortType port)
+{
+  if (globals.host[0]!=0 && globals.port!=0) {
+    if(proto_client_disconnect(C->ph, host, port)<0)
+      return -1;
+  }
+  globals.connected = 0;
   return 0;
 }
 
@@ -117,7 +136,6 @@ getInput()
 {
   int len;
   char *ret;
-
 
   // to make debugging easier we zero the data of the buffer
   bzero(globals.in.data, sizeof(globals.in.data));
@@ -154,7 +172,8 @@ doRPCCmd(Client *C, int c)
 {
   int rc=-1;
 
-  rc = proto_client_move(C->ph, c); //TODO: change this to mark
+  rc = proto_client_mark(C->ph, c, C->player_type); //TODO: change this to mark
+
   printf("mark: rc=%x\n", rc);
   if (rc > 0) game_process_reply(C);
   
@@ -203,7 +222,7 @@ doConnect(Client *C)
     
     if (strlen(globals.host)==0 || globals.port==0) {
       fprintf(stderr, "Not able to connect to <%s:%d>\n", globals.host, globals.port);
-      return -1;
+      return 1;
     } else {
       //VPRINTF("connecting to: server=%s port=%d...", 
 	//      globals.server, globals.port);
@@ -215,21 +234,15 @@ doConnect(Client *C)
 	VPRINTF("connected serverFD=%d\n", globals.serverFD);
       }*/
       // ok startup our connection to the server
-      if (startConnection(C, globals.host, globals.port, update_event_handler)<0) {
+      char player_type = startConnection(C, globals.host, globals.port, update_event_handler);
+      if (player_type == 'F') {
         fprintf(stderr, "Not able to connect to <%s:%d>\n", globals.host, globals.port);
-        return -1;
+        return 1;
       } else {
         globals.connected = 1;
-        char player_type = proto_client_conn(C->ph);
-        if (player_type == 'F')
-	{
-	  //fail, disconnect the client and print unable to connect
-	}
-	else
-	{
-	  C->player_type = player_type;
-          printf("Connected to <%s:%d>: You are %c's", globals.host, globals.port, C->player_type);
-        }
+	C->player_type = player_type;
+        printf("Connected to <%s:%d>: You are %c's", globals.host, globals.port, C->player_type);
+        
       }
     }
   }
@@ -241,18 +254,33 @@ doConnect(Client *C)
 int
 doDisconnect(Client *C)
 {
-  return -1;
+  if (globals.connected == 0)
+    return 1; // do nothing
+  if (startDisconnection(C, globals.host, globals.port)<0)
+  {
+    fprintf(stderr, "Not able to disconnect from <%s:%d>\n", globals.host, globals.port);
+        return 1;
+  }
+  printf("Disconnected from <%s:%d>", globals.host, globals.port);
+  return 1;
 }
 
 int
 doEnter(Client *C)
 {
-  return -1;
+  printf("pressed enter\n");
+  return 1;
 }
 
 int
 doQuit(Client *C)
 {
+  printf("quit pressed\n");
+  if (globals.connected == 1) {
+    // disconnect first
+    // startDisconnection(C->ph, globals.host, globals.port)
+    // printf("Game Over: You Quit");
+  }
   return -1;
 }
 
@@ -261,15 +289,15 @@ docmd(Client *C)
 {
   int rc = 1;
   
-  if (strlen(globals.in.data)==0) return rc;
+  if (strlen(globals.in.data)==0) rc = doEnter(C);
   else if (strncmp(globals.in.data, "connect", 
 		   sizeof("connect")-1)==0) rc = doConnect(C);
   else if (strncmp(globals.in.data, "disconnect", 
 		   sizeof("disconnect")-1)==0) rc = doDisconnect(C);
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit(C);
-  else if (strncmp(globals.in.data, "\n",
-		   sizeof("\n")-1)==0) rc = doEnter(C);
+  /*else if (strncmp(globals.in.data, "\n",
+		   sizeof("\n")-1)==0) rc = doEnter(C);*/
   else rc = doRPC(C);
 
   return rc;
@@ -310,7 +338,7 @@ shell(void *arg)
     if (rc==1) menu=1; else menu=0;
   }
 
-  fprintf(stderr, "terminating\n");
+  //fprintf(stderr, "terminating\n");
   fflush(stdout);
   return NULL;
 }

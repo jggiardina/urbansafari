@@ -447,7 +447,7 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
 
-  FDType userfd = s->fd;
+  int userfd = s->fd;
   int i;
 
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
