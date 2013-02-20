@@ -433,13 +433,30 @@ proto_server_mt_mark_handler(Proto_Session *s){
   proto_session_hdr_unmarshall(s, &h);
   marked_pos = h.gstate.v0.raw;
   player = h.pstate.v0.raw;
+  //check for invalid move or not player turn; if either, no event will be trigger, and only the offending player will be informed -WA
+  if (player == Game_Board.curTurn){
+	if (Game_Board.board[marked_pos] == 0){
+		Game_Board.board[marked_pos] = player;//mark the spot -WA
+	}else{
+		//reply back with "Invalid Move"; -WA
+		h.type = PROTO_MT_REP_BASE_INVALID_MOVE;
+		proto_session_hdr_marshall(s, &h);
+		rc = proto_session_send_msg(s, &h);
+		return rc;
+	}
+  }else{
+	//reply back with "Not your turn" -WA
+	h.type = PROTO_MT_REP_BASE_NOT_TURN;
+	proto_session_hdr_marshall(s, &h);
+        rc = proto_session_send_msg(s, &h);
+       	return rc;
+
+  }
+  //if passes the preceding checks, the move is valid and will be recorded, so send back move reply.
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
   rc=proto_session_send_msg(s,0);
-  
-  if (player == Game_Board.curTurn && Game_Board.board[marked_pos] == 0){
-	Game_Board.board[marked_pos] = player;
-  }
+  //now to check what kind of event to send based on new gamestate -WA
   win = check_for_win(marked_pos);
   if (win == 1){
 	fprintf(stderr, "Player won!\n");
