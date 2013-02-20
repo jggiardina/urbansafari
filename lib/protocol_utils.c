@@ -78,6 +78,12 @@ proto_dump_mt(Proto_Msg_Types type)
   case PROTO_MT_EVENT_BASE_UPDATE: 
     fprintf(stderr, "PROTO_MT_EVENT_BASE_UPDATE");
     break;
+  case PROTO_MT_EVENT_BASE_WIN:
+    fprintf(stderr, "PROTO_MT_EVENT_BASE_WIN");
+    break;
+  case PROTO_MT_EVENT_BASE_DRAW:
+    fprintf(stderr, "PROTO_MT_EVENT_BASE_DRAW");
+    break;
   case PROTO_MT_EVENT_BASE_RESERVED_LAST: 
     fprintf(stderr, "PROTO_MT_EVENT_BASE_RESERVED_LAST");
     break;
@@ -86,6 +92,15 @@ proto_dump_mt(Proto_Msg_Types type)
     break;
   case PROTO_MT_REP_BASE_CONNECT:
     fprintf(stderr, "PROTO_MT_REP_BASE_CONNECT");
+    break;
+  case PROTO_MT_REQ_BASE_DISCONNECT:
+    fprintf(stderr, "PROTO_MT_REQ_BASE_DISCONNECT");
+    break;
+  case PROTO_MT_REP_BASE_DISCONNECT:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DISCONNECT");
+    break;
+  case PROTO_MT_EVENT_BASE_DISCONNECT:
+    fprintf(stderr, "PROTO_MT_EVENT_BASE_DISCONNECT");
     break;
   default:
     fprintf(stderr, "UNKNOWN=%d", type);

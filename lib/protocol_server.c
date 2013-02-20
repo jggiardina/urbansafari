@@ -479,6 +479,8 @@ proto_server_mt_mark_handler(Proto_Session *s){
   proto_session_hdr_unmarshall(s, &h);
   rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
   player = (char) h.pstate.v0.raw;
+
+  //set parameters for reply message
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   h.pstate.v0.raw = Game_Board.curTurn;
   h.gstate.v0.raw = 1;
@@ -492,14 +494,14 @@ proto_server_mt_mark_handler(Proto_Session *s){
 			//reply back with "Invalid Move"; -WA
 			h.type = PROTO_MT_REP_BASE_INVALID_MOVE;
 			proto_session_hdr_marshall(s, &h);
-			rc = proto_session_send_msg(s, &h);
+			rc = proto_session_send_msg(s, 0);
 			return rc;
 		}
   	}else{
 		//reply back with "Not your turn" -WA
 		h.type = PROTO_MT_REP_BASE_NOT_TURN;
 		proto_session_hdr_marshall(s, &h);
-        	rc = proto_session_send_msg(s, &h);
+        	rc = proto_session_send_msg(s, 0);
        		return rc;
   	}
   }
@@ -513,7 +515,7 @@ proto_server_mt_mark_handler(Proto_Session *s){
 	bzero(&h, sizeof(s));
 	h.type = PROTO_MT_EVENT_BASE_WIN;
 	h.pstate.v0.raw = Game_Board.curTurn;
-	//proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
+	proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
 	proto_session_hdr_marshall(s, &h);
 	proto_server_post_event();
 	//player won, trigger event for won
@@ -521,7 +523,10 @@ proto_server_mt_mark_handler(Proto_Session *s){
   if (win == 2){
 	fprintf(stderr, "Game ends in draw.\n");
 	bzero(&h, sizeof(s));
+	proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
         h.type = PROTO_MT_EVENT_BASE_DRAW;
+	proto_session_hdr_marshall(s, &h);
+        proto_server_post_event();
 	//a draw, trigger event for draw
   }
   if (win == 0){//continue; not all spaces are filled
@@ -530,11 +535,13 @@ proto_server_mt_mark_handler(Proto_Session *s){
 	}else{
 		 Game_Board.curTurn = 'X';
 	}
-	h.pstate.v0.raw = Game_Board.curTurn;
-	h.gstate.v0.raw = 1;
 	fprintf(stderr, "Game continues\n");
 	bzero(&h, sizeof(s));
         h.type = PROTO_MT_EVENT_BASE_UPDATE;
+	h.pstate.v0.raw = Game_Board.curTurn;
+	h.gstate.v0.raw = 1;
+	proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
+	proto_session_hdr_marshall(s, &h);
 	proto_server_post_event();	
 	//trigger update
   }	
