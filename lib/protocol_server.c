@@ -363,6 +363,19 @@ proto_server_mt_conn_handler(Proto_Session *s){
 
   return rc;
 }
+
+static void updateBoard(){
+  Proto_Session *se;
+  Proto_Msg_Hdr hdr;
+  se = proto_server_event_session();
+  hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
+  proto_session_hdr_marshall(se, &hdr);
+  
+  proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
+  
+  proto_server_post_event();
+}
+
 //logic for checking if continue (0), win (1), or draw (2) -WA
 static int
 check_for_win(int pos){
