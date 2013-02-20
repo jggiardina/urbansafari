@@ -230,26 +230,26 @@ proto_client_init(Proto_Client_Handle *ch)
   return 1;
 }
 
-int
+char
 proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
 {
   Proto_Client *c = (Proto_Client *)ch;
 
   if (net_setup_connection(&(c->rpc_session.fd), host, port)<0) 
-    return -1;
+    return 'F';
 
   if (net_setup_connection(&(c->event_session.fd), host, port+1)<0) 
-    return -2; 
+    return 'F'; 
 
   if (pthread_create(&(c->EventHandlerTid), NULL, 
 		     &proto_client_event_dispatcher, c) !=0) {
     fprintf(stderr, 
 	    "proto_client_init: create EventHandler thread failed\n");
     perror("proto_client_init:");
-    return -3;
+    return 'F';
   }
 
-  return 0;
+  return proto_client_conn(C->ph);
 }
 
 static void
