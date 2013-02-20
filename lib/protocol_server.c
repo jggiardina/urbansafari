@@ -369,10 +369,12 @@ proto_server_mt_conn_handler(Proto_Session *s){
     rc=proto_session_send_msg(s,1);
   }else if(subscribers == 1){
     proto_session_body_marshall_char(s, 'X');
-    rc=proto_session_send_msg(s,1);  
+    rc=proto_session_send_msg(s,1);
+    updateBoard();  
   }else if(subscribers == 2){
     proto_session_body_marshall_char(s, 'O');
     rc=proto_session_send_msg(s,1);
+    updateBoard();
   }
 
   return rc;
