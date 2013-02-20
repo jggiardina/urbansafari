@@ -30,7 +30,7 @@ extern int proto_server_init(void);
 
 extern int proto_server_set_session_lost_handler(Proto_MT_Handler h);
 extern int proto_server_set_req_handler(Proto_Msg_Types mt, Proto_MT_Handler h);
-
+static void updateBoard();
 extern PortType proto_server_rpcport(void);
 extern PortType proto_server_listenport(void);
 extern Proto_Session *proto_server_event_session(void);

@@ -387,7 +387,7 @@ static void updateBoard(){
   hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
   proto_session_hdr_marshall(se, &hdr);
   
-  proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
+  proto_session_body_marshall_bytes(se, sizeof(Game_Board.board), &Game_Board.board);
   
   proto_server_post_event();
 }

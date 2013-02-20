@@ -303,7 +303,7 @@ do_mark_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int mark, char player){
 	rc = proto_session_rpc(s);
 	bzero(&h, sizeof(h));
 	if (rc==1) {
-		h = proto_session_hdr_unmarshall(s, &h);
+		proto_session_hdr_unmarshall(s, &h);
 		if (h.type == PROTO_MT_REP_BASE_NOT_STARTED) return 0;
 		if (h.type == PROTO_MT_REP_BASE_MOVE) return 1;
 		if (h.type == PROTO_MT_REP_BASE_INVALID_MOVE) return 2;
