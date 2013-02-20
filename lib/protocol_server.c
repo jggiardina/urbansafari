@@ -429,13 +429,7 @@ proto_server_mt_mark_handler(Proto_Session *s){
 
   fprintf(stderr, "proto_server_mt_mark_handler: invoked for session:\n");
   proto_session_dump(s);
-
   bzero(&h, sizeof(s));
-  h.type = proto_session_hdr_unmarshall_type(s);
-  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-
-  //proto_session_hdr_unmarshall_gstate(s, &gs);  
-
   proto_session_hdr_unmarshall(s, &h);
   marked_pos = h.gstate.v0.raw;
   player = h.pstate.v0.raw;
