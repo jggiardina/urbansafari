@@ -344,7 +344,7 @@ proto_server_mt_conn_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
 
-  if(subscribers > 2){
+  if(subscribers >= 3){
     proto_session_body_marshall_char(s, 'F');
     rc=proto_session_send_msg(s,1);
   }else if(subscribers == 1){
@@ -357,6 +357,51 @@ proto_server_mt_conn_handler(Proto_Session *s){
 
   return rc;
 }
+
+/* Handler for Disconnect */
+static int
+proto_server_mt_disconnect_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_disconnect_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  proto_session_hdr_marshall(s, &h);
+
+  FDType userfd = s->fd;
+  int i;
+
+  for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
+    if(Proto_Server.EventSubscribers[i] == userfd){
+      Proto_Server.EventSubscribers[i] = -1;
+      Proto_Server.EventNumSubscribers--;
+      Proto_Server.EventLastSubscriber = i-1;
+      close(userfd);
+      break;
+    }
+  }
+  
+  Proto_Session *se;
+  Proto_Msg_Hdr hdr;
+  
+  if(Game_Board.IsGameStarted != 0){
+    proto_session_body_marshall_int(s, 1);
+    rc=proto_session_send_msg(s,1);
+    
+    //Post Event Disconnect 
+    se = proto_server_event_session();
+    hdr.type = PROTO_MT_EVENT_BASE_DISCONNECT;
+    proto_session_hdr_marshall(se, &hdr);
+    proto_server_post_event(); 
+  }
+
+  return rc;
+}
+
 
 /* Handler for Marking Cells */
 static int
@@ -395,8 +440,10 @@ proto_server_init(void)
   for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
        i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
     //ADD CODE: Looping through the req's and setting them to the null handler -RC
-    if(i == PROTO_MT_REQ_BASE_RESERVED_FIRST+2){
+    if(i == PROTO_MT_REQ_BASE_CONNECT){
       proto_server_set_req_handler(i, proto_server_mt_conn_handler);
+    }else if(i == PROTO_MT_REQ_BASE_DISCONNECT){
+      proto_server_set_req_handler(i, proto_server_mt_disconnect_handler);
     }else{
       proto_server_set_req_handler(i, proto_server_mt_null_handler);
     }

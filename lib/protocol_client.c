@@ -112,10 +112,10 @@ proto_client_event_null_handler(Proto_Session *s)
 }
 
 static char
-proto_client_event_conn_handler(Proto_Session *s)
+proto_client_rpc_conn_handler(Proto_Session *s)
 {
   fprintf(stderr,
-          "proto_client_event_conn_handler: invoked for session:\n");
+          "proto_client_rpc_conn_handler: invoked for session:\n");
   proto_session_dump(s);
   Proto_Msg_Types mt;
 
@@ -127,6 +127,42 @@ proto_client_event_conn_handler(Proto_Session *s)
   }
 
   return tag;
+}
+
+static int
+proto_client_rpc_disconnect_handler(Proto_Session *s)
+{
+  fprintf(stderr,
+          "proto_client_rpc_disconnect_handler: invoked for session:\n");
+  proto_session_dump(s);
+  Proto_Msg_Types mt;
+
+  int ret;
+  mt = proto_session_hdr_unmarshall_type(s);
+
+  if(mt == PROTO_MT_REP_BASE_DISCONNECT){
+   proto_session_body_unmarshall_int(s, 0, &ret);
+  }
+
+  return ret;
+}
+
+static int
+proto_client_event_disconnect_handler(Proto_Session *s)
+{
+  fprintf(stderr,
+          "proto_client_event_disconnect_handler: invoked for session:\n");
+  proto_session_dump(s);
+  Proto_Msg_Types mt;
+
+  int ret;
+  mt = proto_session_hdr_unmarshall_type(s);
+
+  if(mt == PROTO_MT_REP_BASE_DISCONNECT){
+   proto_session_body_unmarshall_int(s, 0, &ret);
+  }
+
+  return ret;
 }
 
 static void *
@@ -181,8 +217,12 @@ proto_client_init(Proto_Client_Handle *ch)
   for (mt=PROTO_MT_EVENT_BASE_RESERVED_FIRST+1;
        mt<PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
     //ADD CODE: probably looping through the base_event_handlers and initializing them to null here. -JG
-  if(mt = PROTO_MT_EVENT_BASE_RESERVED_FIRST+2){
-    proto_client_set_event_handler(c, mt, proto_client_event_conn_handler);
+  if(mt == PROTO_MT_REP_BASE_DISCONNECT){
+    proto_client_set_event_handler(c, mt, proto_client_rpc_disconnect_handler);
+  }else if(mt == PROTO_MT_REP_BASE_CONNECT){
+    proto_client_set_event_handler(c, mt, proto_client_rpc_conn_handler);
+  }else if(mt == PROTO_MT_EVENT_BASE_DISCONNECT){
+    proto_client_set_event_handler(c, mt, proto_client_event_disconnect_handler);
   }else{
     proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
   }
@@ -246,6 +286,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   
   return rc;
 }
+
 extern int 
 proto_client_hello(Proto_Client_Handle ch)
 {
@@ -254,6 +295,10 @@ proto_client_hello(Proto_Client_Handle ch)
 
 extern char proto_client_conn(Proto_Client_Handle ch){
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_CONNECT);  
+}
+
+extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType port){
+  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_DISCONNECT);  
 }
 
 extern int 
