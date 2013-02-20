@@ -108,7 +108,7 @@ main(int argc, char **argv)
     fprintf(stderr, "ERROR: failed to initialize proto_server subsystem\n");
     exit(-1);
   }
-
+	proto_server_init_Game_Board();
   fprintf(stderr, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(), 
 	  proto_server_eventport());
 
