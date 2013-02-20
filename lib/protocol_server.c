@@ -80,8 +80,8 @@ extern int proto_server_init_Game_Board(void){
         Game_Board.board[0] = '7';
         Game_Board.board[0] = '8';
 	Game_Board.board[0] = '9';
-	curTurn = 'X'
-	isGameStarted = 0;
+	Game_Board.curTurn = 'X';
+	Game_Board.IsGameStarted = 0;
 	return 1;
 }
 
