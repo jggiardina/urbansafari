@@ -98,6 +98,17 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
   return 0;
 }
 
+int
+startDisconnection(Client *C, char *host, PortType port)
+{
+  if (globals.host[0]!=0 && globals.port!=0) {
+    if(proto_client_disconnect(C->ph, host, port)<0)
+      return -1;
+  }
+  globals.connected = 0;
+  return 0;
+}
+
 
 int
 prompt(int menu, char player_type) 
@@ -117,7 +128,6 @@ getInput()
 {
   int len;
   char *ret;
-
 
   // to make debugging easier we zero the data of the buffer
   bzero(globals.in.data, sizeof(globals.in.data));
@@ -224,6 +234,8 @@ doConnect(Client *C)
         if (player_type == 'F')
 	{
 	  //fail, disconnect the client and print unable to connect
+	  startDisconnection(C, globals.host, globals.port);
+	  printf("Unable to connect to <%s:%d>", globals.host, globals.port);
 	}
 	else
 	{
@@ -241,18 +253,32 @@ doConnect(Client *C)
 int
 doDisconnect(Client *C)
 {
-  return -1;
+  if (globals.connected == 0)
+    return 1; // do nothing
+  if (startDisconnection(C, globals.host, globals.port)<0)
+  {
+    fprintf(stderr, "Not able to disconnect from <%s:%d>\n", globals.host, globals.port);
+        return -1;
+  }
+  return 1;
 }
 
 int
 doEnter(Client *C)
 {
+  printf("pressed enter\n");
   return -1;
 }
 
 int
 doQuit(Client *C)
 {
+  printf("quit pressed\n");
+  if (globals.connected == 1) {
+    // disconnect first
+    // startDisconnection(C->ph, globals.host, globals.port)
+    // printf("Game Over: You Quit");
+  }
   return -1;
 }
 
@@ -310,7 +336,7 @@ shell(void *arg)
     if (rc==1) menu=1; else menu=0;
   }
 
-  fprintf(stderr, "terminating\n");
+  //fprintf(stderr, "terminating\n");
   fflush(stdout);
   return NULL;
 }
