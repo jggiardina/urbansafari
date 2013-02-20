@@ -249,7 +249,8 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
     return 'F';
   }
 
-  return proto_client_conn(C->ph);
+  char ret = proto_client_conn(ch);
+  return ret;
 }
 
 static void
