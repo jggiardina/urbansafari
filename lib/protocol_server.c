@@ -301,7 +301,7 @@ proto_server_start_rpc_loop(void)
     return -3;
   }
   return 1;
-}proto_session_body_marshall_bytes(Proto_Session *s, int len, char *data)
+}
 
 static int 
 proto_session_lost_default_handler(Proto_Session *s)
@@ -367,7 +367,7 @@ proto_server_mt_conn_handler(Proto_Session *s){
 static int
 check_for_win(int pos){
         int player = Game_Board.curTurn;
-	int numFilled;proto_session_body_marshall_bytes(Proto_Session *s, int len, char *data)
+	int numFilled;
 	int i = 0;
         //check for draw
         for (i = 0; i < 9; i++){
@@ -467,9 +467,9 @@ proto_server_mt_mark_handler(Proto_Session *s){
 	fprintf(stderr, "Player won!\n");
 	bzero(&h, sizeof(s));
 	h.type = PROTO_MT_EVENT_BASE_WIN;
-	h.pstate.v0.raw = curTurn;
+	h.pstate.v0.raw = Game_Board.curTurn;
 	//proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
-	proto_session_hdr_marshall(s);
+	proto_session_hdr_marshall(s, &h);
 	proto_server_post_event();
 	//player won, trigger event for won
   }
@@ -480,12 +480,12 @@ proto_server_mt_mark_handler(Proto_Session *s){
 	//a draw, trigger event for draw
   }
   if (win == 0){//continue; not all spaces are filled
-	if (Game_Board.curTurn == (int) "X"){
-		 Game_Board.curTurn = (int) "O";
+	if (Game_Board.curTurn ==  'X'){
+		 Game_Board.curTurn = 'O';
 	}else{
-		 Game_Board.curTurn = (int) "X";
+		 Game_Board.curTurn = 'X';
 	}
-	h.pstate.v0.raw = curTurn;
+	h.pstate.v0.raw = Game_Board.curTurn;
 	h.gstate.v0.raw = 1;
 	fprintf(stderr, "Game continues\n");
 	bzero(&h, sizeof(s));
