@@ -58,8 +58,9 @@ struct {
 } Proto_Server;
 
 struct {
-	int board[9];
-	int curTurn;	
+	char board[9];
+	char curTurn;
+	int IsGameStarted;	
 }Game_Board;
 
 extern PortType proto_server_rpcport(void) { return Proto_Server.RPCPort; }
@@ -300,7 +301,7 @@ proto_server_start_rpc_loop(void)
     return -3;
   }
   return 1;
-}
+}proto_session_body_marshall_bytes(Proto_Session *s, int len, char *data)
 
 static int 
 proto_session_lost_default_handler(Proto_Session *s)
@@ -366,7 +367,7 @@ proto_server_mt_conn_handler(Proto_Session *s){
 static int
 check_for_win(int pos){
         int player = Game_Board.curTurn;
-	int numFilled;
+	int numFilled;proto_session_body_marshall_bytes(Proto_Session *s, int len, char *data)
 	int i = 0;
         //check for draw
         for (i = 0; i < 9; i++){
@@ -382,7 +383,7 @@ check_for_win(int pos){
                 if (Game_Board.board[i+(pos%3)] != player){
                         break;
                 }
-                if(i == (pos%3)+(3*2)){
+                if(i == (pos%3)+6){
                         return 1;
                 }
         }
@@ -423,7 +424,7 @@ static int
 proto_server_mt_mark_handler(Proto_Session *s){
   int rc = 1;
   int marked_pos;
-  int player;
+  char player;
   int win;
   Proto_Msg_Hdr h;
 
@@ -431,41 +432,51 @@ proto_server_mt_mark_handler(Proto_Session *s){
   proto_session_dump(s);
   bzero(&h, sizeof(s));
   proto_session_hdr_unmarshall(s, &h);
-  marked_pos = h.gstate.v0.raw;
-  player = h.pstate.v0.raw;
+  rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
+  player = (char) h.pstate.v0.raw;
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  h.pstate.v0.raw = Game_Board.curTurn;
+  h.gstate.v0.raw = 1;
+  proto_session_body_marshall_int(s, rc);
   //check for invalid move or not player turn; if either, no event will be trigger, and only the offending player will be informed -WA
-  if (player == Game_Board.curTurn){
-	if (Game_Board.board[marked_pos] == 0){
-		Game_Board.board[marked_pos] = player;//mark the spot -WA
-	}else{
-		//reply back with "Invalid Move"; -WA
-		h.type = PROTO_MT_REP_BASE_INVALID_MOVE;
+  if (rc > 0){
+  	if (player == Game_Board.curTurn){
+		if (Game_Board.board[marked_pos] == 0){
+			Game_Board.board[marked_pos] = player;//mark the spot -WA
+		}else{
+			//reply back with "Invalid Move"; -WA
+			h.type = PROTO_MT_REP_BASE_INVALID_MOVE;
+			proto_session_hdr_marshall(s, &h);
+			rc = proto_session_send_msg(s, &h);
+			return rc;
+		}
+  	}else{
+		//reply back with "Not your turn" -WA
+		h.type = PROTO_MT_REP_BASE_NOT_TURN;
 		proto_session_hdr_marshall(s, &h);
-		rc = proto_session_send_msg(s, &h);
-		return rc;
-	}
-  }else{
-	//reply back with "Not your turn" -WA
-	h.type = PROTO_MT_REP_BASE_NOT_TURN;
-	proto_session_hdr_marshall(s, &h);
-        rc = proto_session_send_msg(s, &h);
-       	return rc;
-
+        	rc = proto_session_send_msg(s, &h);
+       		return rc;
+  	}
   }
   //if passes the preceding checks, the move is valid and will be recorded, so send back move reply.
-  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
   rc=proto_session_send_msg(s,0);
   //now to check what kind of event to send based on new gamestate -WA
   win = check_for_win(marked_pos);
   if (win == 1){
 	fprintf(stderr, "Player won!\n");
-	NYI;assert(0);
+	bzero(&h, sizeof(s));
+	h.type = PROTO_MT_EVENT_BASE_WIN;
+	h.pstate.v0.raw = curTurn;
+	//proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
+	proto_session_hdr_marshall(s);
+	proto_server_post_event();
 	//player won, trigger event for won
   }
   if (win == 2){
 	fprintf(stderr, "Game ends in draw.\n");
-	NYI;assert(0);
+	bzero(&h, sizeof(s));
+        h.type = PROTO_MT_EVENT_BASE_DRAW;
 	//a draw, trigger event for draw
   }
   if (win == 0){//continue; not all spaces are filled
@@ -474,9 +485,12 @@ proto_server_mt_mark_handler(Proto_Session *s){
 	}else{
 		 Game_Board.curTurn = (int) "X";
 	}
+	h.pstate.v0.raw = curTurn;
+	h.gstate.v0.raw = 1;
 	fprintf(stderr, "Game continues\n");
-	NYI;assert(0);
-	
+	bzero(&h, sizeof(s));
+        h.type = PROTO_MT_EVENT_BASE_UPDATE;
+	proto_server_post_event();	
 	//trigger update
   }	
   return rc;

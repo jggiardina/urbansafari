@@ -66,6 +66,12 @@ proto_dump_mt(Proto_Msg_Types type)
   case PROTO_MT_REP_BASE_RESERVED_LAST: 
     fprintf(stderr, "PROTO_MT_REP_BASE_RESERVED_LAST");
     break;
+  case PROTO_MT_REP_BASE_INVALID_MOVE:
+    fprintf(stderr, "PROTO_MT_REP_BASE_INVALID_MOVE");
+    break;
+  case PROTO_MT_REP_BASE_NOT_TURN:
+    fprintf(stderr, "PROTO_MT_REP_BASE_NOT_TURN");
+    break;
   case PROTO_MT_EVENT_BASE_RESERVED_FIRST: 
     fprintf(stderr, "PROTO_MT_EVENT_BASE_RESERVED_LAST");
     break;
