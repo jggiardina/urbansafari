@@ -374,6 +374,7 @@ proto_server_mt_conn_handler(Proto_Session *s){
   }else if(subscribers == 2){
     proto_session_body_marshall_char(s, 'O');
     rc=proto_session_send_msg(s,1);
+    Game_Board.IsGameStarted = 1;
     updateBoard();
   }
 
