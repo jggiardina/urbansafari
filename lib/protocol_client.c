@@ -111,6 +111,24 @@ proto_client_event_null_handler(Proto_Session *s)
   return 1;
 }
 
+static char
+proto_client_event_conn_handler(Proto_Session *s)
+{
+  fprintf(stderr,
+          "proto_client_event_conn_handler: invoked for session:\n");
+  proto_session_dump(s);
+  Proto_Msg_Types mt;
+
+  char tag;
+  mt = proto_session_hdr_unmarshall_type(s);
+  
+  if(mt == PROTO_MT_REP_BASE_CONNECT){
+   proto_session_body_unmarshall_char(s, 0, &tag);
+  }
+
+  return tag;
+}
+
 static void *
 proto_client_event_dispatcher(void * arg)
 {
@@ -163,7 +181,11 @@ proto_client_init(Proto_Client_Handle *ch)
   for (mt=PROTO_MT_EVENT_BASE_RESERVED_FIRST+1;
        mt<PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
     //ADD CODE: probably looping through the base_event_handlers and initializing them to null here. -JG
+  if(mt = PROTO_MT_EVENT_BASE_RESERVED_FIRST+2){
+    proto_client_set_event_handler(c, mt, proto_client_event_conn_handler);
+  }else{
     proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
+  }
   *ch = c;
   return 1;
 }
@@ -215,10 +237,9 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   marshall_mtonly(s, mt);
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
-    proto_session_body_unmarshall_int(s, 0, &rc);
+    proto_session_body_unmarshall_char(s, 0, &rc); 
   } else {
     //ADD CODE // send_msg communication failed so assign the session lost handler and close the session. -JG
-    //NYI; assert(0);
     c->session_lost_handler(s);
     close(s->fd);
   }
@@ -229,6 +250,10 @@ extern int
 proto_client_hello(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);  
+}
+
+extern char proto_client_conn(Proto_Client_Handle ch){
+  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_CONNECT);  
 }
 
 extern int 
