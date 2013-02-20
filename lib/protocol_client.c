@@ -287,6 +287,34 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   
   return rc;
 }
+static int
+do_mark_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int mark, char player){
+	int rc;
+	Proto_Session *s;
+	Proto_Client *c = (Proto_Client *)ch;
+	Proto_Msg_Hdr h;
+	
+	s = proto_client_rpc_session(c);
+	bzero(&h, sizeof(h));
+	h.type = mt;
+	h.pstate.v0.raw = player;
+	proto_session_body_marshall_int(s, mark);
+	proto_session_hdr_marshall(s, &h);
+	rc = proto_session_rpc(s);
+	bzero(&h, sizeof(h));
+	if (rc==1) {
+		h = proto_session_hdr_unmarshall(s, &h);
+		if (h.type == PROTO_MT_REP_BASE_NOT_STARTED) return 0;
+		if (h.type == PROTO_MT_REP_BASE_MOVE) return 1;
+		if (h.type == PROTO_MT_REP_BASE_INVALID_MOVE) return 2;
+    		if (h.type == PROTO_MT_REP_BASE_NOT_TURN) return 3;
+  	} else {
+    		c->session_lost_handler(s);
+    		close(s->fd);
+  	}
+	return rc;
+
+}
 
 extern int 
 proto_client_hello(Proto_Client_Handle ch)
@@ -303,9 +331,9 @@ extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType 
 }
 
 extern int 
-proto_client_move(Proto_Client_Handle ch, char data)
+proto_client_mark(Proto_Client_Handle ch, int data, char player)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MOVE);  
+  return do_mark_rpc(ch,PROTO_MT_REQ_BASE_MOVE, data, player);  
 }
 
 extern int 
