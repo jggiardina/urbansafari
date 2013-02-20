@@ -171,8 +171,10 @@ doRPC(Client *C)
   int c = atoi(globals.in.data);
   if (c < 1 || c > 9 )
   {
-    printf("Not a valid move!");
-  } else
+    printf("Not a valid move!\n");
+    rc = 1;
+  }
+  else
   {
     //printf("enter (h|m<c>|g): ");
     //scanf("%c", &c);
