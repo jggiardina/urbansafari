@@ -57,6 +57,11 @@ struct {
 				       PROTO_MT_REQ_BASE_RESERVED_FIRST-1];
 } Proto_Server;
 
+struct {
+	int board[9];
+	int curTurn;	
+}Game_Board;
+
 extern PortType proto_server_rpcport(void) { return Proto_Server.RPCPort; }
 extern PortType proto_server_eventport(void) { return Proto_Server.EventPort; }
 extern Proto_Session *
@@ -348,31 +353,110 @@ proto_server_mt_conn_handler(Proto_Session *s){
 
   return rc;
 }
+//logic for checking if continue (0), win (1), or draw (2) -WA
+static int
+check_for_win(int pos){
+        int player = Game_Board.curTurn;
+	int numFilled;
+	int i = 0;
+        //check for draw
+        for (i = 0; i < 9; i++){
+                if (Game_Board.board[i] != 0){
+                        numFilled++;
+                }
+        }
+        if (numFilled == 9) {
+		return 2;
+	}
+        //check col
+        for (i = 0; i < 9; i+=3){
+                if (Game_Board.board[i+(pos%3)] != player){
+                        break;
+                }
+                if(i == (pos%3)+(3*2)){
+                        return 1;
+                }
+        }
+        //check row
+        for (i = 0; i < 3; i++){
+                if(Game_Board.board[(pos%3)+i] != player){
+                        break;
+                }
+                if(i == (pos%3)+3){
+                        return 1;
+                }
+        }
+        //check diags
+        if (pos%2 == 0){
+                for(i = 0; i < 9; i+= 4){
+                        if (Game_Board.board[i] != player){
+                                break;
+                        }
+                        if (i == 8){
+                                return 1;
+                        }
+                }
+                for(i = 2; i < 9; i += 2){
+                        if (Game_Board.board[i] != player){
+                                break;
+                        }
+                        if (i == 6){
+                                return 1;
+                        }
+                }
+        }
+        //if no wins detected, return 0
+        return 0;
+}
 
 /* Handler for Marking Cells */
 static int
 proto_server_mt_mark_handler(Proto_Session *s){
   int rc = 1;
+  int marked_pos;
+  int player;
+  int win;
   Proto_Msg_Hdr h;
-  Proto_Game_State gs;
 
   fprintf(stderr, "proto_server_mt_mark_handler: invoked for session:\n");
   proto_session_dump(s);
 
   bzero(&h, sizeof(s));
-  h.type = proto_session_hdr_unmarshall_type(s);
+
+  proto_session_hdr_unmarshall(s, &h);
+  marked_pos = h.gstate.v0.raw;
+  player = h.pstate.v0.raw;
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-
-  gs = proto_session_hdr_unmarshall_gstate(s, &gs);  
-
   proto_session_hdr_marshall(s, &h);
-
-  proto_session_body_marshall_int(s, 0xdeadbeef);
-  rc=proto_session_send_msg(s,1);
-
+  rc=proto_session_send_msg(s,0);
+  
+  if (player == Game_Board.curTurn && Game_Board.board[marked_pos] == 0){
+	Game_Board.board[marked_pos] = player;
+  }
+  win = check_for_win(marked_pos);
+  if (win == 1){
+	fprintf(stderr, "Player won!\n");
+	NYI;assert(0);
+	//player won, trigger event for won
+  }
+  if (win == 2){
+	fprintf(stderr, "Game ends in draw.\n");
+	NYI;assert(0);
+	//a draw, trigger event for draw
+  }
+  if (win == 0){//continue; not all spaces are filled
+	if (Game_Board.curTurn == (int) "X"){
+		 Game_Board.curTurn = (int) "O";
+	}else{
+		 Game_Board.curTurn = (int) "X";
+	}
+	fprintf(stderr, "Game continues\n");
+	NYI;assert(0);
+	
+	//trigger update
+  }	
   return rc;
 }
-
 extern int
 proto_server_init(void)
 {
