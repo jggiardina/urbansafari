@@ -43,6 +43,10 @@ typedef struct {
 				       - 1];
 } Proto_Client;
 
+struct {
+  char player_type;
+} PLAYER_INFO_GLOBALS; // hacky
+
 extern Proto_Session *
 proto_client_rpc_session(Proto_Client_Handle ch)
 {
@@ -125,7 +129,10 @@ proto_client_event_update_handler(Proto_Session *s)
   if (mt == PROTO_MT_EVENT_BASE_UPDATE){
     //update client code should go here -WA
     proto_session_body_unmarshall_bytes(s, 0, sizeof(board), &board);
-    printGameBoard(board);    
+    printGameBoardFromEvent(&board);
+    printMarker();  
+    // print marker here too.
+    
 
     proto_session_reset_send(s);//now to send back ACK message
     Proto_Msg_Hdr h;
@@ -147,14 +154,15 @@ proto_client_event_finish_handler(Proto_Session *s)
   Proto_Msg_Types mt;
   Proto_Msg_Hdr hdr;
   char player;
-
+  char board[9];
+  
   mt = proto_session_hdr_unmarshall_type(s);
   if (mt == PROTO_MT_EVENT_BASE_WIN){
     //update client code should go here -WA
     proto_session_hdr_unmarshall(s, &hdr);
 
     player = (char)hdr.pstate.v0.raw;    
-    fprintf(stderr, "Player %c won the game!", player);
+    fprintf(stderr, "\nPlayer %c won the game!", player);
     
     proto_session_reset_send(s);//now to send back ACK message
     Proto_Msg_Hdr h;
@@ -163,9 +171,17 @@ proto_client_event_finish_handler(Proto_Session *s)
     proto_session_hdr_marshall(s, &h);
     proto_session_send_msg(s, 1);
   }else{ //DRAW
-     printf(stderr, "The game ended in a draw!\n");
+     fprintf(stderr, "The game ended in a draw!\n");
+     proto_session_reset_send(s);//now to send back ACK message
+    Proto_Msg_Hdr h;
+    bzero(&h, sizeof(h));
+    h.type = mt;
+    proto_session_hdr_marshall(s, &h);
+    proto_session_send_msg(s, 1);
   }
-
+  proto_session_body_unmarshall_bytes(s, 0, sizeof(board), &board);
+  printGameBoardFromEvent(&board);
+  printMarker();
   return 1;
 }
 
@@ -272,7 +288,9 @@ proto_client_init(Proto_Client_Handle *ch)
 {
   Proto_Msg_Types mt;
   Proto_Client *c;
- 
+
+   
+
   c = (Proto_Client *)malloc(sizeof(Proto_Client));
   if (c==NULL) return -1;
   bzero(c, sizeof(Proto_Client));
@@ -300,7 +318,7 @@ proto_client_init(Proto_Client_Handle *ch)
   return 1;
 }
 char
-proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
+proto_client_connect(Proto_Client_Handle ch, char *host, PortType port, char* boardInit)
 {
   Proto_Client *c = (Proto_Client *)ch;
 
@@ -318,8 +336,9 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
     return 'F';
   }
 
-  char ret = proto_client_conn(ch);
-  return ret;
+  char rc = proto_client_conn(ch, boardInit);
+  PLAYER_INFO_GLOBALS.player_type = rc;
+  return rc;
 }
 
 static void
@@ -332,10 +351,10 @@ marshall_mtonly(Proto_Session *s, Proto_Msg_Types mt) {
 };
 
 static char
-do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
+do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, char* boardInit)
 {
   char rc;
-  char b[9];
+  //char board[9];
   Proto_Session *s;
   Proto_Client *c = ch;
   Proto_Msg_Hdr hdr;
@@ -347,11 +366,14 @@ do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   if (rc==1) {
     proto_session_hdr_unmarshall(s, &hdr);
     rc = (char)hdr.pstate.v3.raw;
+    proto_session_body_unmarshall_bytes(s, 0, 9, boardInit);
   } else {
     c->session_lost_handler(s);
     close(s->fd);
   }
-
+  //char rcAndBoard[10];
+  //rcAndBoard[0] = rc;
+  //memcpy(rcAndBoard+1, &board, sizeof(board));
   return rc;
 }
 
@@ -441,8 +463,8 @@ proto_client_hello(Proto_Client_Handle ch)
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);  
 }
 
-extern char proto_client_conn(Proto_Client_Handle ch){
-  return do_connect_rpc(ch,PROTO_MT_REQ_BASE_CONNECT);  
+extern char proto_client_conn(Proto_Client_Handle ch, char* boardInit){
+  return do_connect_rpc(ch,PROTO_MT_REQ_BASE_CONNECT, boardInit);  
 }
 
 extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType port){
@@ -468,8 +490,27 @@ proto_client_goodbye(Proto_Client_Handle ch)
 }
 
 void
-printGameBoard(char* board)
+printGameBoardFromEvent(char* board)
 {
-  printf("\n%c|%c|%c\n-----\n%c|%c|%c\n-----\n%c|%c|%c\n", board[0], board[1], board[2], board[3], board[4], board[5], board[6], board[7], board[8], board[9]);
+  fprintf(stderr, "\n%c|%c|%c", board[0], board[1], board[2]);
+  fprintf(stderr, "\n-----");
+  fprintf(stderr, "\n%c|%c|%c", board[3], board[4], board[5]);
+  fprintf(stderr, "\n-----");
+  fprintf(stderr, "\n%c|%c|%c", board[6], board[7], board[8]);
 }
 
+void
+printGameBoard(char* board)
+{
+  printf("\n%c|%c|%c", board[0], board[1], board[2]);
+  printf("\n-----");
+  printf("\n%c|%c|%c", board[3], board[4], board[5]);
+  printf("\n-----");
+  printf("\n%c|%c|%c", board[6], board[7], board[8]);
+}
+
+void
+printMarker()
+{
+ fprintf(stderr, "\n%c>", PLAYER_INFO_GLOBALS.player_type);
+}

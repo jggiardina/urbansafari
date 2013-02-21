@@ -32,7 +32,7 @@ extern Proto_Session *proto_client_rpc_session(Proto_Client_Handle ch);
 extern Proto_Session *proto_client_event_session(Proto_Client_Handle ch);
 
 extern int proto_client_init(Proto_Client_Handle *ch);
-extern char proto_client_connect(Proto_Client_Handle ch, char *host, PortType p);
+extern char proto_client_connect(Proto_Client_Handle ch, char *host, PortType p, char* boardInit);
 
 extern int proto_client_set_session_lost_handler(Proto_Client_Handle ch,
 						 Proto_MT_Handler h);
@@ -47,7 +47,7 @@ static char proto_client_event_conn_handler(Proto_Session *s);
 extern int proto_client_hello(Proto_Client_Handle ch);
 extern int proto_client_move(Proto_Client_Handle ch, char d);
 extern int proto_client_goodbye(Proto_Client_Handle ch);
-extern char proto_client_conn(Proto_Client_Handle ch);
+extern char proto_client_conn(Proto_Client_Handle ch, char* boardInit);
 extern int proto_client_print_board(Proto_Client_Handle ch);
 
 void printGameBoard();

@@ -46,10 +46,10 @@ struct Globals {
 } globals;
 
 typedef struct ClientState  {
+  char Board_Init[9];
   int data;
   char player_type;
   Proto_Client_Handle ph;
-  char GameBoard[9];
 } Client;
 
 static int
@@ -83,7 +83,8 @@ char
 startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 {
   if (globals.host[0]!=0 && globals.port!=0) {
-    char player_type = proto_client_connect(C->ph, host, port);
+    char player_type = proto_client_connect(C->ph, host, port, C->Board_Init);
+    //memcpy(C->Board_Init, rcAndBoard+1, 9);
     if (player_type == 'F') {
       //fprintf(stderr, "failed to connect\n");
       return player_type;
@@ -108,6 +109,7 @@ startDisconnection(Client *C, char *host, PortType port)
       return -1;
   }
   globals.connected = 0;
+  C->player_type = '?';
   return 0;
 }
 
@@ -178,7 +180,7 @@ game_process_mark_reply(Client *C, int rc)
       break;
   }
 
-  return 1;
+  return rc;
 }
 
 
@@ -189,7 +191,7 @@ doMarkRPCCmd(Client *C, int c)
 
   rc = proto_client_mark(C->ph, c, C->player_type); //TODO: change this to mark
   
-  printf("mark: rc=%d\n", rc);
+  //printf("mark: rc=%d\n", rc);
   if (rc > 0) game_process_mark_reply(C, rc);
   else printf("Game hasn't started yet\n");  
   return rc;
@@ -202,22 +204,28 @@ doMarkRPCCmd(Client *C, int c)
 int
 doMarkRPC(Client *C)
 {
-  int rc;
-  int c = atoi(globals.in.data);
-  if (c < 1 || c > 9 )
-  {
-    printf("Not a valid move!\n");
-    rc = 1;
-  }
-  else
-  {
-    //printf("enter (h|m<c>|g): ");
-    //scanf("%c", &c);
-    rc=doMarkRPCCmd(C,c);
+  if (globals.connected == 1) {
+    int rc;
+    int c = atoi(globals.in.data);
+    if (c < 1 || c > 9 )
+    {
+      printf("Not a valid move!\n");
+      return 1;
+    }
+    else
+    {
+      //printf("enter (h|m<c>|g): ");
+      //scanf("%c", &c);
+      rc=doMarkRPCCmd(C,c);
 
-    //printf("doRPC: rc=%d\n", rc);
+      //printf("doRPC: rc=%d\n", rc);
+    }
+    return rc==1 ? 0 : 1;
+  } else {
+    // not connected so do nothing
+    printf("You are not connected");
+    return 1;
   }
-  return 1;
 }
 
 int
@@ -258,7 +266,7 @@ doConnect(Client *C)
         globals.connected = 1;
 	C->player_type = player_type;
         printf("Connected to <%s:%d>: You are %c's", globals.host, globals.port, C->player_type);
-        
+        printGameBoard(C->Board_Init);
       }
     }
   }
@@ -277,7 +285,7 @@ doDisconnect(Client *C)
     fprintf(stderr, "Not able to disconnect from <%s:%d>\n", globals.host, globals.port);
         return 1;
   }
-  printf("Disconnected from <%s:%d>\n", globals.host, globals.port);
+  printf("Game Over: You Quit\n");
   return 1;
 }
 
@@ -291,13 +299,24 @@ doEnter(Client *C)
 }
 
 int
+doWhere(Client *C)
+{
+  //printf("pressed enter\n");
+  if (globals.connected == 1)
+    printf("<%s:%d>\n", globals.host, globals.port);
+  else
+    printf("not connected\n");
+  return 1;
+}
+
+int
 doQuit(Client *C)
 {
-  printf("quit pressed\n");
+  //printf("quit pressed\n");
   if (globals.connected == 1) {
     // disconnect first
-    // startDisconnection(C->ph, globals.host, globals.port)
-    // printf("Game Over: You Quit");
+    startDisconnection(C->ph, globals.host, globals.port);
+    printf("Game Over: You Quit\n");
   }
   return -1;
 }
@@ -314,8 +333,8 @@ docmd(Client *C)
 		   sizeof("disconnect")-1)==0) rc = doDisconnect(C);
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit(C);
-  /*else if (strncmp(globals.in.data, "\n",
-		   sizeof("\n")-1)==0) rc = doEnter(C);*/
+  else if (strncmp(globals.in.data, "where",
+		   sizeof("where")-1)==0) rc = doWhere(C);
   else rc = doMarkRPC(C);
 
   return rc;
