@@ -388,8 +388,9 @@ proto_server_mt_print_handler(Proto_Session *s){
 
   fprintf(stderr, "proto_server_mt_print_handler: invoked for session:\n");
   proto_session_dump(s);
-
+  proto_session_reset_send(s);
   bzero(&h, sizeof(s));
+  bzero(&s->sbuf, sizeof(s->sbuf));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
@@ -528,6 +529,7 @@ proto_server_mt_mark_handler(Proto_Session *s){
   proto_session_hdr_unmarshall(s, &h);
   rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
   player = (char) h.pstate.v0.raw;
+  fprintf(stderr, "player type:%d\n", player);
   player--;//offset because client sends back 1-9, not 0-8
   
   //set parameters for reply message
