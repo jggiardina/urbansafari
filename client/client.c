@@ -301,7 +301,11 @@ doEnter(Client *C)
 int
 doWhere(Client *C)
 {
+  // TEST
+  //proto_client_print_board(C->ph);
+  //doMarkRPCCmd(C, 1);
   //printf("pressed enter\n");
+  // TEST
   if (globals.connected == 1)
     printf("<%s:%d>\n", globals.host, globals.port);
   else
