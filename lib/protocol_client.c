@@ -111,6 +111,28 @@ proto_client_event_null_handler(Proto_Session *s)
   return 1;
 }
 
+static int
+proto_client_event_update_handler(Proto_Session *s)
+{
+  fprintf(stderr,
+          "proto_client_event_update_handler: invoked for session:\n");
+  proto_session_dump(s);
+  Proto_Msg_Types mt;
+
+  mt = proto_session_hdr_unmarshall_type(s);
+  if (mt == PROTO_MT_EVENT_BASE_UPDATE){
+    //update client code should go here -WA
+    proto_session_reset_send(s);//now to send back ACK message
+    Proto_Msg_Hdr h;
+    bzero(&h, sizeof(h));
+    h.type = mt;
+    proto_session_hdr_marshall(s, &h);
+    proto_session_send_msg(s, 1);
+  }
+
+  return 1;
+}
+
 static char
 proto_client_rpc_conn_handler(Proto_Session *s)
 {
@@ -223,6 +245,8 @@ proto_client_init(Proto_Client_Handle *ch)
     proto_client_set_event_handler(c, mt, proto_client_rpc_conn_handler);
   }else if(mt == PROTO_MT_EVENT_BASE_DISCONNECT){
     proto_client_set_event_handler(c, mt, proto_client_event_disconnect_handler);
+  }else if(mt == PROTO_MT_EVENT_BASE_UPDATE){
+    proto_client_set_event_handler(c, mt, proto_client_event_update_handler);
   }else{
     proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
   }
