@@ -229,8 +229,6 @@ proto_client_init(Proto_Client_Handle *ch)
   *ch = c;
   return 1;
 }
-static int proto_client_mark_handler{
-}
 char
 proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
 {
