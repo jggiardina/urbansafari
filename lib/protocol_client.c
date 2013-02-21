@@ -233,14 +233,14 @@ proto_client_event_disconnect_handler(Proto_Session *s)
   Proto_Msg_Types mt;
 
   int ret = 1;
-  int player = ;
+  int player;
 
   mt = proto_session_hdr_unmarshall_type(s);
 
   if(mt == PROTO_MT_EVENT_BASE_DISCONNECT){
    proto_session_body_unmarshall_int(s, 0, &player);
-   if(player == 1){
-     fprintf(stderr, "Game Over: Your opponent left the game!");
+   //if((player == 1 && PLAYER_INFO_GLOBALS.player_type == 'X') || (player == 0 && PLAYER_INFO_GLOBALS.player_type == 'O')){
+     fprintf(stderr, "Game Over: Your Opponent quit the game!");
    //}
   }
 

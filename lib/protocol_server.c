@@ -453,7 +453,7 @@ check_for_win(int pos){
         }
         //check row
         for (i = 0; i < 3; i++){
-                if(Game_Board.board[(pos%3)+i] != player){
+                if(Game_Board.board[pos-(pos%3)+i] != player){
                         break;
                 }
                 if(i == (pos%3)+3){
@@ -505,8 +505,9 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
       Proto_Server.EventSubscribers[i] = -1;
       Proto_Server.EventNumSubscribers--;
       Proto_Server.EventLastSubscriber = (i==0 ? 0 : i-1);
+      Proto_Server.session_lost_handler(&Proto_Server.EventSession);
       close(Proto_Server.EventSubscribers[i]);
-      close(userfd);
+      //close(userfd);
       break;
     }
   }
@@ -589,6 +590,8 @@ proto_server_mt_mark_handler(Proto_Session *s){
 	fprintf(stderr, "Player won!\n");
 	h.type = PROTO_MT_EVENT_BASE_WIN;
 	h.pstate.v0.raw = Game_Board.curTurn;
+        h.gstate.v0.raw = 0;
+        Game_Board.IsGameStarted = 0;
   }
   if (win == 2){
 	fprintf(stderr, "Game ends in draw.\n");
