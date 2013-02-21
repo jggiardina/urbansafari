@@ -160,8 +160,8 @@ proto_client_event_finish_handler(Proto_Session *s)
     //update client code should go here -WA
     proto_session_hdr_unmarshall(s, &hdr);
 
-    player = (char)hdr.gstate.v0.raw;    
-    printf("Player %c won the game!", player);
+    player = (char)hdr.pstate.v0.raw;    
+    fprintf(stderr, "Player %c won the game!", player);
     
     proto_session_reset_send(s);//now to send back ACK message
     Proto_Msg_Hdr h;
@@ -170,7 +170,7 @@ proto_client_event_finish_handler(Proto_Session *s)
     proto_session_hdr_marshall(s, &h);
     proto_session_send_msg(s, 1);
   }else{ //DRAW
-     printf("The game ended in a draw!\n");
+     printf(stderr, "The game ended in a draw!\n");
   }
 
   return 1;
