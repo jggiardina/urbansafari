@@ -467,7 +467,7 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
   int i;
 
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
-    if(Proto_Server.EventSubscribers[i] == userfd){
+    if(Proto_Server.EventSubscribers[i] == userfd+1){
       Proto_Server.EventSubscribers[i] = -1;
       Proto_Server.EventNumSubscribers--;
       Proto_Server.EventLastSubscriber = i-1;
