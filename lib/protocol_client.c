@@ -170,7 +170,13 @@ proto_client_event_finish_handler(Proto_Session *s)
     proto_session_hdr_marshall(s, &h);
     proto_session_send_msg(s, 1);
   }else{ //DRAW
-     printf(stderr, "The game ended in a draw!\n");
+     fprintf(stderr, "The game ended in a draw!\n");
+     proto_session_reset_send(s);//now to send back ACK message
+    Proto_Msg_Hdr h;
+    bzero(&h, sizeof(h));
+    h.type = mt;
+    proto_session_hdr_marshall(s, &h);
+    proto_session_send_msg(s, 1);
   }
 
   return 1;

@@ -431,11 +431,11 @@ static void updateBoard(){
 static int
 check_for_win(int pos){
         int player = Game_Board.curTurn;
-	int numFilled;
+	int numFilled = 0;
 	int i = 0;
         //check for draw
         for (i = 0; i < 9; i++){
-                if (Game_Board.board[i] != 0){
+                if (Game_Board.board[i] != Game_Board.blankBoard[i]){
                         numFilled++;
                 }
         }
