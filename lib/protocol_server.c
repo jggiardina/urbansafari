@@ -362,20 +362,22 @@ proto_server_mt_conn_handler(Proto_Session *s){
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  proto_session_hdr_marshall(s, &h);
 
   if(subscribers >= 3){
-    proto_session_body_marshall_char(s, 'F');
+    h.pstate.v3.raw = 'F';
+    proto_session_hdr_marshall(s, &h);
     rc=proto_session_send_msg(s,1);
   }else if(subscribers == 1){
-    proto_session_body_marshall_char(s, 'X');
+    h.pstate.v3.raw = 'X';
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
     rc=proto_session_send_msg(s,1);
-    updateBoard();  
   }else if(subscribers == 2){
-    proto_session_body_marshall_char(s, 'O');
+    h.pstate.v3.raw = 'O';
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
     rc=proto_session_send_msg(s,1);
     Game_Board.IsGameStarted = 1;
-    updateBoard();
   }
 
   return rc;
@@ -388,10 +390,11 @@ proto_server_mt_print_handler(Proto_Session *s){
 
   fprintf(stderr, "proto_server_mt_print_handler: invoked for session:\n");
   proto_session_dump(s);
-
+  proto_session_reset_send(s);
   bzero(&h, sizeof(s));
+  bzero(&s->sbuf, sizeof(s->sbuf));
   h.type = proto_session_hdr_unmarshall_type(s);
-  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  h.type += PROTO_MT_REP_BASE_PRINT;
   proto_session_hdr_marshall(s, &h);
   
   proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
@@ -479,14 +482,14 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
 
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
-  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  h.type = PROTO_MT_REP_BASE_DISCONNECT;
   proto_session_hdr_marshall(s, &h);
 
   int userfd = s->fd;
   int i;
 
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
-    if(Proto_Server.EventSubscribers[i] == userfd+1){
+    if(Proto_Server.EventSubscribers[i] == userfd){
       Proto_Server.EventSubscribers[i] = -1;
       Proto_Server.EventNumSubscribers--;
       Proto_Server.EventLastSubscriber = i-1;
@@ -528,6 +531,7 @@ proto_server_mt_mark_handler(Proto_Session *s){
   proto_session_hdr_unmarshall(s, &h);
   rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
   player = (char) h.pstate.v0.raw;
+  fprintf(stderr, "player type:%d\n", player);
   player--;//offset because client sends back 1-9, not 0-8
   
   //set parameters for reply message

@@ -182,12 +182,15 @@ proto_client_rpc_conn_handler(Proto_Session *s)
           "proto_client_rpc_conn_handler: invoked for session:\n");
   proto_session_dump(s);*/
   Proto_Msg_Types mt;
+  Proto_Msg_Hdr hdr;
 
   char tag;
   mt = proto_session_hdr_unmarshall_type(s);
   
   if(mt == PROTO_MT_REP_BASE_CONNECT){
-   proto_session_body_unmarshall_char(s, 0, &tag);
+    //proto_session_body_unmarshall_char(s, 0, &tag);
+    proto_session_hdr_unmarshall(s, &hdr);
+    tag = (char)hdr.pstate.v3.raw;
   }
 
   return tag;
@@ -332,6 +335,30 @@ marshall_mtonly(Proto_Session *s, Proto_Msg_Types mt) {
   proto_session_hdr_marshall(s, &h);
 };
 
+static char
+do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
+{
+  char rc;
+  char board[9];
+  Proto_Session *s;
+  Proto_Client *c = ch;
+  Proto_Msg_Hdr hdr;
+
+  s = proto_client_rpc_session(c); 
+
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_hdr_unmarshall(s, &hdr);
+    rc = (char)hdr.pstate.v3.raw;
+  } else {
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
+}
+
 // all rpc's are assume to only reply only with a return code in the body
 // eg.  like the null_mes
 static int 
@@ -357,6 +384,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   
   return rc;
 }
+
 static int
 do_mark_rpc_handler(Proto_Client_Handle ch, Proto_Msg_Types mt, int mark, char player){
 	int rc;
@@ -418,7 +446,7 @@ proto_client_hello(Proto_Client_Handle ch)
 }
 
 extern char proto_client_conn(Proto_Client_Handle ch){
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_CONNECT);  
+  return do_connect_rpc(ch,PROTO_MT_REQ_BASE_CONNECT);  
 }
 
 extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType port){
