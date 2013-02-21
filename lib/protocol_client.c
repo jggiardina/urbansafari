@@ -153,7 +153,7 @@ proto_client_event_finish_handler(Proto_Session *s)
     //update client code should go here -WA
     proto_session_hdr_unmarshall(s, &hdr);
 
-    player = (char)hdr->gstate.v0.raw;    
+    player = (char)hdr.gstate.v0.raw;    
     printf("Player %c won the game!", player);
     
     proto_session_reset_send(s);//now to send back ACK message
