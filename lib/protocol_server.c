@@ -501,10 +501,11 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
   int i;
 
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
-    if(Proto_Server.EventSubscribers[i] == userfd){
+    if(Proto_Server.EventSubscribers[i] == userfd+1){
       Proto_Server.EventSubscribers[i] = -1;
       Proto_Server.EventNumSubscribers--;
-      Proto_Server.EventLastSubscriber = i-1;
+      Proto_Server.EventLastSubscriber = (i==0 ? 0 : i-1);
+      close(Proto_Server.EventSubscribers[i]);
       close(userfd);
       break;
     }
@@ -513,16 +514,15 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
   Proto_Session *se;
   Proto_Msg_Hdr hdr;
   
-  if(Game_Board.IsGameStarted != 0){
-    proto_session_body_marshall_int(s, 1);
-    rc=proto_session_send_msg(s,1);
+  proto_session_body_marshall_int(s, 1);
+  rc=proto_session_send_msg(s,1);
     
-    //Post Event Disconnect 
-    se = proto_server_event_session();
-    hdr.type = PROTO_MT_EVENT_BASE_DISCONNECT;
-    proto_session_hdr_marshall(se, &hdr);
-    proto_server_post_event(); 
-  }
+  //Post Event Disconnect 
+  se = proto_server_event_session();
+  hdr.type = PROTO_MT_EVENT_BASE_DISCONNECT;
+  proto_session_body_marshall_int(se, i);
+  proto_session_hdr_marshall(se, &hdr);
+  proto_server_post_event(); 
 
   return rc;
 }
@@ -636,7 +636,6 @@ proto_server_init(void)
     }else{
       proto_server_set_req_handler(i, proto_server_mt_null_handler);
     }
-    //NYI; assert(0);
   }
 
 
