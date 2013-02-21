@@ -183,7 +183,7 @@ game_process_mark_reply(Client *C, int rc)
 
 
 int 
-doRPCCmd(Client *C, int c) 
+doMarkRPCCmd(Client *C, int c) 
 {
   int rc=-1;
 
@@ -200,7 +200,7 @@ doRPCCmd(Client *C, int c)
 }
 
 int
-doRPC(Client *C)
+doMarkRPC(Client *C)
 {
   int rc;
   int c = atoi(globals.in.data);
@@ -213,7 +213,7 @@ doRPC(Client *C)
   {
     //printf("enter (h|m<c>|g): ");
     //scanf("%c", &c);
-    rc=doRPCCmd(C,c);
+    rc=doMarkRPCCmd(C,c);
 
     //printf("doRPC: rc=%d\n", rc);
   }
@@ -316,7 +316,7 @@ docmd(Client *C)
 		   sizeof("quit")-1)==0) rc = doQuit(C);
   /*else if (strncmp(globals.in.data, "\n",
 		   sizeof("\n")-1)==0) rc = doEnter(C);*/
-  else rc = doRPC(C);
+  else rc = doMarkRPC(C);
 
   return rc;
   /*

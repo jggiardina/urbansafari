@@ -380,7 +380,7 @@ do_mark_rpc_handler(Proto_Client_Handle ch, Proto_Msg_Types mt, int mark, char p
 static int
 do_print_board_rpc_handler(Proto_Client_Handle ch, Proto_Msg_Types mt){
         int rc;
-        char *board;
+        char board[9];
 
 	Proto_Session *s;
         Proto_Client *c = (Proto_Client *)ch;
@@ -392,8 +392,8 @@ do_print_board_rpc_handler(Proto_Client_Handle ch, Proto_Msg_Types mt){
 
 	rc = proto_session_rpc(s);
         if (rc==1) {
-        	proto_session_body_unmarshall_bytes(s, 0, 9/*sizeof(board)*/, board);
-		printGameBoard(board);
+        	proto_session_body_unmarshall_bytes(s, 0, sizeof(board), &board);
+		printGameBoard(&board);
 	} else {
                 c->session_lost_handler(s);
                 close(s->fd);
