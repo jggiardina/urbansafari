@@ -105,6 +105,8 @@ proto_dump_mt(Proto_Msg_Types type)
   case PROTO_MT_EVENT_BASE_DISCONNECT:
     fprintf(stderr, "PROTO_MT_EVENT_BASE_DISCONNECT");
     break;
+  case PROTO_MT_REQ_BASE_PRINT:
+    fprintf(stderr, "PROTO_MT_REQ_BASE_PRINT");
   default:
     fprintf(stderr, "UNKNOWN=%d", type);
   }

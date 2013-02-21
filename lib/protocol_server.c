@@ -72,14 +72,14 @@ proto_server_event_session(void)
 }
 extern int proto_server_init_Game_Board(void){
 	Game_Board.board[0] = '1';
-	Game_Board.board[0] = '2';
-	Game_Board.board[0] = '3';
-	Game_Board.board[0] = '4';
-	Game_Board.board[0] = '5';
-        Game_Board.board[0] = '6';
-        Game_Board.board[0] = '7';
-        Game_Board.board[0] = '8';
-	Game_Board.board[0] = '9';
+	Game_Board.board[1] = '2';
+	Game_Board.board[2] = '3';
+	Game_Board.board[3] = '4';
+	Game_Board.board[4] = '5';
+        Game_Board.board[5] = '6';
+        Game_Board.board[6] = '7';
+        Game_Board.board[7] = '8';
+	Game_Board.board[8] = '9';
 	Game_Board.curTurn = 'X';
 	Game_Board.IsGameStarted = 0;
 	return 1;

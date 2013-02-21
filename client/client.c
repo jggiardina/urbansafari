@@ -52,12 +52,6 @@ typedef struct ClientState  {
   char GameBoard[9];
 } Client;
 
-void
-printGameBoard(Client *C)
-{
-  printf("\n%c|%c|%c\n-----\n%c|%c|%c\n-----\n%c|%c|%c", C->GameBoard[0], C->GameBoard[1], C->GameBoard[2], C->GameBoard[3], C->GameBoard[4], C->GameBoard[5], C->GameBoard[6], C->GameBoard[7], C->GameBoard[8], C->GameBoard[9]);
-}
-
 static int
 clientInit(Client *C)
 {
@@ -172,13 +166,13 @@ game_process_mark_reply(Client *C, int rc)
   switch (rc)
   {
     case 0:
-      printf("Game hasn't started yet");
+      printf("Game hasn't started yet\n");
       break;
     case 2:
-      printf("Not a valid move!");
+      printf("Not a valid move!\n");
       break;
     case 3:
-      printf("Not your turn yet!");
+      printf("Not your turn yet!\n");
       break;
     default: // rc = 1
       break;
@@ -197,7 +191,7 @@ doRPCCmd(Client *C, int c)
   
   printf("mark: rc=%d\n", rc);
   if (rc > 0) game_process_mark_reply(C, rc);
-  else printf("Game hasn't started yet");  
+  else printf("Game hasn't started yet\n");  
   return rc;
   // NULL MT OVERRIDE ;-)
   // printf("%s: rc=0x%x\n", __func__, rc);
@@ -283,16 +277,16 @@ doDisconnect(Client *C)
     fprintf(stderr, "Not able to disconnect from <%s:%d>\n", globals.host, globals.port);
         return 1;
   }
-  printf("Disconnected from <%s:%d>", globals.host, globals.port);
+  printf("Disconnected from <%s:%d>\n", globals.host, globals.port);
   return 1;
 }
 
 int
 doEnter(Client *C)
 {
-  printf("pressed enter\n");
+  //printf("pressed enter\n");
   if (globals.connected == 1)
-    printGameBoard(C);
+    proto_client_print_board(C->ph);
   return 1;
 }
 
