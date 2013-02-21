@@ -107,6 +107,8 @@ proto_dump_mt(Proto_Msg_Types type)
     break;
   case PROTO_MT_REQ_BASE_PRINT:
     fprintf(stderr, "PROTO_MT_REQ_BASE_PRINT");
+  case PROTO_MT_REP_BASE_PRINT:
+    fprintf(stderr, "PROTO_MT_REP_BASE_PRINT");
   default:
     fprintf(stderr, "UNKNOWN=%d", type);
   }
