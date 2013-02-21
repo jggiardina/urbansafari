@@ -230,16 +230,21 @@ proto_client_rpc_disconnect_handler(Proto_Session *s)
 static int
 proto_client_event_disconnect_handler(Proto_Session *s)
 {
-  /*fprintf(stderr,
+  fprintf(stderr,
           "proto_client_event_disconnect_handler: invoked for session:\n");
-  proto_session_dump(s);*/
+  proto_session_dump(s);
   Proto_Msg_Types mt;
 
-  int ret;
+  int ret = 1;
+  int player = ;
+
   mt = proto_session_hdr_unmarshall_type(s);
 
-  if(mt == PROTO_MT_REP_BASE_DISCONNECT){
-   proto_session_body_unmarshall_int(s, 0, &ret);
+  if(mt == PROTO_MT_EVENT_BASE_DISCONNECT){
+   proto_session_body_unmarshall_int(s, 0, &player);
+   if(player == 1){
+     fprintf(stderr, "Game Over: Your opponent left the game!");
+   //}
   }
 
   return ret;
