@@ -315,6 +315,31 @@ do_mark_rpc_handler(Proto_Client_Handle ch, Proto_Msg_Types mt, int mark, char p
 
 }
 
+static int
+do_print_board_rpc_handler(Proto_Client_Handle ch, Proto_Msg_Types mt){
+        int rc;
+        char *board;
+
+	Proto_Session *s;
+        Proto_Client *c = (Proto_Client *)ch;
+        Proto_Msg_Hdr h;
+
+        s = proto_client_rpc_session(c);
+        
+	marshall_mtonly(s, mt);
+
+	rc = proto_session_rpc(s);
+        if (rc==1) {
+        	proto_session_body_unmarshall_bytes(s, 0, 9/*sizeof(board)*/, board);
+		printGameBoard(board);
+	} else {
+                c->session_lost_handler(s);
+                close(s->fd);
+        }
+        return rc;
+
+}
+
 extern int 
 proto_client_hello(Proto_Client_Handle ch)
 {
@@ -335,10 +360,21 @@ proto_client_mark(Proto_Client_Handle ch, int data, char player)
   return do_mark_rpc_handler(ch,PROTO_MT_REQ_BASE_MOVE, data, player);  
 }
 
+extern int
+proto_client_print_board(Proto_Client_Handle ch)
+{
+  return do_print_board_rpc_handler(ch,PROTO_MT_REQ_BASE_PRINT);
+}
+
 extern int 
 proto_client_goodbye(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_GOODBYE);  
 }
 
+void
+printGameBoard(char* board)
+{
+  printf("\n%c|%c|%c\n-----\n%c|%c|%c\n-----\n%c|%c|%c\n", board[0], board[1], board[2], board[3], board[4], board[5], board[6], board[7], board[8], board[9]);
+}
 

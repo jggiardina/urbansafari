@@ -48,4 +48,7 @@ extern int proto_client_hello(Proto_Client_Handle ch);
 extern int proto_client_move(Proto_Client_Handle ch, char d);
 extern int proto_client_goodbye(Proto_Client_Handle ch);
 extern char proto_client_conn(Proto_Client_Handle ch);
+extern int proto_client_print_board(Proto_Client_Handle ch);
+
+void printGameBoard();
 #endif
