@@ -381,6 +381,25 @@ proto_server_mt_conn_handler(Proto_Session *s){
   return rc;
 }
 
+static int
+proto_server_mt_print_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_print_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  proto_session_hdr_marshall(s, &h);
+  
+  proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
+  rc=proto_session_send_msg(s,1);
+  
+  return rc;
+}
+
 static void updateBoard(){
   Proto_Session *se;
   Proto_Msg_Hdr hdr;
@@ -593,7 +612,9 @@ proto_server_init(void)
     }else if(i == PROTO_MT_REQ_BASE_DISCONNECT){
       proto_server_set_req_handler(i, proto_server_mt_disconnect_handler);
     }else if (i == PROTO_MT_REQ_BASE_MOVE){
-	proto_server_set_req_handler(i, proto_server_mt_mark_handler);
+      proto_server_set_req_handler(i, proto_server_mt_mark_handler);
+    }else if( i== PROTO_MT_REQ_BASE_PRINT){
+      proto_server_set_req_handler(i, proto_server_mt_print_handler);
     }else{
       proto_server_set_req_handler(i, proto_server_mt_null_handler);
     }
