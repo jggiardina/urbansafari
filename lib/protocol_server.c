@@ -592,6 +592,8 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_conn_handler);
     }else if(i == PROTO_MT_REQ_BASE_DISCONNECT){
       proto_server_set_req_handler(i, proto_server_mt_disconnect_handler);
+    }else if (i == PROTO_MT_REQ_BASE_MOVE){
+	proto_server_set_req_handler(i, proto_server_mt_mark_handler);
     }else{
       proto_server_set_req_handler(i, proto_server_mt_null_handler);
     }

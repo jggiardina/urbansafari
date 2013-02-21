@@ -155,13 +155,34 @@ getInput()
 // FIXME:  this is ugly maybe the speration of the proto_client code and
 //         the game code is dumb
 int
-game_process_reply(Client *C)
+game_process_mark_reply(Client *C, int rc)
 {
-  Proto_Session *s;
+  // NOT sure why this is even here. -JG
+  //Proto_Session *s;
 
-  s = proto_client_rpc_session(C->ph);
+  //s = proto_client_rpc_session(C->ph);
 
-  fprintf(stderr, "%s: do something %p\n", __func__, s);
+  //fprintf(stderr, "%s: do something %p\n", __func__, s);
+
+  // I will use this function to process the reply from MARK
+  // rc = 0: "Game hasn't started"
+  // rc = 1: "Valid Move"
+  // rc = 2: "Invalid Move"
+  // rc = 3: "Not your turn"
+  switch (rc)
+  {
+    case 0:
+      printf("Game hasn't started yet");
+      break;
+    case 2:
+      printf("Not a valid move!");
+      break;
+    case 3:
+      printf("Not your turn yet!");
+      break;
+    default: // rc = 1
+      break;
+  }
 
   return 1;
 }
@@ -173,14 +194,15 @@ doRPCCmd(Client *C, int c)
   int rc=-1;
 
   rc = proto_client_mark(C->ph, c, C->player_type); //TODO: change this to mark
-
-  printf("mark: rc=%x\n", rc);
-  if (rc > 0) game_process_reply(C);
   
-  // NULL MT OVERRIDE ;-)
-  printf("%s: rc=0x%x\n", __func__, rc);
-  if (rc == 0xdeadbeef) rc=1;
+  printf("mark: rc=%d\n", rc);
+  if (rc > 0) game_process_mark_reply(C, rc);
+  else printf("Game hasn't started yet");  
   return rc;
+  // NULL MT OVERRIDE ;-)
+  // printf("%s: rc=0x%x\n", __func__, rc);
+  // if (rc == 0xdeadbeef) rc=1;
+  // return rc;
 }
 
 int
@@ -199,9 +221,9 @@ doRPC(Client *C)
     //scanf("%c", &c);
     rc=doRPCCmd(C,c);
 
-    printf("doRPC: rc=0x%x\n", rc);
+    //printf("doRPC: rc=%d\n", rc);
   }
-  return rc;
+  return 1;
 }
 
 int
@@ -269,6 +291,8 @@ int
 doEnter(Client *C)
 {
   printf("pressed enter\n");
+  if (globals.connected == 1)
+    printGameBoard(C);
   return 1;
 }
 
