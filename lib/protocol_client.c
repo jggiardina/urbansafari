@@ -129,9 +129,10 @@ proto_client_event_update_handler(Proto_Session *s)
   if (mt == PROTO_MT_EVENT_BASE_UPDATE){
     //update client code should go here -WA
     proto_session_body_unmarshall_bytes(s, 0, sizeof(board), &board);
-    printGameBoard(&board);
-    //printMarker();  
+    printGameBoardFromEvent(&board);
+    printMarker();  
     // print marker here too.
+    
 
     proto_session_reset_send(s);//now to send back ACK message
     Proto_Msg_Hdr h;
@@ -302,7 +303,7 @@ proto_client_init(Proto_Client_Handle *ch)
   *ch = c;
   return 1;
 }
-char
+char*
 proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
 {
   Proto_Client *c = (Proto_Client *)ch;
@@ -321,9 +322,9 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
     return 'F';
   }
 
-  char ret = proto_client_conn(ch);
-  PLAYER_INFO_GLOBALS.player_type = ret;
-  return ret;
+  char* rcAndBoard = proto_client_conn(ch);
+  PLAYER_INFO_GLOBALS.player_type = rcAndBoard[0];
+  return rcAndBoard;
 }
 
 static void
@@ -335,11 +336,11 @@ marshall_mtonly(Proto_Session *s, Proto_Msg_Types mt) {
   proto_session_hdr_marshall(s, &h);
 };
 
-static char
+static char*
 do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
 {
   char rc;
-  char b[9];
+  char board[9];
   Proto_Session *s;
   Proto_Client *c = ch;
   Proto_Msg_Hdr hdr;
@@ -356,8 +357,10 @@ do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
     c->session_lost_handler(s);
     close(s->fd);
   }
-
-  return rc;
+  char rcAndBoard[10];
+  rcAndBoard[0] = rc;
+  memcpy(rcAndBoard+1, &board, sizeof(board));
+  return rcAndBoard;
 }
 
 // all rpc's are assume to only reply only with a return code in the body
@@ -446,7 +449,7 @@ proto_client_hello(Proto_Client_Handle ch)
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);  
 }
 
-extern char proto_client_conn(Proto_Client_Handle ch){
+extern char* proto_client_conn(Proto_Client_Handle ch){
   return do_connect_rpc(ch,PROTO_MT_REQ_BASE_CONNECT);  
 }
 
@@ -473,6 +476,16 @@ proto_client_goodbye(Proto_Client_Handle ch)
 }
 
 void
+printGameBoardFromEvent(char* board)
+{
+  fprintf(stderr, "\n%c|%c|%c", board[0], board[1], board[2]);
+  fprintf(stderr, "\n-----");
+  fprintf(stderr, "\n%c|%c|%c", board[3], board[4], board[5]);
+  fprintf(stderr, "\n-----");
+  fprintf(stderr, "\n%c|%c|%c", board[6], board[7], board[8]);
+}
+
+void
 printGameBoard(char* board)
 {
   printf("\n%c|%c|%c", board[0], board[1], board[2]);
@@ -485,5 +498,5 @@ printGameBoard(char* board)
 void
 printMarker()
 {
- printf("\n%c>", PLAYER_INFO_GLOBALS.player_type);
+ fprintf(stderr, "\n%c>", PLAYER_INFO_GLOBALS.player_type);
 }

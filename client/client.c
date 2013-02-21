@@ -46,6 +46,7 @@ struct Globals {
 } globals;
 
 typedef struct ClientState  {
+  char Board_Init[9];
   int data;
   char player_type;
   Proto_Client_Handle ph;
@@ -82,7 +83,9 @@ char
 startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 {
   if (globals.host[0]!=0 && globals.port!=0) {
-    char player_type = proto_client_connect(C->ph, host, port);
+    char* rcAndBoard = proto_client_connect(C->ph, host, port);
+    char player_type = rcAndBoard[0];
+    memcpy(C->Board_Init, rcAndBoard+1, 9);
     if (player_type == 'F') {
       //fprintf(stderr, "failed to connect\n");
       return player_type;
@@ -257,7 +260,7 @@ doConnect(Client *C)
         globals.connected = 1;
 	C->player_type = player_type;
         printf("Connected to <%s:%d>: You are %c's", globals.host, globals.port, C->player_type);
-        
+        printGameBoard(C->Board_Init);
       }
     }
   }
