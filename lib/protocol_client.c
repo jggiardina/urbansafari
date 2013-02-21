@@ -351,6 +351,7 @@ do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   if (rc==1) {
     proto_session_hdr_unmarshall(s, &hdr);
     rc = (char)hdr.pstate.v3.raw;
+    proto_session_body_unmarshall_bytes(s, 0, sizeof(board), &board);
   } else {
     c->session_lost_handler(s);
     close(s->fd);
