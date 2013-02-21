@@ -59,6 +59,7 @@ struct {
 
 struct {
 	char board[9];
+	char blankBoard[9];
 	char curTurn;
 	int IsGameStarted;	
 }Game_Board;
@@ -80,6 +81,15 @@ extern int proto_server_init_Game_Board(void){
         Game_Board.board[6] = '7';
         Game_Board.board[7] = '8';
 	Game_Board.board[8] = '9';
+	Game_Board.blankBoard[0] = '1';
+        Game_Board.blankBoard[1] = '2';
+        Game_Board.blankBoard[2] = '3';
+        Game_Board.blankBoard[3] = '4';
+        Game_Board.blankBoard[4] = '5';
+        Game_Board.blankBoard[5] = '6';
+        Game_Board.blankBoard[6] = '7';
+        Game_Board.blankBoard[7] = '8';
+        Game_Board.blankBoard[8] = '9';
 	Game_Board.curTurn = 'X';
 	Game_Board.IsGameStarted = 0;
 	return 1;
@@ -196,6 +206,7 @@ proto_server_post_event(void)
   while (num) {
     Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
     if (Proto_Server.EventSession.fd != -1) {
+	fprintf(stderr, "fd=%d\n", Proto_Server.EventSession.fd);
       num--;
 	//ADDED CODE -WA
       if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {//here we push to the client the updated state -WA
@@ -208,6 +219,7 @@ proto_server_post_event(void)
 	//Proto_Server.ADD CODE
       } else {
 	//ADDED CODE -WA
+	fprintf(stderr, "message was sent\n");
       	FD_ZERO(&fdset);//zero the set
       	FD_SET(Proto_Server.EventSession.fd, &fdset);//set it to the given FD_Type
       	ready = select(Proto_Server.EventSession.fd+1, &fdset, NULL, NULL, &timeout);
@@ -522,7 +534,7 @@ proto_server_mt_mark_handler(Proto_Session *s){
   char player;
   int win;
   Proto_Msg_Hdr h;
-
+  bzero(&s->sbuf, sizeof(s->sbuf));
   fprintf(stderr, "proto_server_mt_mark_handler: invoked for session:\n");
   proto_session_dump(s);
   bzero(&h, sizeof(s));
@@ -530,7 +542,7 @@ proto_server_mt_mark_handler(Proto_Session *s){
   rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
   player = (char) h.pstate.v0.raw;
   fprintf(stderr, "player type:%d\n", player);
-  player--;//offset because client sends back 1-9, not 0-8
+  marked_pos--;//offset because client sends back 1-9, not 0-8
   
   //set parameters for reply message
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
@@ -541,7 +553,7 @@ proto_server_mt_mark_handler(Proto_Session *s){
   if (rc > 0){
 	if (Game_Board.IsGameStarted == 1){
   		if (player == Game_Board.curTurn){
-			if (Game_Board.board[marked_pos] == 0){
+			if (Game_Board.board[marked_pos] == Game_Board.blankBoard[marked_pos]){
 				Game_Board.board[marked_pos] = player;//mark the spot -WA
 			}else{
 				//reply back with "Invalid Move"; -WA
@@ -566,7 +578,8 @@ proto_server_mt_mark_handler(Proto_Session *s){
   }
   //if passes the preceding checks, the move is valid and will be recorded, so send back move reply.
   proto_session_hdr_marshall(s, &h);
-  rc=proto_session_send_msg(s,0);
+  rc=proto_session_send_msg(s,1);
+  bzero(&s->sbuf, sizeof(s->sbuf));
   //now to check what kind of event to send based on new gamestate -WA
   bzero(&h, sizeof(s));
   win = check_for_win(marked_pos);
@@ -591,8 +604,9 @@ proto_server_mt_mark_handler(Proto_Session *s){
 	h.gstate.v0.raw = 1;
   }
   //trigger event
-  proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
-  proto_session_hdr_marshall(s, &h);
+  bzero(&Proto_Server.EventSession.sbuf, sizeof(&Proto_Server.EventSession.sbuf));
+  proto_session_body_marshall_bytes(&Proto_Server.EventSession, sizeof(Game_Board.board), &Game_Board.board);
+  proto_session_hdr_marshall(&Proto_Server.EventSession, &h);
   proto_server_post_event();
   return rc;
 }

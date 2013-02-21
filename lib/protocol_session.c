@@ -332,7 +332,7 @@ proto_session_rcv_msg(Proto_Session *s)
                 	fprintf(stderr, "%p: proto_session_rcv_msg: read error\n", pthread_self());
         	}
 	}
-	bzero(&s->rbuf, sizeof(s->rbuf));
+	//bzero(&s->rbuf, sizeof(s->rbuf));
   //end added code
 
   if (proto_debug()) {
