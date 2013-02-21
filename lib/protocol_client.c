@@ -339,7 +339,7 @@ static char
 do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
 {
   char rc;
-  char board[9];
+  char b[9];
   Proto_Session *s;
   Proto_Client *c = ch;
   Proto_Msg_Hdr hdr;
