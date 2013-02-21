@@ -374,6 +374,7 @@ proto_server_mt_conn_handler(Proto_Session *s){
   }else if(subscribers == 2){
     proto_session_body_marshall_char(s, 'O');
     rc=proto_session_send_msg(s,1);
+    Game_Board.IsGameStarted = 1;
     updateBoard();
   }
 
@@ -591,6 +592,8 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_conn_handler);
     }else if(i == PROTO_MT_REQ_BASE_DISCONNECT){
       proto_server_set_req_handler(i, proto_server_mt_disconnect_handler);
+    }else if (i == PROTO_MT_REQ_BASE_MOVE){
+	proto_server_set_req_handler(i, proto_server_mt_mark_handler);
     }else{
       proto_server_set_req_handler(i, proto_server_mt_null_handler);
     }
