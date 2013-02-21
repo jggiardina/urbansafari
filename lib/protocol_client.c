@@ -114,9 +114,9 @@ proto_client_event_null_handler(Proto_Session *s)
 static int
 proto_client_event_update_handler(Proto_Session *s)
 {
-  fprintf(stderr,
+  /*fprintf(stderr,
           "proto_client_event_update_handler: invoked for session:\n");
-  proto_session_dump(s);
+  proto_session_dump(s);*/
   Proto_Msg_Types mt;
 
   mt = proto_session_hdr_unmarshall_type(s);
@@ -141,9 +141,9 @@ proto_client_event_update_handler(Proto_Session *s)
 static int
 proto_client_event_finish_handler(Proto_Session *s)
 {
-  fprintf(stderr,
+  /*fprintf(stderr,
           "proto_client_event_finish_handler: invoked for session:\n");
-  proto_session_dump(s);
+  proto_session_dump(s);*/
   Proto_Msg_Types mt;
   Proto_Msg_Hdr hdr;
   char player;
@@ -172,9 +172,9 @@ proto_client_event_finish_handler(Proto_Session *s)
 static char
 proto_client_rpc_conn_handler(Proto_Session *s)
 {
-  fprintf(stderr,
+  /*fprintf(stderr,
           "proto_client_rpc_conn_handler: invoked for session:\n");
-  proto_session_dump(s);
+  proto_session_dump(s);*/
   Proto_Msg_Types mt;
 
   char tag;
@@ -190,9 +190,9 @@ proto_client_rpc_conn_handler(Proto_Session *s)
 static int
 proto_client_rpc_disconnect_handler(Proto_Session *s)
 {
-  fprintf(stderr,
+  /*fprintf(stderr,
           "proto_client_rpc_disconnect_handler: invoked for session:\n");
-  proto_session_dump(s);
+  proto_session_dump(s);*/
   Proto_Msg_Types mt;
 
   int ret;
@@ -208,9 +208,9 @@ proto_client_rpc_disconnect_handler(Proto_Session *s)
 static int
 proto_client_event_disconnect_handler(Proto_Session *s)
 {
-  fprintf(stderr,
+  /*fprintf(stderr,
           "proto_client_event_disconnect_handler: invoked for session:\n");
-  proto_session_dump(s);
+  proto_session_dump(s);*/
   Proto_Msg_Types mt;
 
   int ret;
