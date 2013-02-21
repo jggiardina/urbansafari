@@ -162,7 +162,10 @@ proto_client_event_finish_handler(Proto_Session *s)
     proto_session_hdr_unmarshall(s, &hdr);
 
     player = (char)hdr.pstate.v0.raw;    
-    fprintf(stderr, "\nPlayer %c won the game!", player);
+    if (PLAYER_INFO_GLOBALS.player_type == player)
+      fprintf(stderr, "\nGameOver: You win");
+    else
+      fprintf(stderr, "\nGameOver: You lose");
     
     proto_session_reset_send(s);//now to send back ACK message
     Proto_Msg_Hdr h;
@@ -171,7 +174,7 @@ proto_client_event_finish_handler(Proto_Session *s)
     proto_session_hdr_marshall(s, &h);
     proto_session_send_msg(s, 1);
   }else{ //DRAW
-     fprintf(stderr, "The game ended in a draw!\n");
+     fprintf(stderr, "\nGame Over: Draw");
      proto_session_reset_send(s);//now to send back ACK message
     Proto_Msg_Hdr h;
     bzero(&h, sizeof(h));
