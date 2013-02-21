@@ -394,7 +394,7 @@ proto_server_mt_print_handler(Proto_Session *s){
   bzero(&h, sizeof(s));
   bzero(&s->sbuf, sizeof(s->sbuf));
   h.type = proto_session_hdr_unmarshall_type(s);
-  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  h.type += PROTO_MT_REP_BASE_PRINT;
   proto_session_hdr_marshall(s, &h);
   
   proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
@@ -482,7 +482,7 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
 
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
-  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  h.type = PROTO_MT_REP_BASE_DISCONNECT;
   proto_session_hdr_marshall(s, &h);
 
   int userfd = s->fd;
