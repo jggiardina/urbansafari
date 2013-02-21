@@ -362,20 +362,22 @@ proto_server_mt_conn_handler(Proto_Session *s){
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  proto_session_hdr_marshall(s, &h);
 
   if(subscribers >= 3){
-    proto_session_body_marshall_char(s, 'F');
+    h.pstate.v3.raw = 'F';
+    proto_session_hdr_marshall(s, &h);
     rc=proto_session_send_msg(s,1);
   }else if(subscribers == 1){
-    proto_session_body_marshall_char(s, 'X');
+    h.pstate.v3.raw = 'X';
+    proto_session_hdr_marshall(s, &h);
     proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
     rc=proto_session_send_msg(s,1);
   }else if(subscribers == 2){
-    proto_session_body_marshall_char(s, 'O');
+    h.pstate.v3.raw = 'O';
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
     rc=proto_session_send_msg(s,1);
     Game_Board.IsGameStarted = 1;
-    proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
   }
 
   return rc;
@@ -487,7 +489,7 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
   int i;
 
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
-    if(Proto_Server.EventSubscribers[i] == userfd+1){
+    if(Proto_Server.EventSubscribers[i] == userfd){
       Proto_Server.EventSubscribers[i] = -1;
       Proto_Server.EventNumSubscribers--;
       Proto_Server.EventLastSubscriber = i-1;
