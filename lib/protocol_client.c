@@ -43,6 +43,10 @@ typedef struct {
 				       - 1];
 } Proto_Client;
 
+struct {
+  char player_type;
+} PLAYER_INFO_GLOBALS; // hacky
+
 extern Proto_Session *
 proto_client_rpc_session(Proto_Client_Handle ch)
 {
@@ -125,7 +129,9 @@ proto_client_event_update_handler(Proto_Session *s)
   if (mt == PROTO_MT_EVENT_BASE_UPDATE){
     //update client code should go here -WA
     proto_session_body_unmarshall_bytes(s, 0, sizeof(board), &board);
-    printGameBoard(board);    
+    printGameBoard(&board);
+    //printMarker();  
+    // print marker here too.
 
     proto_session_reset_send(s);//now to send back ACK message
     Proto_Msg_Hdr h;
@@ -264,7 +270,9 @@ proto_client_init(Proto_Client_Handle *ch)
 {
   Proto_Msg_Types mt;
   Proto_Client *c;
- 
+
+   
+
   c = (Proto_Client *)malloc(sizeof(Proto_Client));
   if (c==NULL) return -1;
   bzero(c, sizeof(Proto_Client));
@@ -311,6 +319,7 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
   }
 
   char ret = proto_client_conn(ch);
+  PLAYER_INFO_GLOBALS.player_type = ret;
   return ret;
 }
 
@@ -437,6 +446,15 @@ proto_client_goodbye(Proto_Client_Handle ch)
 void
 printGameBoard(char* board)
 {
-  printf("\n%c|%c|%c\n-----\n%c|%c|%c\n-----\n%c|%c|%c\n", board[0], board[1], board[2], board[3], board[4], board[5], board[6], board[7], board[8], board[9]);
+  printf("\n%c|%c|%c", board[0], board[1], board[2]);
+  printf("\n-----");
+  printf("\n%c|%c|%c", board[3], board[4], board[5]);
+  printf("\n-----");
+  printf("\n%c|%c|%c", board[6], board[7], board[8]);
 }
 
+void
+printMarker()
+{
+ printf("\n%c>", PLAYER_INFO_GLOBALS.player_type);
+}

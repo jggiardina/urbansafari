@@ -49,7 +49,6 @@ typedef struct ClientState  {
   int data;
   char player_type;
   Proto_Client_Handle ph;
-  char GameBoard[9];
 } Client;
 
 static int
