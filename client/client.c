@@ -84,7 +84,6 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 {
   if (globals.host[0]!=0 && globals.port!=0) {
     char player_type = proto_client_connect(C->ph, host, port, C->Board_Init);
-    //memcpy(C->Board_Init, rcAndBoard+1, 9);
     if (player_type == 'F') {
       //fprintf(stderr, "failed to connect\n");
       return player_type;
@@ -119,7 +118,6 @@ prompt(int menu, char player_type)
 {
   //static char MenuString[] = "\n%s> ";
   int len;
-  //int c=0;
 
   if (menu) printf("\n%c>", player_type);
   fflush(stdout);
@@ -153,13 +151,6 @@ getInput()
 int
 game_process_mark_reply(Client *C, int rc)
 {
-  // NOT sure why this is even here. -JG
-  //Proto_Session *s;
-
-  //s = proto_client_rpc_session(C->ph);
-
-  //fprintf(stderr, "%s: do something %p\n", __func__, s);
-
   // I will use this function to process the reply from MARK
   // rc = 0: "Game hasn't started"
   // rc = 1: "Valid Move"
@@ -189,7 +180,7 @@ doMarkRPCCmd(Client *C, int c)
 {
   int rc=-1;
 
-  rc = proto_client_mark(C->ph, c, C->player_type); //TODO: change this to mark
+  rc = proto_client_mark(C->ph, c, C->player_type); 
   
   //printf("mark: rc=%d\n", rc);
   if (rc > 0) game_process_mark_reply(C, rc);
@@ -214,11 +205,11 @@ doMarkRPC(Client *C)
     }
     else
     {
-      //printf("enter (h|m<c>|g): ");
-      //scanf("%c", &c);
+      //printf("enter (h|m<c>|g): "); // old rpc cmd code
+      //scanf("%c", &c); // old rpc cmd code
       rc=doMarkRPCCmd(C,c);
 
-      //printf("doRPC: rc=%d\n", rc);
+      //printf("doRPC: rc=%d\n", rc); // old rpc cmd code
     }
     return rc==1 ? 0 : 1;
   } else {
@@ -249,15 +240,6 @@ doConnect(Client *C)
       fprintf(stderr, "Not able to connect to <%s:%d>\n", globals.host, globals.port);
       return 1;
     } else {
-      //VPRINTF("connecting to: server=%s port=%d...", 
-	//      globals.server, globals.port);
-      /*if (net_setup_connection(&globals.serverFD, globals.server, globals.port)<0) {
-	fprintf(stderr, " failed NOT connected server=%s port=%d\n", 
-		globals.server, globals.port);
-      } else {
-	globals.connected=1;
-	VPRINTF("connected serverFD=%d\n", globals.serverFD);
-      }*/
       // ok startup our connection to the server
       char player_type = startConnection(C, globals.host, globals.port, update_event_handler);
       if (player_type == 'F') {
@@ -343,7 +325,7 @@ docmd(Client *C)
   else rc = doMarkRPC(C);
 
   return rc;
-  /*
+  /* old client code
   switch (cmd) {
   case 'd':
     proto_debug_on();
@@ -370,7 +352,6 @@ void *
 shell(void *arg)
 {
   Client *C = arg;
-  //char c;
   int rc;
   int menu=1;
 
@@ -384,7 +365,8 @@ shell(void *arg)
   fflush(stdout);
   return NULL;
 }
-
+/* usage and initGlobals not used because we do not accept the host and port from the command line arguments. the initialization of the globals for host and port are done 
+ *
 void 
 usage(char *pgm)
 {
@@ -419,6 +401,7 @@ initGlobals(int argc, char **argv)
   }
 
 }
+*/
 
 int 
 main(int argc, char **argv)
@@ -432,7 +415,7 @@ main(int argc, char **argv)
     return -1;
   }    
 
-  /* MOVE TO doConnect -JG
+  /* MOVED TO doConnect -JG
   // ok startup our connection to the server
   if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
     fprintf(stderr, "ERROR: startConnection failed\n");
