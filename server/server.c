@@ -189,24 +189,6 @@ int reply_not_turn(Proto_Session *s){
         proto_server_not_turn_handler(s, GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
         return 1;
 }
-/*int checkMark(int marked_pos){
-	if (GameBoard.board[marked_pos] == GameBoard.blankBoard[marked_pos]){
-		return 0;
-	}else{
-		return 1;
-	}
-}
-void setMark(int marked_pos, char player){
-	GameBoard.board[marked_pos] = player;
-}
-char
-curTurn(void){
-	return GameBoard.curTurn;
-}
-void setCurTurn(char toSet){
-	GameBoard.curTurn = toSet;
-}
-*/
 int
 IsGameStarted(void){
 	return GameBoard.IsGameStarted;
