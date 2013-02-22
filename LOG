@@ -1,3 +1,38 @@
+LOG for HW2
+
+Attendees:
+Ryan Conrad
+Jeffrey Giardina
+Will Ang
+
+Overall Summary:
+
+At first, our team started about 2 weeks ago filling in code for protocol_session, server, and client.  Will filled in code for the session, Ryan filled in for the server, and Jeff for the client.
+
+We worked on this for 2 days but could not get anything compiled and was not sure whether we were actually filling in the code correctly.
+
+From here we added assert.h and misc.h to let us use the NYI tool to fill in all of the ADD CODE parts so we could compile.  Once compiled, we walked through one at a time the errors, where Jeff would focus on client, Ryan on server, and Will on session.  Finally the code was all filled in and the RPC sessions were working passing data back and forth.  
+
+The next step was getting the events updating and talking, so we looked into the server and client protocol code together and made the handlers on both sides and got update working.
+
+RPC and EVENT code was now working and it was time to start the game.
+
+-------------------------------------------------------------------------------------------------------------------
+
+Will started on the tic tac toe logic for winning and drawing.  Ryan thought up the initial RPC and event calls we would need and coded them on the protocol_server and client, while Jeff did all of the input output for the client.c and worked also with server.c
+
+From there we got the connect command working, and could not get disconnect yet so we put that off till later.
+
+We worked on displaying the board and decided to pass it as a char array of 9 in the body as bytes, and we got the board to display.  Now was the time to hook up Will's logic with the marking rpc calls and they were fixed to work.  Then the other protocols like updating when a person marked a cell and events for when a user won was finished up along with logic for not your turn or invalid move, where Jeff implemented those on the client.c.
+
+After testing and more testing the win and draw logic was perfect and the UI was fixed up by Jeff to look nice and clean with no extra lines or missing markers.  Finally it was time to do disconnect and that gave us a lot of trouble.  We could not get the event session and rpc session to close until we finally looked at post_event with a clean eye and copied it more or less from what we wrote and after tweaking it, was able to close the connection and let the other user know someone left.
+
+This was out completed game...so then we tested more and got rid of some warnings for casting and such and cleaned up the comments and got rid of the NYI's and uneeded code that was commented out.
+
+In summary, Ryan worked on server and session calls.  Will on the Board logic and calls for the board and marking the cells, and Jeff for the io for the user and UI, along with helping solve problems across the board and writing events, rpc's, and server code when Will or Ryan were bogged down.
+
+DATED ENTRIES BELOW:
+
 <FEB 9 2013>
 Attendees: ALL^M
 Questions:^M
