@@ -128,7 +128,7 @@ proto_client_event_update_handler(Proto_Session *s)
  
   if (mt == PROTO_MT_EVENT_BASE_UPDATE){
     //update client code should go here -WA
-    proto_session_body_unmarshall_bytes(s, 0, sizeof(board), &board);
+    proto_session_body_unmarshall_bytes(s, 0, sizeof(board), (char *)&board);
     printGameBoardFromEvent(&board);
     printMarker();  
     // print marker here too.
@@ -182,7 +182,7 @@ proto_client_event_finish_handler(Proto_Session *s)
     proto_session_hdr_marshall(s, &h);
     proto_session_send_msg(s, 1);
   }
-  proto_session_body_unmarshall_bytes(s, 0, sizeof(board), &board);
+  proto_session_body_unmarshall_bytes(s, 0, sizeof(board), (char *)&board);
   printGameBoardFromEvent(&board);
   printMarker();
   return 1;
@@ -394,7 +394,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   marshall_mtonly(s, mt);
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
-    proto_session_body_unmarshall_char(s, 0, &rc); 
+    proto_session_body_unmarshall_int(s, 0, (int *)&rc); 
   } else {
     //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
     c->session_lost_handler(s);
@@ -448,7 +448,7 @@ do_print_board_rpc_handler(Proto_Client_Handle ch, Proto_Msg_Types mt){
 
 	rc = proto_session_rpc(s);
         if (rc==1) {
-        	proto_session_body_unmarshall_bytes(s, 0, sizeof(board), &board);
+        	proto_session_body_unmarshall_bytes(s, 0, sizeof(board), (char *)&board);
 		printGameBoard(&board);
 	} else {
                 c->session_lost_handler(s);
@@ -513,5 +513,5 @@ printGameBoard(char* board)
 void
 printMarker()
 {
- fprintf(stderr, "\n%c>", PLAYER_INFO_GLOBALS.player_type);
+  fprintf(stderr, "\n%c>", PLAYER_INFO_GLOBALS.player_type);
 }

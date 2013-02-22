@@ -353,12 +353,12 @@ proto_server_mt_conn_handler(Proto_Session *s){
   }else if(subscribers == 1){
     h.pstate.v3.raw = 'X';
     proto_session_hdr_marshall(s, &h);
-    proto_session_body_marshall_bytes(s, 9, getBoard());
+    proto_session_body_marshall_bytes(s, 9, (char *)getBoard());
     rc=proto_session_send_msg(s,1);
   }else if(subscribers == 2){
     h.pstate.v3.raw = 'O';
     proto_session_hdr_marshall(s, &h);
-    proto_session_body_marshall_bytes(s, 9, getBoard());
+    proto_session_body_marshall_bytes(s, 9, (char *)getBoard());
     rc=proto_session_send_msg(s,1);
     startGame();
   }
@@ -381,7 +381,7 @@ proto_server_mt_print_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_PRINT;
   proto_session_hdr_marshall(s, &h);
   
-  proto_session_body_marshall_bytes(s, 9, getBoard());
+  proto_session_body_marshall_bytes(s, 9, (char *)getBoard());
   rc=proto_session_send_msg(s,1);
   
   return rc;
@@ -394,7 +394,7 @@ static void updateBoard(){
   hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
   proto_session_hdr_marshall(se, &hdr);
   
-  proto_session_body_marshall_bytes(se, 9, getBoard());
+  proto_session_body_marshall_bytes(se, 9, (char *)getBoard());
   
   proto_server_post_event();
 }

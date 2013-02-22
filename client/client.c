@@ -303,8 +303,8 @@ int
 doWhere(Client *C)
 {
   // TEST
-  proto_client_print_board(C->ph);
-  doMarkRPCCmd(C, 1);
+  //proto_client_print_board(C->ph);
+  //doMarkRPCCmd(C, 1);
   //printf("pressed enter\n");
   // TEST
   if (globals.connected == 1)
