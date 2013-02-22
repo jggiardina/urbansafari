@@ -79,7 +79,7 @@ check_for_win(int pos){
                 if (GameBoard.board[i+(pos%3)] != player){
                         break;
                 }
-                if(i == (pos%3)+6){
+                if(i == 6){
                         return 1;
                 }
         }
@@ -141,6 +141,7 @@ mark(int marked_pos, char player, Proto_Session *s){
          win = check_for_win(marked_pos);
   if (win == 1){
         trigger_win();
+	stopGame();
         return 1;
   }
   if (win == 2){
@@ -188,24 +189,6 @@ int reply_not_turn(Proto_Session *s){
         proto_server_not_turn_handler(s, GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
         return 1;
 }
-/*int checkMark(int marked_pos){
-	if (GameBoard.board[marked_pos] == GameBoard.blankBoard[marked_pos]){
-		return 0;
-	}else{
-		return 1;
-	}
-}
-void setMark(int marked_pos, char player){
-	GameBoard.board[marked_pos] = player;
-}
-char
-curTurn(void){
-	return GameBoard.curTurn;
-}
-void setCurTurn(char toSet){
-	GameBoard.curTurn = toSet;
-}
-*/
 int
 IsGameStarted(void){
 	return GameBoard.IsGameStarted;
