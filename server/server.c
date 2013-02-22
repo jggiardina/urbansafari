@@ -79,7 +79,7 @@ check_for_win(int pos){
                 if (GameBoard.board[i+(pos%3)] != player){
                         break;
                 }
-                if(i == (pos%3)+6){
+                if(i == 6){
                         return 1;
                 }
         }
@@ -141,6 +141,7 @@ mark(int marked_pos, char player, Proto_Session *s){
          win = check_for_win(marked_pos);
   if (win == 1){
         trigger_win();
+	stopGame();
         return 1;
   }
   if (win == 2){
