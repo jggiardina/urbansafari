@@ -33,7 +33,7 @@ struct {
         char curTurn;
         int IsGameStarted;
 }GameBoard;
-int init_Game_Board(void){
+int init_GameBoard(void){
         GameBoard.board[0] = '1';
         GameBoard.board[1] = '2';
         GameBoard.board[2] = '3';
@@ -88,7 +88,7 @@ check_for_win(int pos){
                 if(GameBoard.board[pos-(pos%3)+i] != player){
                         break;
                 }
-                if(i == (pos%3)+3){
+                if(i == 2){
                         return 1;
                 }
         }
@@ -114,7 +114,81 @@ check_for_win(int pos){
         //if no wins detected, return 0
         return 0;
 }
-int checkMark(int marked_pos){
+int
+mark(int marked_pos, char player, Proto_Session *s){
+        int win;
+        if (GameBoard.IsGameStarted == 1){
+                if (player == GameBoard.curTurn){
+                        if (GameBoard.board[marked_pos] == GameBoard.blankBoard[marked_pos]){
+                                GameBoard.board[marked_pos] = player;//mark the spot -WA
+                        }else{
+                                //reply back with "Invalid Move"; -WAi
+                                reply_invalid_move(s);
+                                return 1;
+                        }
+                }else{
+                        //reply back with "Not your turn" -WA
+                        reply_not_turn(s);
+                        return 1;
+                }
+        }else{
+                //not started -WA
+                reply_not_started(s);
+                return 1;
+        }
+	reply_valid_move(s);
+        //passed all above checks, is a valid move
+         win = check_for_win(marked_pos);
+  if (win == 1){
+        trigger_win();
+        return 1;
+  }
+  if (win == 2){
+        trigger_draw();
+        return 1;
+  }
+  if (win == 0){//continue; not all spaces are filled
+        if (GameBoard.curTurn ==  'X'){
+                 GameBoard.curTurn = 'O';
+        }else{
+                 GameBoard.curTurn = 'X';
+        }
+        trigger_update();
+        return 1;
+  }
+
+
+
+}
+int trigger_win(void){
+        proto_server_win_handler(GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
+        return 1;
+}
+int trigger_update(void){
+        proto_server_update_handler(GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
+        return 1;
+}
+int trigger_draw(void){
+        proto_server_draw_handler(GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
+        return 1;
+}
+int reply_invalid_move(Proto_Session *s){
+        proto_server_invalid_move_handler(s, GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
+        return 1;
+}
+int reply_valid_move(Proto_Session *s){
+        proto_server_valid_move_handler(s, GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
+        return 1;
+}
+int reply_not_started(Proto_Session *s){
+        proto_server_not_started_handler(s, GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
+        return 1;
+}
+int reply_not_turn(Proto_Session *s){
+        proto_server_not_turn_handler(s, GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
+        return 1;
+}
+/*int checkMark(int marked_pos){
 	if (GameBoard.board[marked_pos] == GameBoard.blankBoard[marked_pos]){
 		return 0;
 	}else{
@@ -131,6 +205,7 @@ curTurn(void){
 void setCurTurn(char toSet){
 	GameBoard.curTurn = toSet;
 }
+*/
 int
 IsGameStarted(void){
 	return GameBoard.IsGameStarted;
@@ -224,7 +299,7 @@ main(int argc, char **argv)
     fprintf(stderr, "ERROR: failed to initialize proto_server subsystem\n");
     exit(-1);
   }
-	init_Game_Board();
+	init_GameBoard();
   fprintf(stderr, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(), 
 	  proto_server_eventport());
 

@@ -183,7 +183,7 @@ proto_server_post_event(void)
       if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {//here we push to the client the updated state -WA
 	//END ADDED CODE
 	// must have lost an event connection
-	close(Proto_Server.EventSession.fd);
+	close(Proto_Server.EventSession.fd+1);
 	Proto_Server.EventSubscribers[i]=-1;
 	Proto_Server.EventNumSubscribers--;
 	Proto_Server.session_lost_handler(&Proto_Server.EventSession);
@@ -416,13 +416,14 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
   int i;
   
   pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
- 
+ fprintf(stderr, "lookingfor %d/n", userfd+1);
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
     if(Proto_Server.EventSubscribers[i] == userfd+1){
       Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
       Proto_Server.EventSubscribers[i] = -1;
       Proto_Server.EventNumSubscribers--;
       //Proto_Server.EventLastSubscriber = (i==0 ? 0 : i-1);
+	fprintf(stderr, "disconnected %d/n", Proto_Server.EventSession.fd);
       close(Proto_Server.EventSession.fd);
       Proto_Server.session_lost_handler(&Proto_Server.EventSession);
       stopGame();
@@ -453,7 +454,7 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
 /* Handler for Marking Cells */
 static int
 proto_server_mt_mark_handler(Proto_Session *s){
-  int rc = 1;
+  /*int rc = 1;
   int marked_pos;
   char player;
   int win;
@@ -534,6 +535,68 @@ proto_server_mt_mark_handler(Proto_Session *s){
   proto_session_hdr_marshall(&Proto_Server.EventSession, &h);
   proto_server_post_event();
   return rc;
+	*/
+  int rc;
+  int marked_pos;
+  char player;
+  int win;
+  Proto_Msg_Hdr h;
+  fprintf(stderr, "proto_server_mt_mark_handler: invoked for session:\n");
+  proto_session_dump(s);
+  bzero(&h, sizeof(h));
+  proto_session_hdr_unmarshall(s, &h);
+  rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
+  player = (char) h.pstate.v0.raw;
+  marked_pos--;//offset because client sends back 1-9, not 0-8
+  mark(marked_pos, player, s);
+  return rc;
+}
+static void
+prepare_for_post(Proto_Session *s, char player, int IsStarted, char *board, Proto_Msg_Types msg){
+        Proto_Msg_Hdr h;
+        bzero(s->sbuf, sizeof(s->sbuf));
+        bzero(&h, sizeof(h));
+        h.type = msg;
+        h.gstate.v0.raw = IsStarted;
+        h.pstate.v0.raw = player;
+        proto_session_body_marshall_bytes(s, 9, board);
+        proto_session_hdr_marshall(s, &h);
+}
+extern void
+proto_server_win_handler(char player, char *board, int IsStarted){
+        prepare_for_post(proto_server_event_session(), player, IsStarted, board, PROTO_MT_EVENT_BASE_WIN);
+        proto_server_post_event();
+}
+extern void
+proto_server_update_handler(char player, char *board, int IsStarted){
+        prepare_for_post(proto_server_event_session(), player, IsStarted, board, PROTO_MT_EVENT_BASE_UPDATE);
+        proto_server_post_event();
+}
+extern void
+proto_server_draw_handler(char player, char *board, int IsStarted){
+        prepare_for_post(proto_server_event_session(), player, IsStarted, board, PROTO_MT_EVENT_BASE_DRAW);
+        proto_server_post_event();
+}
+extern void
+proto_server_invalid_move_handler(Proto_Session *s, char player, char *board, int IsStarted){
+        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_INVALID_MOVE);
+        proto_session_send_msg(s, 1);
+}
+extern void
+proto_server_valid_move_handler(Proto_Session *s, char player, char *board, int IsStarted){
+        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_MOVE);
+        proto_session_send_msg(s, 1);
+}
+
+extern void
+proto_server_not_turn_handler(Proto_Session *s, char player, char *board, int IsStarted){
+        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_NOT_TURN);
+        proto_session_send_msg(s, 1);
+}  
+extern void
+proto_server_not_started_handler(Proto_Session *s, char player, char *board, int IsStarted){
+        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_NOT_STARTED);
+        proto_session_send_msg(s, 1);
 }
 extern int
 proto_server_init(void)
