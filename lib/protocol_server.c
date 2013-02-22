@@ -177,7 +177,7 @@ proto_server_post_event(void)
   while (num) {
     Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
     if (Proto_Server.EventSession.fd != -1) {
-	fprintf(stderr, "fd=%d\n", Proto_Server.EventSession.fd);
+	//fprintf(stderr, "fd=%d\n", Proto_Server.EventSession.fd);
       num--;
 	//ADDED CODE -WA
       if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {//here we push to the client the updated state -WA
@@ -190,7 +190,7 @@ proto_server_post_event(void)
 	//Proto_Server.ADD CODE
       } else {
 	//ADDED CODE -WA
-	fprintf(stderr, "message was sent\n");
+	//fprintf(stderr, "message was sent\n");
       	FD_ZERO(&fdset);//zero the set
       	FD_SET(Proto_Server.EventSession.fd, &fdset);//set it to the given FD_Type
       	ready = select(Proto_Server.EventSession.fd+1, &fdset, NULL, NULL, &timeout);
