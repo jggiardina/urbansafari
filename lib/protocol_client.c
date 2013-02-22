@@ -163,9 +163,9 @@ proto_client_event_finish_handler(Proto_Session *s)
 
     player = (char)hdr.pstate.v0.raw;    
     if (PLAYER_INFO_GLOBALS.player_type == player)
-      fprintf(stderr, "\nGameOver: You win");
+      fprintf(stderr, "\nGame Over: You win");
     else
-      fprintf(stderr, "\nGameOver: You lose");
+      fprintf(stderr, "\nGame Over: You lose");
     
     proto_session_reset_send(s);//now to send back ACK message
     Proto_Msg_Hdr h;
@@ -230,21 +230,22 @@ proto_client_rpc_disconnect_handler(Proto_Session *s)
 static int
 proto_client_event_disconnect_handler(Proto_Session *s)
 {
-  fprintf(stderr,
+  /*fprintf(stderr,
           "proto_client_event_disconnect_handler: invoked for session:\n");
-  proto_session_dump(s);
+  proto_session_dump(s);*/
   Proto_Msg_Types mt;
 
   int ret = 1;
-  int player;
+  int player_quit=-1;
 
   mt = proto_session_hdr_unmarshall_type(s);
 
   if(mt == PROTO_MT_EVENT_BASE_DISCONNECT){
-   proto_session_body_unmarshall_int(s, 0, &player);
-   //if((player == 1 && PLAYER_INFO_GLOBALS.player_type == 'X') || (player == 0 && PLAYER_INFO_GLOBALS.player_type == 'O')){
-     fprintf(stderr, "Game Over: Your Opponent quit the game!");
-   //}
+   proto_session_body_unmarshall_int(s, 0, &player_quit);
+   if((player_quit == 1 && PLAYER_INFO_GLOBALS.player_type == 'X') || (player_quit == 0 && PLAYER_INFO_GLOBALS.player_type == 'O')){ // kludgy, because the player could reconnect as not the 0 or 1 spot and then this no longer works, but because we don't care about what happens after the game is over we leave this for now. -JG
+     fprintf(stderr, "\nGame Over: Other Side Quit");
+     printMarker();
+   }
   }
 
   return ret;

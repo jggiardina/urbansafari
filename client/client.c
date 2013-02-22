@@ -238,7 +238,8 @@ doConnect(Client *C)
   //VPRINTF("BEGIN: %s\n", globals.in.data);
 
   if (globals.connected==1) {
-     fprintf(stderr, "Already connected to server"); //eventually do nothing
+     //fprintf(stderr, "Already connected to server"); //do nothing
+     fprintf(stderr, "\n"); //do nothing
   } else {
     for (i=0; i<len; i++) if (globals.in.data[i]==':') globals.in.data[i]=' ';
     sscanf(globals.in.data, "%*s %" XSTR(STRLEN) "s %d", globals.host,
@@ -302,8 +303,8 @@ int
 doWhere(Client *C)
 {
   // TEST
-  //proto_client_print_board(C->ph);
-  //doMarkRPCCmd(C, 1);
+  proto_client_print_board(C->ph);
+  doMarkRPCCmd(C, 1);
   //printf("pressed enter\n");
   // TEST
   if (globals.connected == 1)
@@ -319,7 +320,7 @@ doQuit(Client *C)
   //printf("quit pressed\n");
   if (globals.connected == 1) {
     // disconnect first
-    startDisconnection(C->ph, globals.host, globals.port);
+    startDisconnection(C, globals.host, globals.port);
     printf("Game Over: You Quit\n");
   }
   return -1;

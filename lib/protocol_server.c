@@ -166,7 +166,7 @@ proto_server_post_event(void)
   int ready;//ready int to be used later -WA
   fd_set   fdset;//fdset needed by select function -WA
 
-  timeout.tv_sec = 15;//set the time to 15 seconds; seems reasonable -WA
+  timeout.tv_sec = 3;//set the time to 15 seconds; seems reasonable -WA
   timeout.tv_usec = 0;
   //END ADDED CODE
 
@@ -409,22 +409,23 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
 
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
-  h.type = PROTO_MT_REP_BASE_DISCONNECT;
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
 
   int userfd = s->fd;
   int i;
   
   pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
- fprintf(stderr, "lookingfor %d/n", userfd+1);
+ fprintf(stderr, "looking for %d", userfd+1);
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
-    if(Proto_Server.EventSubscribers[i] == userfd+1){
+    if(Proto_Server.EventSubscribers[i] == userfd-1){
       Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
       Proto_Server.EventSubscribers[i] = -1;
       Proto_Server.EventNumSubscribers--;
       //Proto_Server.EventLastSubscriber = (i==0 ? 0 : i-1);
-	fprintf(stderr, "disconnected %d/n", Proto_Server.EventSession.fd);
+      fprintf(stderr, "disconnected from %d", Proto_Server.EventSession.fd);
       close(Proto_Server.EventSession.fd);
+      close(Proto_Server.EventSession.fd+1);
       Proto_Server.session_lost_handler(&Proto_Server.EventSession);
       stopGame();
       //close(userfd);
