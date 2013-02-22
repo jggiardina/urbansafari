@@ -51,4 +51,6 @@ extern char proto_client_conn(Proto_Client_Handle ch, char* boardInit);
 extern int proto_client_print_board(Proto_Client_Handle ch);
 
 void printGameBoard();
+void printGameBoardFromEvent();
+void printMarker();
 #endif
