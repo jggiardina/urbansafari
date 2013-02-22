@@ -45,7 +45,7 @@ typedef struct {
 
 struct {
   char player_type;
-} PLAYER_INFO_GLOBALS; // hacky
+} PLAYER_INFO_GLOBALS; 
 
 extern Proto_Session *
 proto_client_rpc_session(Proto_Client_Handle ch)
@@ -201,7 +201,6 @@ proto_client_rpc_conn_handler(Proto_Session *s)
   mt = proto_session_hdr_unmarshall_type(s);
   
   if(mt == PROTO_MT_REP_BASE_CONNECT){
-    //proto_session_body_unmarshall_char(s, 0, &tag);
     proto_session_hdr_unmarshall(s, &hdr);
     tag = (char)hdr.pstate.v3.raw;
   }
@@ -242,7 +241,8 @@ proto_client_event_disconnect_handler(Proto_Session *s)
 
   if(mt == PROTO_MT_EVENT_BASE_DISCONNECT){
    proto_session_body_unmarshall_int(s, 0, &player_quit);
-   if((player_quit == 1 && PLAYER_INFO_GLOBALS.player_type == 'X') || (player_quit == 0 && PLAYER_INFO_GLOBALS.player_type == 'O')){ // kludgy, because the player could reconnect as not the 0 or 1 spot and then this no longer works, but because we don't care about what happens after the game is over we leave this for now. -JG
+   // Below if statement...kludgy, because the player could reconnect as not the 0 or 1 spot and then this no longer works, but because we don't care about what happens after the game is over we leave this for now. -JG
+   if((player_quit == 1 && PLAYER_INFO_GLOBALS.player_type == 'X') || (player_quit == 0 && PLAYER_INFO_GLOBALS.player_type == 'O')){ 
      fprintf(stderr, "\nGame Over: Other Side Quit");
      printMarker();
    }
@@ -292,8 +292,6 @@ proto_client_init(Proto_Client_Handle *ch)
 {
   Proto_Msg_Types mt;
   Proto_Client *c;
-
-   
 
   c = (Proto_Client *)malloc(sizeof(Proto_Client));
   if (c==NULL) return -1;
@@ -393,13 +391,12 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   s = proto_client_rpc_session(c); //ADD CODE: set the Proto_Session, rpc_session is only Proto_Session, so we need it's address here. -JG
   
   // marshall
-
   marshall_mtonly(s, mt);
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
     proto_session_body_unmarshall_char(s, 0, &rc); 
   } else {
-    //ADD CODE // send_msg communication failed so assign the session lost handler and close the session. -JG
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
     c->session_lost_handler(s);
     close(s->fd);
   }

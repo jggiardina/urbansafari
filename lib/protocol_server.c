@@ -82,7 +82,7 @@ proto_server_set_req_handler(Proto_Msg_Types mt, Proto_MT_Handler h)
     i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
     
     //ADD CODE: Adding the set handle code with the correct handler index -RC
-    Proto_Server.base_req_handlers[i] = h; // need to set the handler. -JG
+    Proto_Server.base_req_handlers[i] = h; 
     return 1;
   } else {
     return -1;
@@ -110,7 +110,7 @@ proto_server_record_event_subscriber(int fd, int *num)
     int i;
     for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
       if (Proto_Server.EventSubscribers[i]==-1) {
-	//ADD CODE: Set the last subscriber ????? -RC
+	//ADD CODE: Set the last subscriber  -RC
         Proto_Server.EventLastSubscriber = i;
 	Proto_Server.EventSubscribers[i] = fd;
 	Proto_Server.EventNumSubscribers++;
@@ -166,7 +166,7 @@ proto_server_post_event(void)
   int ready;//ready int to be used later -WA
   fd_set   fdset;//fdset needed by select function -WA
 
-  timeout.tv_sec = 3;//set the time to 15 seconds; seems reasonable -WA
+  timeout.tv_sec = 3;//set the time to 3 seconds; seems reasonable -WA
   timeout.tv_usec = 0;
   //END ADDED CODE
 
@@ -244,7 +244,6 @@ proto_server_req_dispatcher(void * arg)
   for (;;) {
     if (proto_session_rcv_msg(&s)==1) {
         //ADD CODE: Very similar to the dispatcher from client - RC
-	//NYI; assert(0);
         mt = proto_session_hdr_unmarshall_type(&s);
         if(mt > PROTO_MT_REQ_BASE_RESERVED_FIRST &&
            mt < PROTO_MT_REQ_BASE_RESERVED_LAST) { // Changed PROTO_MT_EVENT_BASE_RESERVED_FIRST and LAST to REQ, since we are dealing with requests/rpc and not the event channel. -JG
@@ -339,7 +338,8 @@ proto_server_mt_conn_handler(Proto_Session *s){
 
   fprintf(stderr, "proto_server_mt_conn_handler: invoked for session:\n");
   proto_session_dump(s);
-
+  
+  pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
   int subscribers = Proto_Server.EventNumSubscribers;
   
   bzero(&h, sizeof(s));
@@ -362,7 +362,8 @@ proto_server_mt_conn_handler(Proto_Session *s){
     rc=proto_session_send_msg(s,1);
     startGame();
   }
-
+  pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+   
   return rc;
 }
 
@@ -455,88 +456,6 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
 /* Handler for Marking Cells */
 static int
 proto_server_mt_mark_handler(Proto_Session *s){
-  /*int rc = 1;
-  int marked_pos;
-  char player;
-  int win;
-  Proto_Msg_Hdr h;
-  bzero(&s->sbuf, sizeof(s->sbuf));
-  fprintf(stderr, "proto_server_mt_mark_handler: invoked for session:\n");
-  proto_session_dump(s);
-  bzero(&h, sizeof(s));
-  proto_session_hdr_unmarshall(s, &h);
-  rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
-  player = (char) h.pstate.v0.raw;
-  marked_pos--;//offset because client sends back 1-9, not 0-8
-  
-  //set parameters for reply message
-  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  h.pstate.v0.raw = curTurn();
-  h.gstate.v0.raw = 1;
-  proto_session_body_marshall_int(s, rc);
-  //check for invalid move or not player turn; if either, no event will be trigger, and only the offending player will be informed -WA
-  if (rc > 0){
-	if (IsGameStarted() == 1){
-  		if (player == curTurn()){
-			if (checkMark(marked_pos) == 0){
-				setMark(marked_pos, player);//mark the spot -WA
-			}else{
-				//reply back with "Invalid Move"; -WA
-				h.type = PROTO_MT_REP_BASE_INVALID_MOVE;
-				proto_session_hdr_marshall(s, &h);
-				rc = proto_session_send_msg(s, 0);
-				return rc;
-			}
-  		}else{
-			//reply back with "Not your turn" -WA
-			h.type = PROTO_MT_REP_BASE_NOT_TURN;
-			proto_session_hdr_marshall(s, &h);
-        		rc = proto_session_send_msg(s, 0);
-       			return rc;
-  		}
-	}else{
-		h.type = PROTO_MT_REP_BASE_NOT_STARTED;
-                proto_session_hdr_marshall(s, &h);
-                rc = proto_session_send_msg(s, 0);
-                return rc;
-	}
-  }
-  //if passes the preceding checks, the move is valid and will be recorded, so send back move reply.
-  bzero(&s->sbuf, sizeof(s->sbuf));
-  proto_session_hdr_marshall(s, &h);
-  rc = proto_session_send_msg(s, 1);
-  //now to check what kind of event to send based on new gamestate -WA
-  bzero(&h, sizeof(s));
-  win = check_for_win(marked_pos);
-  if (win == 1){
-	fprintf(stderr, "Player won!\n");
-	h.type = PROTO_MT_EVENT_BASE_WIN;
-	h.pstate.v0.raw = curTurn();
-        h.gstate.v0.raw = 0;
-        stopGame();
-  }
-  if (win == 2){
-	fprintf(stderr, "Game ends in draw.\n");
-        h.type = PROTO_MT_EVENT_BASE_DRAW;
-  }
-  if (win == 0){//continue; not all spaces are filled
-	if (curTurn() ==  'X'){
-		 setCurTurn('O');
-	}else{
-		 setCurTurn('X');
-	}
-	fprintf(stderr, "Game continues\n");
-        h.type = PROTO_MT_EVENT_BASE_UPDATE;
-	h.pstate.v0.raw = curTurn();
-	h.gstate.v0.raw = 1;
-  }
-  //trigger event
-  bzero(&Proto_Server.EventSession.sbuf, sizeof(&Proto_Server.EventSession.sbuf));
-  proto_session_body_marshall_bytes(&Proto_Server.EventSession, 9, getBoard());
-  proto_session_hdr_marshall(&Proto_Server.EventSession, &h);
-  proto_server_post_event();
-  return rc;
-	*/
   int rc;
   int marked_pos;
   char player;

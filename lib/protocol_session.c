@@ -318,7 +318,6 @@ proto_session_rcv_msg(Proto_Session *s)
   	proto_session_reset_receive(s);
   	// read reply
   	//Start added code
-  	//NYI;assert(0);
   	int n;
 	int header_length = (sizeof(int) * 10) + sizeof(long long);//define header length; it is always a given. -WA
 	n = net_readn(s->fd, &s->rhdr, header_length);//read the header into rhdr -WA
