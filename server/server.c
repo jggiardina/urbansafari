@@ -65,17 +65,7 @@ check_for_win(int pos){
         int player = GameBoard.curTurn;
         int numFilled = 0;
         int i = 0;
-        //check for draw
-        for (i = 0; i < 9; i++){
-                if (GameBoard.board[i] != GameBoard.blankBoard[i]){
-                        numFilled++;
-                }
-        }
-        if (numFilled == 9) {
-                return 2;
-        }
-        //check col
-        for (i = 0; i < 9; i+=3){
+	for (i = 0; i < 9; i+=3){
                 if (GameBoard.board[i+(pos%3)] != player){
                         break;
                 }
@@ -110,6 +100,15 @@ check_for_win(int pos){
                                 return 1;
                         }
                 }
+        }
+	//check for draw
+	for (i = 0; i < 9; i++){
+                if (GameBoard.board[i] != GameBoard.blankBoard[i]){
+                        numFilled++;
+                }
+        }
+        if (numFilled == 9) {
+                return 2;
         }
         //if no wins detected, return 0
         return 0;
@@ -146,6 +145,7 @@ mark(int marked_pos, char player, Proto_Session *s){
   }
   if (win == 2){
         trigger_draw();
+	stopGame();
         return 1;
   }
   if (win == 0){//continue; not all spaces are filled
