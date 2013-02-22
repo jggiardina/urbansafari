@@ -57,6 +57,7 @@ struct {
 				       PROTO_MT_REQ_BASE_RESERVED_FIRST-1];
 } Proto_Server;
 
+
 extern PortType proto_server_rpcport(void) { return Proto_Server.RPCPort; }
 extern PortType proto_server_eventport(void) { return Proto_Server.EventPort; }
 extern Proto_Session *
@@ -81,7 +82,7 @@ proto_server_set_req_handler(Proto_Msg_Types mt, Proto_MT_Handler h)
     i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
     
     //ADD CODE: Adding the set handle code with the correct handler index -RC
-    Proto_Server.base_req_handlers[i] = h; // need to set the handler. -JG
+    Proto_Server.base_req_handlers[i] = h; 
     return 1;
   } else {
     return -1;
@@ -109,7 +110,7 @@ proto_server_record_event_subscriber(int fd, int *num)
     int i;
     for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
       if (Proto_Server.EventSubscribers[i]==-1) {
-	//ADD CODE: Set the last subscriber ????? -RC
+	//ADD CODE: Set the last subscriber  -RC
         Proto_Server.EventLastSubscriber = i;
 	Proto_Server.EventSubscribers[i] = fd;
 	Proto_Server.EventNumSubscribers++;
@@ -165,7 +166,7 @@ proto_server_post_event(void)
   int ready;//ready int to be used later -WA
   fd_set   fdset;//fdset needed by select function -WA
 
-  timeout.tv_sec = 15;//set the time to 15 seconds; seems reasonable -WA
+  timeout.tv_sec = 3;//set the time to 3 seconds; seems reasonable -WA
   timeout.tv_usec = 0;
   //END ADDED CODE
 
@@ -176,19 +177,20 @@ proto_server_post_event(void)
   while (num) {
     Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
     if (Proto_Server.EventSession.fd != -1) {
+	//fprintf(stderr, "fd=%d\n", Proto_Server.EventSession.fd);
       num--;
 	//ADDED CODE -WA
       if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {//here we push to the client the updated state -WA
 	//END ADDED CODE
 	// must have lost an event connection
-	close(Proto_Server.EventSession.fd);
+	close(Proto_Server.EventSession.fd+1);
 	Proto_Server.EventSubscribers[i]=-1;
 	Proto_Server.EventNumSubscribers--;
 	Proto_Server.session_lost_handler(&Proto_Server.EventSession);
 	//Proto_Server.ADD CODE
-	//NYI; assert(0);
       } else {
 	//ADDED CODE -WA
+	//fprintf(stderr, "message was sent\n");
       	FD_ZERO(&fdset);//zero the set
       	FD_SET(Proto_Server.EventSession.fd, &fdset);//set it to the given FD_Type
       	ready = select(Proto_Server.EventSession.fd+1, &fdset, NULL, NULL, &timeout);
@@ -242,7 +244,6 @@ proto_server_req_dispatcher(void * arg)
   for (;;) {
     if (proto_session_rcv_msg(&s)==1) {
         //ADD CODE: Very similar to the dispatcher from client - RC
-	//NYI; assert(0);
         mt = proto_session_hdr_unmarshall_type(&s);
         if(mt > PROTO_MT_REQ_BASE_RESERVED_FIRST &&
            mt < PROTO_MT_REQ_BASE_RESERVED_LAST) { // Changed PROTO_MT_EVENT_BASE_RESERVED_FIRST and LAST to REQ, since we are dealing with requests/rpc and not the event channel. -JG
@@ -329,6 +330,194 @@ proto_server_mt_null_handler(Proto_Session *s)
   return rc;
 }
 
+/* Handler for Connection */
+static int
+proto_server_mt_conn_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_conn_handler: invoked for session:\n");
+  proto_session_dump(s);
+  
+  pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+  int subscribers = Proto_Server.EventNumSubscribers;
+  
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+
+  if(subscribers >= 3){
+    h.pstate.v3.raw = 'F';
+    proto_session_hdr_marshall(s, &h);
+    rc=proto_session_send_msg(s,1);
+  }else if(subscribers == 1){
+    h.pstate.v3.raw = 'X';
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_bytes(s, 9, (char *)getBoard());
+    rc=proto_session_send_msg(s,1);
+  }else if(subscribers == 2){
+    h.pstate.v3.raw = 'O';
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_bytes(s, 9, (char *)getBoard());
+    rc=proto_session_send_msg(s,1);
+    startGame();
+  }
+  pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+   
+  return rc;
+}
+
+static int
+proto_server_mt_print_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_print_handler: invoked for session:\n");
+  proto_session_dump(s);
+  proto_session_reset_send(s);
+  bzero(&h, sizeof(s));
+  bzero(&s->sbuf, sizeof(s->sbuf));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_PRINT;
+  proto_session_hdr_marshall(s, &h);
+  
+  proto_session_body_marshall_bytes(s, 9, (char *)getBoard());
+  rc=proto_session_send_msg(s,1);
+  
+  return rc;
+}
+
+static void updateBoard(){
+  Proto_Session *se;
+  Proto_Msg_Hdr hdr;
+  se = proto_server_event_session();
+  hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
+  proto_session_hdr_marshall(se, &hdr);
+  
+  proto_session_body_marshall_bytes(se, 9, (char *)getBoard());
+  
+  proto_server_post_event();
+}
+
+/* Handler for Disconnect */
+static int
+proto_server_mt_disconnect_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_disconnect_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  proto_session_hdr_marshall(s, &h);
+
+  int userfd = s->fd;
+  int i;
+  
+  pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+ fprintf(stderr, "looking for %d", userfd+1);
+  for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
+    if(Proto_Server.EventSubscribers[i] == userfd-1){
+      Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
+      Proto_Server.EventSubscribers[i] = -1;
+      Proto_Server.EventNumSubscribers--;
+      //Proto_Server.EventLastSubscriber = (i==0 ? 0 : i-1);
+      fprintf(stderr, "disconnected from %d", Proto_Server.EventSession.fd);
+      close(Proto_Server.EventSession.fd);
+      close(Proto_Server.EventSession.fd+1);
+      Proto_Server.session_lost_handler(&Proto_Server.EventSession);
+      stopGame();
+      //close(userfd);
+      break;
+    }
+  }
+  
+  pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+
+  Proto_Session *se;
+  Proto_Msg_Hdr hdr;
+  
+  proto_session_body_marshall_int(s, 1);
+  rc=proto_session_send_msg(s,1);
+    
+  //Post Event Disconnect 
+  se = proto_server_event_session();
+  hdr.type = PROTO_MT_EVENT_BASE_DISCONNECT;
+  proto_session_body_marshall_int(se, i);
+  proto_session_hdr_marshall(se, &hdr);
+  proto_server_post_event(); 
+
+  return rc;
+}
+
+
+/* Handler for Marking Cells */
+static int
+proto_server_mt_mark_handler(Proto_Session *s){
+  int rc;
+  int marked_pos;
+  char player;
+  int win;
+  Proto_Msg_Hdr h;
+  fprintf(stderr, "proto_server_mt_mark_handler: invoked for session:\n");
+  proto_session_dump(s);
+  bzero(&h, sizeof(h));
+  proto_session_hdr_unmarshall(s, &h);
+  rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
+  player = (char) h.pstate.v0.raw;
+  marked_pos--;//offset because client sends back 1-9, not 0-8
+  mark(marked_pos, player, s);
+  return rc;
+}
+static void
+prepare_for_post(Proto_Session *s, char player, int IsStarted, char *board, Proto_Msg_Types msg){
+        Proto_Msg_Hdr h;
+        bzero(s->sbuf, sizeof(s->sbuf));
+        bzero(&h, sizeof(h));
+        h.type = msg;
+        h.gstate.v0.raw = IsStarted;
+        h.pstate.v0.raw = player;
+        proto_session_body_marshall_bytes(s, 9, board);
+        proto_session_hdr_marshall(s, &h);
+}
+extern void
+proto_server_win_handler(char player, char *board, int IsStarted){
+        prepare_for_post(proto_server_event_session(), player, IsStarted, board, PROTO_MT_EVENT_BASE_WIN);
+        proto_server_post_event();
+}
+extern void
+proto_server_update_handler(char player, char *board, int IsStarted){
+        prepare_for_post(proto_server_event_session(), player, IsStarted, board, PROTO_MT_EVENT_BASE_UPDATE);
+        proto_server_post_event();
+}
+extern void
+proto_server_draw_handler(char player, char *board, int IsStarted){
+        prepare_for_post(proto_server_event_session(), player, IsStarted, board, PROTO_MT_EVENT_BASE_DRAW);
+        proto_server_post_event();
+}
+extern void
+proto_server_invalid_move_handler(Proto_Session *s, char player, char *board, int IsStarted){
+        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_INVALID_MOVE);
+        proto_session_send_msg(s, 1);
+}
+extern void
+proto_server_valid_move_handler(Proto_Session *s, char player, char *board, int IsStarted){
+        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_MOVE);
+        proto_session_send_msg(s, 1);
+}
+
+extern void
+proto_server_not_turn_handler(Proto_Session *s, char player, char *board, int IsStarted){
+        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_NOT_TURN);
+        proto_session_send_msg(s, 1);
+}  
+extern void
+proto_server_not_started_handler(Proto_Session *s, char player, char *board, int IsStarted){
+        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_NOT_STARTED);
+        proto_session_send_msg(s, 1);
+}
 extern int
 proto_server_init(void)
 {
@@ -342,8 +531,17 @@ proto_server_init(void)
   for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
        i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
     //ADD CODE: Looping through the req's and setting them to the null handler -RC
-    proto_server_set_req_handler(i, proto_server_mt_null_handler);
-    //NYI; assert(0);
+    if(i == PROTO_MT_REQ_BASE_CONNECT){
+      proto_server_set_req_handler(i, proto_server_mt_conn_handler);
+    }else if(i == PROTO_MT_REQ_BASE_DISCONNECT){
+      proto_server_set_req_handler(i, proto_server_mt_disconnect_handler);
+    }else if (i == PROTO_MT_REQ_BASE_MOVE){
+      proto_server_set_req_handler(i, proto_server_mt_mark_handler);
+    }else if( i== PROTO_MT_REQ_BASE_PRINT){
+      proto_server_set_req_handler(i, proto_server_mt_print_handler);
+    }else{
+      proto_server_set_req_handler(i, proto_server_mt_null_handler);
+    }
   }
 
 

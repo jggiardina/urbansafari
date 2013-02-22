@@ -281,8 +281,7 @@ proto_session_body_unmarshall_bytes(Proto_Session *s, int offset, int len,
   }
   return -1;
 }
-
-// rc < 0 on comm failures
+//rc < 0 on comm failures
 // rc == 1 indicates comm success
 extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
@@ -319,7 +318,6 @@ proto_session_rcv_msg(Proto_Session *s)
   	proto_session_reset_receive(s);
   	// read reply
   	//Start added code
-  	//NYI;assert(0);
   	int n;
 	int header_length = (sizeof(int) * 10) + sizeof(long long);//define header length; it is always a given. -WA
 	n = net_readn(s->fd, &s->rhdr, header_length);//read the header into rhdr -WA
@@ -333,6 +331,7 @@ proto_session_rcv_msg(Proto_Session *s)
                 	fprintf(stderr, "%p: proto_session_rcv_msg: read error\n", pthread_self());
         	}
 	}
+	//bzero(&s->rbuf, sizeof(s->rbuf));
   //end added code
 
   if (proto_debug()) {
@@ -346,7 +345,7 @@ extern int
 proto_session_rpc(Proto_Session *s)
 {
   int rc;
-  rc = proto_session_send_msg(s, 0);//we send the message to the server -WA
+  rc = proto_session_send_msg(s, 1);//we send the message to the server -WA
   rc = proto_session_rcv_msg(s);//until we recieve a reply, this function will continue to wait. once the server is done it's business, it will send us a reply back, allowing this rpc function to complete.
   return rc;
 }
