@@ -230,13 +230,13 @@ proto_client_rpc_disconnect_handler(Proto_Session *s)
 static int
 proto_client_event_disconnect_handler(Proto_Session *s)
 {
-  fprintf(stderr,
+  /*fprintf(stderr,
           "proto_client_event_disconnect_handler: invoked for session:\n");
-  proto_session_dump(s);
+  proto_session_dump(s);*/
   Proto_Msg_Types mt;
 
   int ret = 1;
-  int player;
+  int player=0;
 
   mt = proto_session_hdr_unmarshall_type(s);
 
