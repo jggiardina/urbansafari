@@ -57,12 +57,6 @@ struct {
 				       PROTO_MT_REQ_BASE_RESERVED_FIRST-1];
 } Proto_Server;
 
-struct {
-	char board[9];
-	char blankBoard[9];
-	char curTurn;
-	int IsGameStarted;	
-}Game_Board;
 
 extern PortType proto_server_rpcport(void) { return Proto_Server.RPCPort; }
 extern PortType proto_server_eventport(void) { return Proto_Server.EventPort; }
@@ -70,29 +64,6 @@ extern Proto_Session *
 proto_server_event_session(void) 
 { 
   return &Proto_Server.EventSession; 
-}
-extern int proto_server_init_Game_Board(void){
-	Game_Board.board[0] = '1';
-	Game_Board.board[1] = '2';
-	Game_Board.board[2] = '3';
-	Game_Board.board[3] = '4';
-	Game_Board.board[4] = '5';
-        Game_Board.board[5] = '6';
-        Game_Board.board[6] = '7';
-        Game_Board.board[7] = '8';
-	Game_Board.board[8] = '9';
-	Game_Board.blankBoard[0] = '1';
-        Game_Board.blankBoard[1] = '2';
-        Game_Board.blankBoard[2] = '3';
-        Game_Board.blankBoard[3] = '4';
-        Game_Board.blankBoard[4] = '5';
-        Game_Board.blankBoard[5] = '6';
-        Game_Board.blankBoard[6] = '7';
-        Game_Board.blankBoard[7] = '8';
-        Game_Board.blankBoard[8] = '9';
-	Game_Board.curTurn = 'X';
-	Game_Board.IsGameStarted = 0;
-	return 1;
 }
 
 extern int
@@ -382,14 +353,14 @@ proto_server_mt_conn_handler(Proto_Session *s){
   }else if(subscribers == 1){
     h.pstate.v3.raw = 'X';
     proto_session_hdr_marshall(s, &h);
-    proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
+    proto_session_body_marshall_bytes(s, 9, getBoard());
     rc=proto_session_send_msg(s,1);
   }else if(subscribers == 2){
     h.pstate.v3.raw = 'O';
     proto_session_hdr_marshall(s, &h);
-    proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
+    proto_session_body_marshall_bytes(s, 9, getBoard());
     rc=proto_session_send_msg(s,1);
-    Game_Board.IsGameStarted = 1;
+    startGame();
   }
 
   return rc;
@@ -409,7 +380,7 @@ proto_server_mt_print_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_PRINT;
   proto_session_hdr_marshall(s, &h);
   
-  proto_session_body_marshall_bytes(s, sizeof(Game_Board.board), &Game_Board.board);
+  proto_session_body_marshall_bytes(s, 9, getBoard());
   rc=proto_session_send_msg(s,1);
   
   return rc;
@@ -422,65 +393,9 @@ static void updateBoard(){
   hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
   proto_session_hdr_marshall(se, &hdr);
   
-  proto_session_body_marshall_bytes(se, sizeof(Game_Board.board), &Game_Board.board);
+  proto_session_body_marshall_bytes(se, 9, getBoard());
   
   proto_server_post_event();
-}
-
-//logic for checking if continue (0), win (1), or draw (2) -WA
-static int
-check_for_win(int pos){
-        int player = Game_Board.curTurn;
-	int numFilled = 0;
-	int i = 0;
-        //check for draw
-        for (i = 0; i < 9; i++){
-                if (Game_Board.board[i] != Game_Board.blankBoard[i]){
-                        numFilled++;
-                }
-        }
-        if (numFilled == 9) {
-		return 2;
-	}
-        //check col
-        for (i = 0; i < 9; i+=3){
-                if (Game_Board.board[i+(pos%3)] != player){
-                        break;
-                }
-                if(i == (pos%3)+6){
-                        return 1;
-                }
-        }
-        //check row
-        for (i = 0; i < 3; i++){
-                if(Game_Board.board[pos-(pos%3)+i] != player){
-                        break;
-                }
-                if(i == (pos%3)+3){
-                        return 1;
-                }
-        }
-        //check diags
-        if (pos%2 == 0){
-                for(i = 0; i < 9; i+= 4){
-                        if (Game_Board.board[i] != player){
-                                break;
-                        }
-                        if (i == 8){
-                                return 1;
-                        }
-                }
-                for(i = 2; i < 9; i += 2){
-                        if (Game_Board.board[i] != player){
-                                break;
-                        }
-                        if (i == 6){
-                                return 1;
-                        }
-                }
-        }
-        //if no wins detected, return 0
-        return 0;
 }
 
 /* Handler for Disconnect */
@@ -510,7 +425,7 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
       //Proto_Server.EventLastSubscriber = (i==0 ? 0 : i-1);
       close(Proto_Server.EventSession.fd);
       Proto_Server.session_lost_handler(&Proto_Server.EventSession);
-      Game_Board.IsGameStarted = 0;
+      stopGame();
       //close(userfd);
       break;
     }
@@ -550,20 +465,19 @@ proto_server_mt_mark_handler(Proto_Session *s){
   proto_session_hdr_unmarshall(s, &h);
   rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
   player = (char) h.pstate.v0.raw;
-  fprintf(stderr, "player type:%d\n", player);
   marked_pos--;//offset because client sends back 1-9, not 0-8
   
   //set parameters for reply message
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  h.pstate.v0.raw = Game_Board.curTurn;
+  h.pstate.v0.raw = curTurn();
   h.gstate.v0.raw = 1;
   proto_session_body_marshall_int(s, rc);
   //check for invalid move or not player turn; if either, no event will be trigger, and only the offending player will be informed -WA
   if (rc > 0){
-	if (Game_Board.IsGameStarted == 1){
-  		if (player == Game_Board.curTurn){
-			if (Game_Board.board[marked_pos] == Game_Board.blankBoard[marked_pos]){
-				Game_Board.board[marked_pos] = player;//mark the spot -WA
+	if (IsGameStarted() == 1){
+  		if (player == curTurn()){
+			if (checkMark(marked_pos) == 0){
+				setMark(marked_pos, player);//mark the spot -WA
 			}else{
 				//reply back with "Invalid Move"; -WA
 				h.type = PROTO_MT_REP_BASE_INVALID_MOVE;
@@ -586,37 +500,37 @@ proto_server_mt_mark_handler(Proto_Session *s){
 	}
   }
   //if passes the preceding checks, the move is valid and will be recorded, so send back move reply.
-  proto_session_hdr_marshall(s, &h);
-  rc=proto_session_send_msg(s,1);
   bzero(&s->sbuf, sizeof(s->sbuf));
+  proto_session_hdr_marshall(s, &h);
+  rc = proto_session_send_msg(s, 1);
   //now to check what kind of event to send based on new gamestate -WA
   bzero(&h, sizeof(s));
   win = check_for_win(marked_pos);
   if (win == 1){
 	fprintf(stderr, "Player won!\n");
 	h.type = PROTO_MT_EVENT_BASE_WIN;
-	h.pstate.v0.raw = Game_Board.curTurn;
+	h.pstate.v0.raw = curTurn();
         h.gstate.v0.raw = 0;
-        Game_Board.IsGameStarted = 0;
+        stopGame();
   }
   if (win == 2){
 	fprintf(stderr, "Game ends in draw.\n");
         h.type = PROTO_MT_EVENT_BASE_DRAW;
   }
   if (win == 0){//continue; not all spaces are filled
-	if (Game_Board.curTurn ==  'X'){
-		 Game_Board.curTurn = 'O';
+	if (curTurn() ==  'X'){
+		 setCurTurn('O');
 	}else{
-		 Game_Board.curTurn = 'X';
+		 setCurTurn('X');
 	}
 	fprintf(stderr, "Game continues\n");
         h.type = PROTO_MT_EVENT_BASE_UPDATE;
-	h.pstate.v0.raw = Game_Board.curTurn;
+	h.pstate.v0.raw = curTurn();
 	h.gstate.v0.raw = 1;
   }
   //trigger event
   bzero(&Proto_Server.EventSession.sbuf, sizeof(&Proto_Server.EventSession.sbuf));
-  proto_session_body_marshall_bytes(&Proto_Server.EventSession, sizeof(Game_Board.board), &Game_Board.board);
+  proto_session_body_marshall_bytes(&Proto_Server.EventSession, 9, getBoard());
   proto_session_hdr_marshall(&Proto_Server.EventSession, &h);
   proto_server_post_event();
   return rc;
