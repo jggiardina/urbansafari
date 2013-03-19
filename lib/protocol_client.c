@@ -43,10 +43,6 @@ typedef struct {
 				       - 1];
 } Proto_Client;
 
-struct {
-  char player_type;
-} PLAYER_INFO_GLOBALS; 
-
 extern Proto_Session *
 proto_client_rpc_session(Proto_Client_Handle ch)
 {
@@ -100,7 +96,8 @@ proto_client_event_null_handler(Proto_Session *s)
   fprintf(stderr, 
 	  "proto_client_event_null_handler: invoked for session:\n");
   proto_session_dump(s);
-  Proto_Msg_Types mt;
+  
+  /*Proto_Msg_Types mt; // No longer need this -JG
 
   mt = proto_session_hdr_unmarshall_type(s);
   if (mt == PROTO_MT_EVENT_BASE_UPDATE){
@@ -111,16 +108,16 @@ proto_client_event_null_handler(Proto_Session *s)
   	h.type = PROTO_MT_EVENT_BASE_UPDATE;
   	proto_session_hdr_marshall(s, &h);
  	proto_session_send_msg(s, 1);
-  }
+  }*/
   return 1;
 }
-
+/* ALL EVENT HANDLERS NOW IN client/client.c -JG
 static int
 proto_client_event_update_handler(Proto_Session *s)
 {
-  /*fprintf(stderr,
+  fprintf(stderr,
           "proto_client_event_update_handler: invoked for session:\n");
-  proto_session_dump(s);*/
+  proto_session_dump(s);
   Proto_Msg_Types mt;
 
   mt = proto_session_hdr_unmarshall_type(s);
@@ -148,9 +145,9 @@ proto_client_event_update_handler(Proto_Session *s)
 static int
 proto_client_event_finish_handler(Proto_Session *s)
 {
-  /*fprintf(stderr,
+  fprintf(stderr,
           "proto_client_event_finish_handler: invoked for session:\n");
-  proto_session_dump(s);*/
+  proto_session_dump(s);
   Proto_Msg_Types mt;
   Proto_Msg_Hdr hdr;
   char player;
@@ -187,7 +184,7 @@ proto_client_event_finish_handler(Proto_Session *s)
   printMarker();
   return 1;
 }
-
+*/
 static char
 proto_client_rpc_conn_handler(Proto_Session *s)
 {
@@ -225,13 +222,13 @@ proto_client_rpc_disconnect_handler(Proto_Session *s)
 
   return ret;
 }
-
+/*
 static int
 proto_client_event_disconnect_handler(Proto_Session *s)
 {
-  /*fprintf(stderr,
+  fprintf(stderr,
           "proto_client_event_disconnect_handler: invoked for session:\n");
-  proto_session_dump(s);*/
+  proto_session_dump(s);
   Proto_Msg_Types mt;
 
   int ret = 1;
@@ -250,7 +247,7 @@ proto_client_event_disconnect_handler(Proto_Session *s)
 
   return ret;
 }
-
+*/
 static void *
 proto_client_event_dispatcher(void * arg)
 {
@@ -319,27 +316,27 @@ proto_client_init(Proto_Client_Handle *ch)
   *ch = c;
   return 1;
 }
-char
-proto_client_connect(Proto_Client_Handle ch, char *host, PortType port, char* boardInit)
+
+int
+proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
 {
   Proto_Client *c = (Proto_Client *)ch;
 
   if (net_setup_connection(&(c->rpc_session.fd), host, port)<0) 
-    return 'F';
+    return '-1';
 
   if (net_setup_connection(&(c->event_session.fd), host, port+1)<0) 
-    return 'F'; 
+    return '-2'; 
 
   if (pthread_create(&(c->EventHandlerTid), NULL, 
 		     &proto_client_event_dispatcher, c) !=0) {
     fprintf(stderr, 
 	    "proto_client_init: create EventHandler thread failed\n");
     perror("proto_client_init:");
-    return 'F';
+    return '-3';
   }
 
-  char rc = proto_client_conn(ch, boardInit);
-  PLAYER_INFO_GLOBALS.player_type = rc;
+  int rc = proto_client_hello(ch);
   return rc;
 }
 
@@ -352,6 +349,7 @@ marshall_mtonly(Proto_Session *s, Proto_Msg_Types mt) {
   proto_session_hdr_marshall(s, &h);
 };
 
+/* ALL RPC should be done through DUMMY
 static char
 do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, char* boardInit)
 {
@@ -378,6 +376,7 @@ do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, char* boardInit)
   //memcpy(rcAndBoard+1, &board, sizeof(board));
   return rc;
 }
+*/
 
 // all rpc's are assume to only reply only with a return code in the body
 // eg.  like the null_mes
@@ -463,11 +462,11 @@ proto_client_hello(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);  
 }
-
+/*
 extern char proto_client_conn(Proto_Client_Handle ch, char* boardInit){
   return do_connect_rpc(ch,PROTO_MT_REQ_BASE_CONNECT, boardInit);  
 }
-
+*/
 extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType port){
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_DISCONNECT);  
 }
