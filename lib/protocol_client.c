@@ -319,19 +319,20 @@ proto_client_hello(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);  
 }
-
+/*
 extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType port){
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_DISCONNECT);  
 }
-
+*/
+/*
 extern int 
 proto_client_move(Proto_Client_Handle ch, char data)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MOVE);  
 }
-
+*/
 extern int 
-proto_client_goodbye(Proto_Client_Handle ch)
+proto_client_goodbye(Proto_Client_Handle ch/*, char *host, PortType port*/)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_GOODBYE);  
 }

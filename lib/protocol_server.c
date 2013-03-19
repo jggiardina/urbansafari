@@ -383,7 +383,7 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
       close(Proto_Server.EventSession.fd);
       close(Proto_Server.EventSession.fd+1);
       Proto_Server.session_lost_handler(&Proto_Server.EventSession);
-      stopGame();
+      //stopGame();
       //close(userfd);
       break;
     }

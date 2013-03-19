@@ -60,6 +60,7 @@ char *
 getBoard(void){
 	return GameBoard.board;
 }
+/*
 int
 check_for_win(int pos){
         int player = GameBoard.curTurn;
@@ -160,7 +161,8 @@ mark(int marked_pos, char player, Proto_Session *s){
 
 
 
-}
+}*/
+/*
 int trigger_win(void){
         proto_server_win_handler(GameBoard.curTurn, GameBoard.board, GameBoard.IsGameStarted);
         return 1;
@@ -201,7 +203,7 @@ void
 stopGame(void){
         GameBoard.IsGameStarted = 0;
 }
-
+*/
 int 
 doUpdateClients(void)
 {
