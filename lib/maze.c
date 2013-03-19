@@ -11,7 +11,7 @@
 
 int load_map(char* map_file, Map map){
   int rc=1;
-
+  
   return rc;
 }
 
@@ -61,9 +61,11 @@ int num_wall(Map map){
   return map.num_wall_cells;
 }
 
-char* dim(){
-  NYI;assert(0);
-  //return (char*)map.h + 'x' + (char*)map.w;
+Pos dim(Map map){
+  Pos d;
+  d.x = map.w;
+  d.y = map.h;
+  return d;
 }
 
 int cinfo(){

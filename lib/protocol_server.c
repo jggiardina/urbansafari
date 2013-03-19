@@ -377,8 +377,8 @@ proto_server_mt_map_info_team_handler(Proto_Session *s){
     c = GREEN;
   }
 
-  home_cells = num_home(c);
-  jail_cells = num_jail(c);
+  home_cells = num_home(c, game_map);
+  jail_cells = num_jail(c, game_map);
 
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   h.gstate.v0.raw = home_cells;
@@ -422,6 +422,7 @@ static int
 proto_server_mt_dim_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
+  Pos dimensions;
 
   fprintf(stderr, "proto_server_mt_dim_handler: invoked for session:\n");
   proto_session_dump(s);
@@ -430,6 +431,12 @@ proto_server_mt_dim_handler(Proto_Session *s){
 
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
+  
+  dimensions = dim(game_map);
+  int x = dimensions.x;
+  int y = dimensions.y;
+  proto_session_body_marshall_int(s, x);
+  proto_session_body_marshall_int(s, y);
 
   rc=proto_session_send_msg(s,1);
 
