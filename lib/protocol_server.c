@@ -36,7 +36,10 @@
 #include "protocol_utils.h"
 #include "protocol_server.h"
 #include "misc.h"
+#include "maze.c"
 #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
+
+Map game_map;
 
 struct {
   FDType   RPCListenFD;
@@ -330,6 +333,29 @@ proto_server_mt_null_handler(Proto_Session *s)
   return rc;
 }
 
+/* Handler for Dumping Map in ASCII */
+static int 
+proto_server_mt_dump_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_hello_handler: invoked for session:\n");
+  proto_session_dump(s);
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+
+  proto_session_hdr_marshall(s, &h);
+  
+  //Dump out ASCII of map
+  char* map_data = dump_map(game_map);
+  fprintf(stderr, "%s", map_data);i
+ 
+  rc=proto_session_send_msg(s,1);
+  
+  return rc;
+}
+
 /* Handler for Connection */
 static int
 proto_server_mt_hello_handler(Proto_Session *s){
@@ -430,6 +456,8 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_hello_handler);
     }else if(i == PROTO_MT_REQ_BASE_GOODBYE){
       proto_server_set_req_handler(i, proto_server_mt_goodbye_handler);
+    }else if(i == PROTO_MT_REQ_BASE_DUMP){
+      proto_server_set_req_handler(i, proto_server_mt_dump_handler);
     }
   }
 

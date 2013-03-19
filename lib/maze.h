@@ -34,6 +34,7 @@ typedef struct
 
 typedef struct
 {
+  char* data_ascii;
   int h;
   int w;
   int num_wall_cells;

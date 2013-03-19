@@ -9,18 +9,14 @@
 #include "misc.h"
 #include "maze.h"
 
-Map map;
-
-int load_map(char* map_file){
+int load_map(char* map_file, Map map){
   int rc=1;
 
   return rc;
 }
 
-int dump_map(Map* m){
-  int rc=1;
-
-  return rc;
+char* dump_map(Map map){
+  return map.data_ascii;
 }
 
 int num_home(Color c){
@@ -47,11 +43,11 @@ int num_jail(Color c){
   return cells;
 }
 
-int num_floor(){
+int num_floor(Map map){
   return map.num_floor_cells;
 }
 
-int num_wall(){
+int num_wall(Map map){
   return map.num_wall_cells;
 }
 
