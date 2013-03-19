@@ -332,71 +332,26 @@ proto_server_mt_null_handler(Proto_Session *s)
 
 /* Handler for Connection */
 static int
-proto_server_mt_conn_handler(Proto_Session *s){
+proto_server_mt_hello_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
 
-  fprintf(stderr, "proto_server_mt_conn_handler: invoked for session:\n");
+  fprintf(stderr, "proto_server_mt_hello_handler: invoked for session:\n");
   proto_session_dump(s);
   
-  pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
-  int subscribers = Proto_Server.EventNumSubscribers;
+  //pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+  //int subscribers = Proto_Server.EventNumSubscribers;
   
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
 
-  if(subscribers >= 3){
-    h.pstate.v3.raw = 'F';
-    proto_session_hdr_marshall(s, &h);
-    rc=proto_session_send_msg(s,1);
-  }else if(subscribers == 1){
-    h.pstate.v3.raw = 'X';
-    proto_session_hdr_marshall(s, &h);
-    proto_session_body_marshall_bytes(s, 9, (char *)getBoard());
-    rc=proto_session_send_msg(s,1);
-  }else if(subscribers == 2){
-    h.pstate.v3.raw = 'O';
-    proto_session_hdr_marshall(s, &h);
-    proto_session_body_marshall_bytes(s, 9, (char *)getBoard());
-    rc=proto_session_send_msg(s,1);
-    startGame();
-  }
-  pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
-   
-  return rc;
-}
-
-static int
-proto_server_mt_print_handler(Proto_Session *s){
-  int rc = 1;
-  Proto_Msg_Hdr h;
-
-  fprintf(stderr, "proto_server_mt_print_handler: invoked for session:\n");
-  proto_session_dump(s);
-  proto_session_reset_send(s);
-  bzero(&h, sizeof(s));
-  bzero(&s->sbuf, sizeof(s->sbuf));
-  h.type = proto_session_hdr_unmarshall_type(s);
-  h.type += PROTO_MT_REP_BASE_PRINT;
-  proto_session_hdr_marshall(s, &h);
-  
-  proto_session_body_marshall_bytes(s, 9, (char *)getBoard());
+  proto_session_hdr_marshall(s, &h);  
   rc=proto_session_send_msg(s,1);
   
+  //pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+   
   return rc;
-}
-
-static void updateBoard(){
-  Proto_Session *se;
-  Proto_Msg_Hdr hdr;
-  se = proto_server_event_session();
-  hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
-  proto_session_hdr_marshall(se, &hdr);
-  
-  proto_session_body_marshall_bytes(se, 9, (char *)getBoard());
-  
-  proto_server_post_event();
 }
 
 /* Handler for Disconnect */
@@ -452,72 +407,12 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
   return rc;
 }
 
-
-/* Handler for Marking Cells */
-static int
-proto_server_mt_mark_handler(Proto_Session *s){
-  int rc;
-  int marked_pos;
-  char player;
-  int win;
-  Proto_Msg_Hdr h;
-  fprintf(stderr, "proto_server_mt_mark_handler: invoked for session:\n");
-  proto_session_dump(s);
-  bzero(&h, sizeof(h));
-  proto_session_hdr_unmarshall(s, &h);
-  rc = proto_session_body_unmarshall_int(s, 0, &marked_pos);
-  player = (char) h.pstate.v0.raw;
-  marked_pos--;//offset because client sends back 1-9, not 0-8
-  mark(marked_pos, player, s);
-  return rc;
-}
-static void
-prepare_for_post(Proto_Session *s, char player, int IsStarted, char *board, Proto_Msg_Types msg){
-        Proto_Msg_Hdr h;
-        bzero(s->sbuf, sizeof(s->sbuf));
-        bzero(&h, sizeof(h));
-        h.type = msg;
-        h.gstate.v0.raw = IsStarted;
-        h.pstate.v0.raw = player;
-        proto_session_body_marshall_bytes(s, 9, board);
-        proto_session_hdr_marshall(s, &h);
-}
-extern void
-proto_server_win_handler(char player, char *board, int IsStarted){
-        prepare_for_post(proto_server_event_session(), player, IsStarted, board, PROTO_MT_EVENT_BASE_WIN);
-        proto_server_post_event();
-}
-extern void
-proto_server_update_handler(char player, char *board, int IsStarted){
-        prepare_for_post(proto_server_event_session(), player, IsStarted, board, PROTO_MT_EVENT_BASE_UPDATE);
-        proto_server_post_event();
-}
-extern void
-proto_server_draw_handler(char player, char *board, int IsStarted){
-        prepare_for_post(proto_server_event_session(), player, IsStarted, board, PROTO_MT_EVENT_BASE_DRAW);
-        proto_server_post_event();
-}
-extern void
-proto_server_invalid_move_handler(Proto_Session *s, char player, char *board, int IsStarted){
-        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_INVALID_MOVE);
-        proto_session_send_msg(s, 1);
-}
-extern void
-proto_server_valid_move_handler(Proto_Session *s, char player, char *board, int IsStarted){
-        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_MOVE);
-        proto_session_send_msg(s, 1);
-}
-
-extern void
-proto_server_not_turn_handler(Proto_Session *s, char player, char *board, int IsStarted){
-        prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_NOT_TURN);
-        proto_session_send_msg(s, 1);
-}  
-extern void
+/*/extern void
 proto_server_not_started_handler(Proto_Session *s, char player, char *board, int IsStarted){
         prepare_for_post(s, player, IsStarted, board, PROTO_MT_REP_BASE_NOT_STARTED);
         proto_session_send_msg(s, 1);
-}
+}*/
+
 extern int
 proto_server_init(void)
 {
@@ -531,19 +426,12 @@ proto_server_init(void)
   for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
        i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
     //ADD CODE: Looping through the req's and setting them to the null handler -RC
-    if(i == PROTO_MT_REQ_BASE_CONNECT){
-      proto_server_set_req_handler(i, proto_server_mt_conn_handler);
+    if(i == PROTO_MT_REQ_BASE_HELLO){
+      proto_server_set_req_handler(i, proto_server_mt_hello_handler);
     }else if(i == PROTO_MT_REQ_BASE_DISCONNECT){
       proto_server_set_req_handler(i, proto_server_mt_disconnect_handler);
-    }else if (i == PROTO_MT_REQ_BASE_MOVE){
-      proto_server_set_req_handler(i, proto_server_mt_mark_handler);
-    }else if( i== PROTO_MT_REQ_BASE_PRINT){
-      proto_server_set_req_handler(i, proto_server_mt_print_handler);
-    }else{
-      proto_server_set_req_handler(i, proto_server_mt_null_handler);
     }
   }
-
 
   for (i=0; i<PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
     Proto_Server.EventSubscribers[i]=-1;
