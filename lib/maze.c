@@ -6,7 +6,44 @@
 #include <pthread.h>
 #include <assert.h>
 
-//#include "misc.h"
-//#include "maze.h"
+#include "misc.h"
+#include "maze.h"
 
-//int 
+Map map;
+
+int load_map(char* map_file){
+  int rc=1;
+
+  return rc;
+}
+
+int dump_map(Map* m){
+  int rc=1;
+
+  return rc;
+}
+
+int num_home(Color c){
+  int cells=0;
+
+  if(c == RED){
+     
+  }else if(c == GREEN){
+
+  }
+
+  return cells;
+}
+
+int num_jail(Color c){
+  int cells=0;
+
+  if(c == RED){
+
+  }else if(c == GREEN){
+
+  }
+
+  return cells;
+}
+

@@ -21,7 +21,7 @@ typedef struct
 typedef struct
 {
   Pos p;
-  int charges=10;
+  int charges;
 } __attribute__((__packed__)) Hammer;
 
 typedef struct
@@ -36,7 +36,7 @@ typedef struct
 {
   int h;
   int w;
-  Cell[] cells;
   int num_walls_cells;
   int num_floor_cells;
+  Cell cells[];
 } __attribute__((__packed__)) Map;
