@@ -340,7 +340,7 @@ do_map_dim_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *dim)
 }
 
 static int
-do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Cell_Type *cell_type, int *team, int *occupied)
+do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type *cell_type, int *team, int *occupied)
 {
   int rc;
   Proto_Session *s;
@@ -394,9 +394,9 @@ proto_client_map_dim(Proto_Client_Handle ch, Pos *dim)
 }
 
 extern int
-proto_client_map_cinfo(Proto_Client_Handle ch, Cell_Type *cell_type, int *team, int *occupied)
+proto_client_map_cinfo(Proto_Client_Handle ch, Pos *pos, Cell_Type *cell_type, int *team, int *occupied)
 {
-  return do_map_cinfo_rpc(ch,PROTO_MT_REQ_BASE_MAP_CINFO, cell_type, team, occupied);
+  return do_map_cinfo_rpc(ch,PROTO_MT_REQ_BASE_MAP_CINFO, pos, cell_type, team, occupied);
 }
 
 extern int

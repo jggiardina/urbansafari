@@ -216,6 +216,7 @@ doConnect(Client *C)
       }
     }
   }
+  globals.connected = 1;
   fprintf(stderr, "Connected to <%s:%d>\n", globals.host, globals.port);
   //VPRINTF("END: %s %d %d\n", globals.server, globals.port, globals.serverFD);
   return 1;
@@ -247,6 +248,10 @@ doMapDump(Client *C)
 {
   int rc = 0;
   printf("pressed dump\n");
+  if (globals.connected!=0) {
+    fprintf(stderr, "You are not connected\n"); //do nothing
+    return 1;
+  }
   rc = proto_client_map_dump(C->ph);
   return 1;
 }
@@ -260,6 +265,7 @@ doMapInfoTeam(Client *C, char c)
 
   if (globals.connected!=1) {
      fprintf(stderr, "You are not connected\n"); //do nothing
+     return 1;
   } else {
     sscanf(globals.in.data, "%d", &team_num);
   }
@@ -291,14 +297,15 @@ doMapDim(Client *C)
 {
   printf("pressed dim \n");
   int rc = 0;
-  Pos *dim;
-  dim->x = 0; dim->y = 0;
+  Pos dim = {0, 0};
+  //dim->x = 0; dim->y = 0;
   if (globals.connected!=1) {
      fprintf(stderr, "You are not connected\n"); //do nothing
+     return 1;
   }
-  rc = proto_client_map_dim(C->ph, dim);
+  rc = proto_client_map_dim(C->ph, &dim);
   
-  fprintf(stderr, "Maze Dimensions: %d x %d (width x height)\n", dim[0], dim[1]);
+  fprintf(stderr, "Maze Dimensions: %d x %d (width x height)\n", dim.x, dim.y);
   return 1;
 }
 
@@ -313,29 +320,21 @@ doMapCinfo(Client *C)
   int occupied = 0;
   if (globals.connected!=1) {
      fprintf(stderr, "You are not connected\n"); //do nothing
+     return 1;
   }
-  rc = proto_client_map_cinfo(C->ph, cell_type, &team, &occupied);
+  int i, len = strlen(globals.in.data);
+  for (i=0; i<len; i++) if (globals.in.data[i]=='<' || globals.in.data[i]==',' || globals.in.data[i]=='>') globals.in.data[i]=' ';
+    sscanf(globals.in.data, "%d" XSTR(STRLEN) "s %d", &x,
+           &y);
+  Pos pos = {x, y};
+  //pos->x = x;
+  //pos->y = y;
+  rc = proto_client_map_cinfo(C->ph, &pos, cell_type, &team, &occupied);
 
   fprintf(stderr, "Cell Info for <%d,%d>: Cell Type: %s, Team: %d, Occupied: %d\n", x, y, *cell_type, team, occupied);
   return 1;
 }
 
-/*
-int
-doWhere(Client *C)
-{
-  // TEST
-  //proto_client_print_board(C->ph);
-  //doMarkRPCCmd(C, 1);
-  //printf("pressed enter\n");
-  // TEST
-  if (globals.connected == 1)
-    printf("<%s:%d>\n", globals.host, globals.port);
-  else
-    printf("not connected\n");
-  return 1;
-}
-*/
 int
 doQuit(Client *C)
 {

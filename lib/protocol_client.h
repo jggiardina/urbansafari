@@ -50,7 +50,7 @@ extern int proto_client_map_info(Proto_Client_Handle ch);
 extern int proto_client_map_info_team(Proto_Client_Handle ch, int team_num);
 extern int proto_client_map_dim(Proto_Client_Handle ch, Pos *dim);
 extern int proto_client_map_dump(Proto_Client_Handle ch);
-extern int proto_client_map_cinfo(Proto_Client_Handle ch, Cell_Type *cell_type, int *team, int *occupied);
+extern int proto_client_map_cinfo(Proto_Client_Handle ch, Pos *pos, Cell_Type *cell_type, int *team, int *occupied);
 //extern int proto_client_move(Proto_Client_Handle ch, char d);
 extern int proto_client_goodbye(Proto_Client_Handle ch);
 //extern char proto_client_conn(Proto_Client_Handle ch, char* boardInit);
