@@ -96,7 +96,7 @@ int
 startDisconnection(Client *C, char *host, PortType port)
 {
   if (globals.host[0]!=0 && globals.port!=0) {
-    if(proto_client_disconnect(C->ph, host, port)<0)
+    if(proto_client_goodbye(C->ph/*, host, port*/)<0)
       return -1;
   }
   globals.connected = 0;
@@ -215,7 +215,7 @@ doConnect(Client *C)
       }
     }
   }
-
+  fprintf(stderr, "Connected to <%s:%d>\n", globals.host, globals.port);
   //VPRINTF("END: %s %d %d\n", globals.server, globals.port, globals.serverFD);
   return 1;
 }
@@ -233,16 +233,22 @@ doDisconnect(Client *C)
   printf("Game Over: You Quit\n");
   return 1;
 }
-
+*/
 int
 doEnter(Client *C)
 {
-  //printf("pressed enter\n");
-  if (globals.connected == 1)
-    proto_client_print_board(C->ph);
+  printf("pressed enter\n");
   return 1;
 }
 
+int
+doMapInfo(Client *C, char c)
+{
+  printf("pressed %s \n", c);
+  return 1;
+}
+
+/*
 int
 doWhere(Client *C)
 {
@@ -261,11 +267,11 @@ doWhere(Client *C)
 int
 doQuit(Client *C)
 {
-  //printf("quit pressed\n");
+  printf("quit pressed\n");
   if (globals.connected == 1) {
     // disconnect first
-    startDisconnection(C, globals.host, globals.port);
-    printf("Game Over: You Quit\n");
+    //startDisconnection(C, globals.host, globals.port);
+    //printf("Game Over: You Quit\n");
   }
   return -1;
 }
@@ -275,17 +281,24 @@ docmd(Client *C)
 {
   int rc = 1;
   
-  //if (strlen(globals.in.data)==0) rc = doEnter(C);
-  if (strncmp(globals.in.data, "connect", 
+  if (strlen(globals.in.data)==0) rc = doEnter(C);
+  else if (strncmp(globals.in.data, "connect", 
 		   sizeof("connect")-1)==0) rc = doConnect(C);
   /*else if (strncmp(globals.in.data, "disconnect", 
-		   sizeof("disconnect")-1)==0) rc = doDisconnect(C);
+		   sizeof("disconnect")-1)==0) rc = doDisconnect(C);*/
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit(C);
-  else if (strncmp(globals.in.data, "where",
-		   sizeof("where")-1)==0) rc = doWhere(C);
-  else rc = doMarkRPC(C);
-*/
+  else if (strncmp(globals.in.data, "numhome",
+		   sizeof("numhome")-1)==0) rc = doMapInfo(C, 'h');
+  else if (strncmp(globals.in.data, "numjail",
+		   sizeof("numjail")-1)==0) rc = doMapInfo(C, 'j');
+  else if (strncmp(globals.in.data, "numwall",
+		   sizeof("numwall")-1)==0) rc = doMapInfo(C, 'w');
+  else if (strncmp(globals.in.data, "numfloor",
+		   sizeof("numfloor")-1)==0) rc = doMapInfo(C, 'f');
+  
+  //else rc = doMarkRPC(C);
+
   return rc;
 }
 
