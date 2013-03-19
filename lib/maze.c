@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <assert.h>
 
-#include "misc.h"
-#include "maze.h"
+//#include "misc.h"
+//#include "maze.h"
 
-int 
+//int 

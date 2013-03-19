@@ -100,13 +100,13 @@ startDisconnection(Client *C, char *host, PortType port)
       return -1;
   }
   globals.connected = 0;
-  C->player_type = '?';
+  //C->player_type = '?';
   return 0;
 }
 
 
 int
-prompt(int menu, char player_type) 
+prompt(int menu) 
 {
   static char MenuString[] = "\nclient> ";
   int len;
@@ -152,19 +152,18 @@ game_process_reply(Client *C)
   return 1;
 }
 
-
-int 
+/*int 
 doMarkRPCCmd(Client *C, int c) 
 {
   int rc=-1;
 
-  rc = proto_client_mark(C->ph, c, C->player_type); 
+  rc = proto_client_mark(C->ph, c); 
   
   if (rc > 0) game_process_mark_reply(C, rc);
   else printf("Game hasn't started yet\n");  
   return rc;
-}
-
+}*/
+/*
 int
 doMarkRPC(Client *C)
 {
@@ -187,7 +186,7 @@ doMarkRPC(Client *C)
     return 1;
   }
 }
-
+*/
 int
 doConnect(Client *C)
 {
@@ -220,7 +219,7 @@ doConnect(Client *C)
   //VPRINTF("END: %s %d %d\n", globals.server, globals.port, globals.serverFD);
   return 1;
 }
-
+/*
 int
 doDisconnect(Client *C)
 {
@@ -258,7 +257,7 @@ doWhere(Client *C)
     printf("not connected\n");
   return 1;
 }
-
+*/
 int
 doQuit(Client *C)
 {
@@ -276,17 +275,17 @@ docmd(Client *C)
 {
   int rc = 1;
   
-  if (strlen(globals.in.data)==0) rc = doEnter(C);
-  else if (strncmp(globals.in.data, "connect", 
+  //if (strlen(globals.in.data)==0) rc = doEnter(C);
+  if (strncmp(globals.in.data, "connect", 
 		   sizeof("connect")-1)==0) rc = doConnect(C);
-  else if (strncmp(globals.in.data, "disconnect", 
+  /*else if (strncmp(globals.in.data, "disconnect", 
 		   sizeof("disconnect")-1)==0) rc = doDisconnect(C);
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit(C);
   else if (strncmp(globals.in.data, "where",
 		   sizeof("where")-1)==0) rc = doWhere(C);
   else rc = doMarkRPC(C);
-
+*/
   return rc;
 }
 

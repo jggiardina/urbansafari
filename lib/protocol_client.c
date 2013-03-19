@@ -97,18 +97,6 @@ proto_client_event_null_handler(Proto_Session *s)
 	  "proto_client_event_null_handler: invoked for session:\n");
   proto_session_dump(s);
   
-  /*Proto_Msg_Types mt; // No longer need this -JG
-
-  mt = proto_session_hdr_unmarshall_type(s);
-  if (mt == PROTO_MT_EVENT_BASE_UPDATE){
-	//update client code should go here -WA
-  	proto_session_reset_send(s);//now to send back ACK message
-	Proto_Msg_Hdr h;
-	bzero(&h, sizeof(h));
-  	h.type = PROTO_MT_EVENT_BASE_UPDATE;
-  	proto_session_hdr_marshall(s, &h);
- 	proto_session_send_msg(s, 1);
-  }*/
   return 1;
 }
 /* ALL EVENT HANDLERS NOW IN client/client.c -JG
@@ -185,43 +173,7 @@ proto_client_event_finish_handler(Proto_Session *s)
   return 1;
 }
 */
-static char
-proto_client_rpc_conn_handler(Proto_Session *s)
-{
-  /*fprintf(stderr,
-          "proto_client_rpc_conn_handler: invoked for session:\n");
-  proto_session_dump(s);*/
-  Proto_Msg_Types mt;
-  Proto_Msg_Hdr hdr;
 
-  char tag;
-  mt = proto_session_hdr_unmarshall_type(s);
-  
-  if(mt == PROTO_MT_REP_BASE_CONNECT){
-    proto_session_hdr_unmarshall(s, &hdr);
-    tag = (char)hdr.pstate.v3.raw;
-  }
-
-  return tag;
-}
-
-static int
-proto_client_rpc_disconnect_handler(Proto_Session *s)
-{
-  /*fprintf(stderr,
-          "proto_client_rpc_disconnect_handler: invoked for session:\n");
-  proto_session_dump(s);*/
-  Proto_Msg_Types mt;
-
-  int ret;
-  mt = proto_session_hdr_unmarshall_type(s);
-
-  if(mt == PROTO_MT_REP_BASE_DISCONNECT){
-   proto_session_body_unmarshall_int(s, 0, &ret);
-  }
-
-  return ret;
-}
 /*
 static int
 proto_client_event_disconnect_handler(Proto_Session *s)
@@ -300,19 +252,7 @@ proto_client_init(Proto_Client_Handle *ch)
   for (mt=PROTO_MT_EVENT_BASE_RESERVED_FIRST+1;
        mt<PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
     //ADD CODE: probably looping through the base_event_handlers and initializing them to null here. -JG
-  if(mt == PROTO_MT_REP_BASE_DISCONNECT){
-    proto_client_set_event_handler(c, mt, proto_client_rpc_disconnect_handler);
-  }else if(mt == PROTO_MT_REP_BASE_CONNECT){
-    proto_client_set_event_handler(c, mt, proto_client_rpc_conn_handler);
-  }else if(mt == PROTO_MT_EVENT_BASE_DISCONNECT){
-    proto_client_set_event_handler(c, mt, proto_client_event_disconnect_handler);
-  }else if(mt == PROTO_MT_EVENT_BASE_UPDATE){
-    proto_client_set_event_handler(c, mt, proto_client_event_update_handler);
-  }else if(mt == PROTO_MT_EVENT_BASE_WIN || mt == PROTO_MT_EVENT_BASE_DRAW){
-    proto_client_set_event_handler(c, mt, proto_client_event_finish_handler);
-  }else{
     proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
-  }
   *ch = c;
   return 1;
 }
@@ -323,17 +263,17 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
   Proto_Client *c = (Proto_Client *)ch;
 
   if (net_setup_connection(&(c->rpc_session.fd), host, port)<0) 
-    return '-1';
+    return -1;
 
   if (net_setup_connection(&(c->event_session.fd), host, port+1)<0) 
-    return '-2'; 
+    return -2; 
 
   if (pthread_create(&(c->EventHandlerTid), NULL, 
 		     &proto_client_event_dispatcher, c) !=0) {
     fprintf(stderr, 
 	    "proto_client_init: create EventHandler thread failed\n");
     perror("proto_client_init:");
-    return '-3';
+    return -3;
   }
 
   int rc = proto_client_hello(ch);
@@ -348,35 +288,6 @@ marshall_mtonly(Proto_Session *s, Proto_Msg_Types mt) {
   h.type = mt;
   proto_session_hdr_marshall(s, &h);
 };
-
-/* ALL RPC should be done through DUMMY
-static char
-do_connect_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, char* boardInit)
-{
-  char rc;
-  //char board[9];
-  Proto_Session *s;
-  Proto_Client *c = ch;
-  Proto_Msg_Hdr hdr;
-
-  s = proto_client_rpc_session(c); 
-
-  marshall_mtonly(s, mt);
-  rc = proto_session_rpc(s);//perform our rpc call
-  if (rc==1) {
-    proto_session_hdr_unmarshall(s, &hdr);
-    rc = (char)hdr.pstate.v3.raw;
-    proto_session_body_unmarshall_bytes(s, 0, 9, boardInit);
-  } else {
-    c->session_lost_handler(s);
-    close(s->fd);
-  }
-  //char rcAndBoard[10];
-  //rcAndBoard[0] = rc;
-  //memcpy(rcAndBoard+1, &board, sizeof(board));
-  return rc;
-}
-*/
 
 // all rpc's are assume to only reply only with a return code in the body
 // eg.  like the null_mes
@@ -403,114 +314,24 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   return rc;
 }
 
-static int
-do_mark_rpc_handler(Proto_Client_Handle ch, Proto_Msg_Types mt, int mark, char player){
-	int rc;
-	Proto_Session *s;
-	Proto_Client *c = (Proto_Client *)ch;
-	Proto_Msg_Hdr h;
-	
-	s = proto_client_rpc_session(c);
-	bzero(&h, sizeof(s));
-	h.type = mt;
-	h.pstate.v0.raw = player;
-	proto_session_body_marshall_int(s, mark);
-	proto_session_hdr_marshall(s, &h);
-	rc = proto_session_rpc(s);
-	bzero(&h, sizeof(s));
-	if (rc==1) {
-		proto_session_hdr_unmarshall(s, &h);
-		if (h.type == PROTO_MT_REP_BASE_NOT_STARTED) return 0;
-		if (h.type == PROTO_MT_REP_BASE_MOVE) return 1;
-		if (h.type == PROTO_MT_REP_BASE_INVALID_MOVE) return 2;
-    		if (h.type == PROTO_MT_REP_BASE_NOT_TURN) return 3;
-  	} else {
-    		c->session_lost_handler(s);
-    		close(s->fd);
-  	}
-	return rc;
-
-}
-
-static int
-do_print_board_rpc_handler(Proto_Client_Handle ch, Proto_Msg_Types mt){
-        int rc;
-        char board[9];
-
-	Proto_Session *s;
-        Proto_Client *c = (Proto_Client *)ch;
-        Proto_Msg_Hdr h;
-
-        s = proto_client_rpc_session(c);
-        
-	marshall_mtonly(s, mt);
-
-	rc = proto_session_rpc(s);
-        if (rc==1) {
-        	proto_session_body_unmarshall_bytes(s, 0, sizeof(board), (char *)&board);
-		printGameBoard(&board);
-	} else {
-                c->session_lost_handler(s);
-                close(s->fd);
-        }
-        return rc;
-
-}
-
 extern int 
 proto_client_hello(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);  
 }
-/*
-extern char proto_client_conn(Proto_Client_Handle ch, char* boardInit){
-  return do_connect_rpc(ch,PROTO_MT_REQ_BASE_CONNECT, boardInit);  
-}
-*/
+
 extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType port){
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_DISCONNECT);  
 }
 
 extern int 
-proto_client_mark(Proto_Client_Handle ch, int data, char player)
+proto_client_move(Proto_Client_Handle ch, char data)
 {
-  return do_mark_rpc_handler(ch,PROTO_MT_REQ_BASE_MOVE, data, player);  
-}
-
-extern int
-proto_client_print_board(Proto_Client_Handle ch)
-{
-  return do_print_board_rpc_handler(ch,PROTO_MT_REQ_BASE_PRINT);
+  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MOVE);  
 }
 
 extern int 
 proto_client_goodbye(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_GOODBYE);  
-}
-
-void
-printGameBoardFromEvent(char* board)
-{
-  fprintf(stderr, "\n%c|%c|%c", board[0], board[1], board[2]);
-  fprintf(stderr, "\n-----");
-  fprintf(stderr, "\n%c|%c|%c", board[3], board[4], board[5]);
-  fprintf(stderr, "\n-----");
-  fprintf(stderr, "\n%c|%c|%c", board[6], board[7], board[8]);
-}
-
-void
-printGameBoard(char* board)
-{
-  printf("\n%c|%c|%c", board[0], board[1], board[2]);
-  printf("\n-----");
-  printf("\n%c|%c|%c", board[3], board[4], board[5]);
-  printf("\n-----");
-  printf("\n%c|%c|%c", board[6], board[7], board[8]);
-}
-
-void
-printMarker()
-{
-  fprintf(stderr, "\n%c>", PLAYER_INFO_GLOBALS.player_type);
 }
