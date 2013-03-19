@@ -32,6 +32,7 @@
 #include "protocol_utils.h"
 #include "protocol_client.h"
 #include "misc.h"
+//#include "maze.h"
 
 typedef struct {
   Proto_Session rpc_session;
@@ -314,6 +315,55 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   return rc;
 }
 
+static int
+do_map_dim_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *dim)
+{
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+
+  s = proto_client_rpc_session(c); //ADD CODE: set the Proto_Session, rpc_session is only Proto_Session, so we need it's address here. -JG
+
+  // marshall
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, &(dim->x));
+    proto_session_body_unmarshall_int(s, sizeof(int), &(dim->y));
+  } else {
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
+}
+
+static int
+do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Cell_Type *cell_type, int *team, int *occupied)
+{
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+
+  s = proto_client_rpc_session(c); //ADD CODE: set the Proto_Session, rpc_session is only Proto_Session, so we need it's address here. -JG
+
+  // marshall
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, (int*)cell_type);
+    proto_session_body_unmarshall_int(s, sizeof(int), team);
+    proto_session_body_unmarshall_int(s, 2*sizeof(int), occupied);
+  } else {
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
+}
+
 extern int 
 proto_client_hello(Proto_Client_Handle ch)
 {
@@ -321,19 +371,36 @@ proto_client_hello(Proto_Client_Handle ch)
 }
 
 extern int
-proto_client_map_info_1(Proto_Client_Handle ch)
+proto_client_map_info_team(Proto_Client_Handle ch, int team_num)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);
+  Proto_Msg_Types mt;
+  if (team_num == 1) mt = PROTO_MT_REQ_BASE_MAP_INFO_1;
+  else if (team_num == 2) mt = PROTO_MT_REQ_BASE_MAP_INFO_2;
+  else return -1;
+
+  return do_generic_dummy_rpc(ch,mt);
 }
 
 extern int
-proto_client_map_info_2(Proto_Client_Handle ch)
+proto_client_map_info(Proto_Client_Handle ch)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);
+  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MAP_INFO);
 }
 
 extern int
-proto_client_dump(Proto_Client_Handle ch)
+proto_client_map_dim(Proto_Client_Handle ch, Pos *dim)
+{
+  return do_map_dim_rpc(ch,PROTO_MT_REQ_BASE_MAP_DIM, dim);
+}
+
+extern int
+proto_client_map_cinfo(Proto_Client_Handle ch, Cell_Type *cell_type, int *team, int *occupied)
+{
+  return do_map_cinfo_rpc(ch,PROTO_MT_REQ_BASE_MAP_CINFO, cell_type, team, occupied);
+}
+
+extern int
+proto_client_map_dump(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_DUMP);
 }
