@@ -242,9 +242,47 @@ doEnter(Client *C)
 }
 
 int
+doDump(Client *C)
+{
+  int rc = 0;
+  printf("pressed dump\n");
+  rc = proto_client_dump(C);
+  return 1;
+}
+
+int
+doMapInfoTeam(Client *C, char c)
+{
+  printf("pressed %c \n", c);
+  int team_num = 0;
+  int rc = 0;
+
+  if (globals.connected!=1) {
+     fprintf(stderr, "You are not connected"); //do nothing
+  } else {
+    sscanf(globals.in.data, "%d", &team_num);
+  }
+  if (team_num == 1) rc = proto_client_map_info_1(C);
+  else if (team_num == 2) rc = proto_client_map_info_2(C);
+  else fprintf(stderr, "Invalid team number\n");
+  
+  if (c == 'h') fprintf(stderr, "numhome=%d", rc);
+  if (c == 'j') fprintf(stderr, "numjail=%d", rc);
+  return 1;
+}
+
+int
 doMapInfo(Client *C, char c)
 {
-  printf("pressed %s \n", c);
+  printf("pressed %c \n", c);
+  int rc = 0;
+  if (globals.connected!=1) {
+     fprintf(stderr, "You are not connected"); //do nothing
+  }
+  rc = proto_client_map_info(C);
+  if (c == 'w') fprintf(stderr, "numwall=%d", rc);
+  if (c == 'f') fprintf(stderr, "numfloor=%d", rc);
+
   return 1;
 }
 
@@ -289,15 +327,20 @@ docmd(Client *C)
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit(C);
   else if (strncmp(globals.in.data, "numhome",
-		   sizeof("numhome")-1)==0) rc = doMapInfo(C, 'h');
+		   sizeof("numhome")-1)==0) rc = doMapInfoTeam(C, 'h');
   else if (strncmp(globals.in.data, "numjail",
-		   sizeof("numjail")-1)==0) rc = doMapInfo(C, 'j');
+		   sizeof("numjail")-1)==0) rc = doMapInfoTeam(C, 'j');
   else if (strncmp(globals.in.data, "numwall",
 		   sizeof("numwall")-1)==0) rc = doMapInfo(C, 'w');
   else if (strncmp(globals.in.data, "numfloor",
 		   sizeof("numfloor")-1)==0) rc = doMapInfo(C, 'f');
+  else if (strncmp(globals.in.data, "dump",
+		   sizeof("dump")-1)==0) rc = doDump(C);
   
-  //else rc = doMarkRPC(C);
+  else {
+    fprintf(stderr, "Invalid command\n");
+    rc = 1;
+  }
 
   return rc;
 }
