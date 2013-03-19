@@ -26,6 +26,7 @@
 #include "../lib/types.h"
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
+//#include "../lib/maze.h"
 
 #define STRLEN 81
 #define XSTR(s) STR(s)
@@ -242,11 +243,11 @@ doEnter(Client *C)
 }
 
 int
-doDump(Client *C)
+doMapDump(Client *C)
 {
   int rc = 0;
   printf("pressed dump\n");
-  rc = proto_client_dump(C);
+  rc = proto_client_map_dump(C->ph);
   return 1;
 }
 
@@ -258,16 +259,15 @@ doMapInfoTeam(Client *C, char c)
   int rc = 0;
 
   if (globals.connected!=1) {
-     fprintf(stderr, "You are not connected"); //do nothing
+     fprintf(stderr, "You are not connected\n"); //do nothing
   } else {
     sscanf(globals.in.data, "%d", &team_num);
   }
-  if (team_num == 1) rc = proto_client_map_info_1(C);
-  else if (team_num == 2) rc = proto_client_map_info_2(C);
+  if (team_num < 3) rc = proto_client_map_info_team(C->ph, team_num);
   else fprintf(stderr, "Invalid team number\n");
   
-  if (c == 'h') fprintf(stderr, "numhome=%d", rc);
-  if (c == 'j') fprintf(stderr, "numjail=%d", rc);
+  if (c == 'h') fprintf(stderr, "numhome=%d\n", rc);
+  if (c == 'j') fprintf(stderr, "numjail=%d\n", rc);
   return 1;
 }
 
@@ -277,12 +277,46 @@ doMapInfo(Client *C, char c)
   printf("pressed %c \n", c);
   int rc = 0;
   if (globals.connected!=1) {
-     fprintf(stderr, "You are not connected"); //do nothing
+     fprintf(stderr, "You are not connected\n"); //do nothing
   }
-  rc = proto_client_map_info(C);
-  if (c == 'w') fprintf(stderr, "numwall=%d", rc);
-  if (c == 'f') fprintf(stderr, "numfloor=%d", rc);
+  rc = proto_client_map_info(C->ph);
+  if (c == 'w') fprintf(stderr, "numwall=%d\n", rc);
+  if (c == 'f') fprintf(stderr, "numfloor=%d\n", rc);
 
+  return 1;
+}
+
+int
+doMapDim(Client *C)
+{
+  printf("pressed dim \n");
+  int rc = 0;
+  Pos *dim;
+  dim->x = 0; dim->y = 0;
+  if (globals.connected!=1) {
+     fprintf(stderr, "You are not connected\n"); //do nothing
+  }
+  rc = proto_client_map_dim(C->ph, dim);
+  
+  fprintf(stderr, "Maze Dimensions: %d x %d (width x height)\n", dim[0], dim[1]);
+  return 1;
+}
+
+int
+doMapCinfo(Client *C)
+{
+  printf("pressed dim \n");
+  int rc = 0;
+  int x,y = 0;
+  Cell_Type *cell_type;
+  int team = 0;
+  int occupied = 0;
+  if (globals.connected!=1) {
+     fprintf(stderr, "You are not connected\n"); //do nothing
+  }
+  rc = proto_client_map_cinfo(C->ph, cell_type, &team, &occupied);
+
+  fprintf(stderr, "Cell Info for <%d,%d>: Cell Type: %s, Team: %d, Occupied: %d\n", x, y, *cell_type, team, occupied);
   return 1;
 }
 
@@ -335,8 +369,11 @@ docmd(Client *C)
   else if (strncmp(globals.in.data, "numfloor",
 		   sizeof("numfloor")-1)==0) rc = doMapInfo(C, 'f');
   else if (strncmp(globals.in.data, "dump",
-		   sizeof("dump")-1)==0) rc = doDump(C);
-  
+		   sizeof("dump")-1)==0) rc = doMapDump(C);
+  else if (strncmp(globals.in.data, "dim",
+                   sizeof("dim")-1)==0) rc = doMapDim(C);
+  else if (strncmp(globals.in.data, "cinfo",
+                   sizeof("cinfo")-1)==0) rc = doMapCinfo(C);
   else {
     fprintf(stderr, "Invalid command\n");
     rc = 1;
