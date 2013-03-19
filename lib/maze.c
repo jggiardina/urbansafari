@@ -47,3 +47,19 @@ int num_jail(Color c){
   return cells;
 }
 
+int num_floor(){
+  return map.num_floor_cells;
+}
+
+int num_wall(){
+  return map.num_wall_cells;
+}
+
+char* dim(){
+  NYI;assert(0);
+  //return (char*)map.h + 'x' + (char*)map.w;
+}
+
+int cinfo(){
+  NYI;assert(0);
+}

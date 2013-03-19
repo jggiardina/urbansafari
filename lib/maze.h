@@ -36,7 +36,7 @@ typedef struct
 {
   int h;
   int w;
-  int num_walls_cells;
+  int num_wall_cells;
   int num_floor_cells;
   Cell cells[];
 } __attribute__((__packed__)) Map;
