@@ -356,11 +356,11 @@ proto_server_mt_hello_handler(Proto_Session *s){
 
 /* Handler for Disconnect */
 static int
-proto_server_mt_disconnect_handler(Proto_Session *s){
+proto_server_mt_goodbye_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
 
-  fprintf(stderr, "proto_server_mt_disconnect_handler: invoked for session:\n");
+  fprintf(stderr, "proto_server_mt_goodbye_handler: invoked for session:\n");
   proto_session_dump(s);
 
   bzero(&h, sizeof(s));
@@ -399,7 +399,7 @@ proto_server_mt_disconnect_handler(Proto_Session *s){
     
   //Post Event Disconnect 
   se = proto_server_event_session();
-  hdr.type = PROTO_MT_EVENT_BASE_DISCONNECT;
+  hdr.type = PROTO_MT_EVENT_BASE_GOODBYE;
   proto_session_body_marshall_int(se, i);
   proto_session_hdr_marshall(se, &hdr);
   proto_server_post_event(); 
@@ -428,8 +428,8 @@ proto_server_init(void)
     //ADD CODE: Looping through the req's and setting them to the null handler -RC
     if(i == PROTO_MT_REQ_BASE_HELLO){
       proto_server_set_req_handler(i, proto_server_mt_hello_handler);
-    }else if(i == PROTO_MT_REQ_BASE_DISCONNECT){
-      proto_server_set_req_handler(i, proto_server_mt_disconnect_handler);
+    }else if(i == PROTO_MT_REQ_BASE_GOODBYE){
+      proto_server_set_req_handler(i, proto_server_mt_goodbye_handler);
     }
   }
 
