@@ -349,7 +349,7 @@ proto_server_mt_dump_handler(Proto_Session *s){
   
   //Dump out ASCII of map
   char* map_data = dump_map(game_map);
-  fprintf(stderr, "%s", map_data);i
+  fprintf(stderr, "%s", map_data);
  
   rc=proto_session_send_msg(s,1);
   
