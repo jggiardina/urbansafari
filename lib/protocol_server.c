@@ -542,7 +542,7 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_map_info_team_handler);
     }else if(i == PROTO_MT_REQ_BASE_MAP_INFO){
       proto_server_set_req_handler(i, proto_server_mt_map_info_handler);
-    }else if(i == PROTO_MT_REQ_BASE_DIM){
+    }else if(i == PROTO_MT_REQ_BASE_MAP_DIM){
       proto_server_set_req_handler(i, proto_server_mt_dim_handler);
     }
   }
