@@ -78,6 +78,36 @@ proto_dump_mt(Proto_Msg_Types type)
   case PROTO_MT_EVENT_BASE_GOODBYE:
     fprintf(stderr, "PROTO_MT_EVENT_BASE_GOODBYE");
     break;
+  case PROTO_MT_REQ_BASE_DUMP:
+    fprintf(stderr, "PROTO_MT_REQ_BASE_DUMP");
+    break;
+  case PROTO_MT_REP_BASE_DUMP:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    break;
+  case PROTO_MT_REQ_BASE_DIM:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    break;
+  case PROTO_MT_REP_BASE_DIM:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    break;
+  case PROTO_MT_REQ_BASE_MAP_INFO_1:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    break;
+  case PROTO_MT_REP_BASE_MAP_INFO_1:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    break;
+  case PROTO_MT_REQ_BASE_MAP_INFO_2:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    break;
+  case PROTO_MT_REP_BASE_MAP_INFO_2:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    break;
+  case PROTO_MT_REQ_BASE_MAP_INFO:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    break;
+  case PROTO_MT_REP_BASE_MAP_INFO:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    break;
   default:
     fprintf(stderr, "UNKNOWN=%d", type);
   }

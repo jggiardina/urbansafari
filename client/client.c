@@ -26,6 +26,7 @@
 #include "../lib/types.h"
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
+//#include "../lib/maze.h"
 
 #define STRLEN 81
 #define XSTR(s) STR(s)
@@ -215,6 +216,7 @@ doConnect(Client *C)
       }
     }
   }
+  globals.connected = 1;
   fprintf(stderr, "Connected to <%s:%d>\n", globals.host, globals.port);
   //VPRINTF("END: %s %d %d\n", globals.server, globals.port, globals.serverFD);
   return 1;
@@ -242,28 +244,97 @@ doEnter(Client *C)
 }
 
 int
-doMapInfo(Client *C, char c)
+doMapDump(Client *C)
 {
-  printf("pressed %s \n", c);
+  int rc = 0;
+  printf("pressed dump\n");
+  if (globals.connected!=0) {
+    fprintf(stderr, "You are not connected\n"); //do nothing
+    return 1;
+  }
+  rc = proto_client_map_dump(C->ph);
   return 1;
 }
 
-/*
 int
-doWhere(Client *C)
+doMapInfoTeam(Client *C, char c)
 {
-  // TEST
-  //proto_client_print_board(C->ph);
-  //doMarkRPCCmd(C, 1);
-  //printf("pressed enter\n");
-  // TEST
-  if (globals.connected == 1)
-    printf("<%s:%d>\n", globals.host, globals.port);
-  else
-    printf("not connected\n");
+  printf("pressed %c \n", c);
+  int team_num = 0;
+  int rc = 0;
+
+  if (globals.connected!=1) {
+     fprintf(stderr, "You are not connected\n"); //do nothing
+     return 1;
+  } else {
+    sscanf(globals.in.data, "%d", &team_num);
+  }
+  if (team_num < 3) rc = proto_client_map_info_team(C->ph, team_num);
+  else fprintf(stderr, "Invalid team number\n");
+  
+  if (c == 'h') fprintf(stderr, "numhome=%d\n", rc);
+  if (c == 'j') fprintf(stderr, "numjail=%d\n", rc);
   return 1;
 }
-*/
+
+int
+doMapInfo(Client *C, char c)
+{
+  printf("pressed %c \n", c);
+  int rc = 0;
+  if (globals.connected!=1) {
+     fprintf(stderr, "You are not connected\n"); //do nothing
+  }
+  rc = proto_client_map_info(C->ph);
+  if (c == 'w') fprintf(stderr, "numwall=%d\n", rc);
+  if (c == 'f') fprintf(stderr, "numfloor=%d\n", rc);
+
+  return 1;
+}
+
+int
+doMapDim(Client *C)
+{
+  printf("pressed dim \n");
+  int rc = 0;
+  Pos dim = {0, 0};
+  //dim->x = 0; dim->y = 0;
+  if (globals.connected!=1) {
+     fprintf(stderr, "You are not connected\n"); //do nothing
+     return 1;
+  }
+  rc = proto_client_map_dim(C->ph, &dim);
+  
+  fprintf(stderr, "Maze Dimensions: %d x %d (width x height)\n", dim.x, dim.y);
+  return 1;
+}
+
+int
+doMapCinfo(Client *C)
+{
+  printf("pressed dim \n");
+  int rc = 0;
+  int x,y = 0;
+  Cell_Type *cell_type;
+  int team = 0;
+  int occupied = 0;
+  if (globals.connected!=1) {
+     fprintf(stderr, "You are not connected\n"); //do nothing
+     return 1;
+  }
+  int i, len = strlen(globals.in.data);
+  for (i=0; i<len; i++) if (globals.in.data[i]=='<' || globals.in.data[i]==',' || globals.in.data[i]=='>') globals.in.data[i]=' ';
+    sscanf(globals.in.data, "%d" XSTR(STRLEN) "s %d", &x,
+           &y);
+  Pos pos = {x, y};
+  //pos->x = x;
+  //pos->y = y;
+  rc = proto_client_map_cinfo(C->ph, &pos, cell_type, &team, &occupied);
+
+  fprintf(stderr, "Cell Info for <%d,%d>: Cell Type: %s, Team: %d, Occupied: %d\n", x, y, *cell_type, team, occupied);
+  return 1;
+}
+
 int
 doQuit(Client *C)
 {
@@ -289,15 +360,23 @@ docmd(Client *C)
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit(C);
   else if (strncmp(globals.in.data, "numhome",
-		   sizeof("numhome")-1)==0) rc = doMapInfo(C, 'h');
+		   sizeof("numhome")-1)==0) rc = doMapInfoTeam(C, 'h');
   else if (strncmp(globals.in.data, "numjail",
-		   sizeof("numjail")-1)==0) rc = doMapInfo(C, 'j');
+		   sizeof("numjail")-1)==0) rc = doMapInfoTeam(C, 'j');
   else if (strncmp(globals.in.data, "numwall",
 		   sizeof("numwall")-1)==0) rc = doMapInfo(C, 'w');
   else if (strncmp(globals.in.data, "numfloor",
 		   sizeof("numfloor")-1)==0) rc = doMapInfo(C, 'f');
-  
-  //else rc = doMarkRPC(C);
+  else if (strncmp(globals.in.data, "dump",
+		   sizeof("dump")-1)==0) rc = doMapDump(C);
+  else if (strncmp(globals.in.data, "dim",
+                   sizeof("dim")-1)==0) rc = doMapDim(C);
+  else if (strncmp(globals.in.data, "cinfo",
+                   sizeof("cinfo")-1)==0) rc = doMapCinfo(C);
+  else {
+    fprintf(stderr, "Invalid command\n");
+    rc = 1;
+  }
 
   return rc;
 }

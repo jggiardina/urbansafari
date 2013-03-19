@@ -27,6 +27,7 @@ typedef struct
 typedef struct
 {
   Pos p;
+  Color c;
   Hammer h; //Dont know if we want these
   Flag f;  //Dont know if we want these 
   Cell_Type t;
@@ -34,8 +35,9 @@ typedef struct
 
 typedef struct
 {
-  int h;
+  char* data_ascii;
   int w;
+  int h;
   int num_wall_cells;
   int num_floor_cells;
   Cell cells[];
