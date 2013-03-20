@@ -381,8 +381,9 @@ proto_server_mt_map_info_team_handler(Proto_Session *s){
   jail_cells = num_jail(c, game_map);
 
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  h.gstate.v0.raw = home_cells;
-  h.gstate.v1.raw = jail_cells;
+  proto_session_body_marshall_int(s, home_cells);
+  proto_session_body_marshall_int(s, jail_cells);
+
   proto_session_hdr_marshall(s, &h);
   
   rc=proto_session_send_msg(s,1);
@@ -408,9 +409,9 @@ proto_server_mt_map_info_handler(Proto_Session *s){
   floor_cells = num_floor(game_map);
 
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  h.gstate.v0.raw = wall_cells;
-  h.gstate.v1.raw = floor_cells;
   proto_session_hdr_marshall(s, &h);
+  proto_session_body_marshall_int(s, wall_cells);
+  proto_session_body_marshall_int(s, floor_cells);
 
   rc=proto_session_send_msg(s,1);
 
