@@ -422,7 +422,7 @@ static int
 proto_server_mt_dim_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
-  Pos* dimensions;
+  Pos dimensions;
 
   fprintf(stderr, "proto_server_mt_dim_handler: invoked for session:\n");
   proto_session_dump(s);
@@ -432,9 +432,9 @@ proto_server_mt_dim_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
   
-  dimensions = (Pos*)dim(getMap());
-  int x = dimensions->x;
-  int y = dimensions->y;
+  dim(getMap(), &dimensions);
+  int x = dimensions.x;
+  int y = dimensions.y;
   proto_session_body_marshall_int(s, x);
   proto_session_body_marshall_int(s, y);
 
@@ -451,7 +451,7 @@ proto_server_mt_cinfo_handler(Proto_Session *s){
   Cell_Type t;
   int team=0;
   int occupied=0;
-  Cell* cell_xy;  
+  Cell cell_xy;  
 
   int x;
   int y;  
@@ -465,22 +465,22 @@ proto_server_mt_cinfo_handler(Proto_Session *s){
   proto_session_body_unmarshall_int(s, 0, &x);
   proto_session_body_unmarshall_int(s, sizeof(int), &y);
 
-  cell_xy = (Cell*)cinfo(getMap(), x, y);
+  cinfo(getMap(), &cell_xy, x, y);
   
-  if(cell_xy->t == -1 || cell_xy->c == -1){
+  if(cell_xy.t == -1 || cell_xy.c == -1){
     t = -1;
     team = -1;
     occupied = -1;
   }else{
-    t = cell_xy->t;
+    t = cell_xy.t;
 
-    if(cell_xy->c == RED){
+    if(cell_xy.c == RED){
       team = 1;
     }else{
       team = 2;
     }
 
-    if(&cell_xy->hammer || &cell_xy->flag){
+    if(&cell_xy.hammer || &cell_xy.flag){
       occupied = 1;
     }else{
       occupied = 0;
@@ -606,6 +606,8 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_map_info_handler);
     }else if(i == PROTO_MT_REQ_BASE_MAP_DIM){
       proto_server_set_req_handler(i, proto_server_mt_dim_handler);
+    }else if(i == PROTO_MT_REQ_BASE_MAP_CINFO){
+      proto_server_set_req_handler(i, proto_server_mt_cinfo_handler);
     }
   }
 
