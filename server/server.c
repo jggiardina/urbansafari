@@ -43,7 +43,7 @@ struct LineBuffer {
 struct Globals {
   struct LineBuffer in;
   Map map;
-  char mapbuf[20000];
+  char mapbuf[40000];
 } globals;
 
 int 
@@ -73,7 +73,8 @@ docmd(char cmd)
                    sizeof("load")-1)==0) rc = doLoad();
   else if (strncmp(globals.in.data, "dump",
                    sizeof("dump")-1)==0) rc = doDump();
-
+  else if (strncmp(globals.in.data, "check",
+                   sizeof("check")-1)==0) rc = doCheck();
   return rc;
 }
 int
@@ -83,7 +84,7 @@ doLoad(){
   FILE * myfile;
   int i, n, len;
   sscanf(globals.in.data, "%*s %s", filename);
-  fprintf(stderr, "Opening file %s \n", filename);
+  //fprintf(stderr, "Opening file %s \n", filename);
   myfile = fopen(filename, "r");
   if ( myfile == NULL ){
     fprintf( stderr, "Could not open file\n" );
@@ -97,13 +98,29 @@ doLoad(){
 		n++;
 	}
 	fclose(myfile);
-	fprintf( stderr, "Read %d lines\n", n);
+	//fprintf( stderr, "Read %d lines\n", n);
 	load_map(globals.mapbuf, &globals.map);
 	}
   return 1;
 }
 int
 doDump(){
+	dump_map(&globals.map);
+	fprintf(stderr, "%s \n", globals.map.data_ascii);
+	return 1;
+}
+int
+doCheck(){
+	int i;
+	doLoad();
+	doDump();
+	for (i = 0; i < 40000; i++){
+		if (globals.mapbuf[i] != globals.map.data_ascii[i]){
+			fprintf(stderr, "Not the same.\n");
+			return 1;
+		}
+	}
+	fprintf(stderr, "All the same.\n");
 	return 1;
 }
 int

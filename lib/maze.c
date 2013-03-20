@@ -12,7 +12,6 @@
 int load_map(char* map_file, Map *map){
   int rc=1;
   Cell ctest;
-  map->data_ascii = map_file;
   int i, j;
   for (j = 0; j < 200; j++){
   	for (i = 0; i < 200; i++){
@@ -51,56 +50,37 @@ int load_map(char* map_file, Map *map){
                         c.p.x = i;
                         c.p.y = j;
                         map->cells[i+(j*200)] = c;
-			if (i+j == (198)){
+			/*if (i+j == (198)){
 				fprintf(stderr, "Last cell type = %d, Team = %d, x = %d, y = %d\n", c.t, c.c, c.p.x, c.p.y);
-			}
+			}*/
                 }
   }
   fprintf(stderr, "Read in %d rows and %d columns\n", j, i);
   return rc;
 }
 
-char* dump_map(Map map){
- /* 
+char* dump_map(Map *map){ 
   int j, i;
   Cell c;
   for (j = 0; j < 200; j++){
         for (i = 0; i < 200; i++){
-                c = map.cells[i+j];
-		if (map.cells[i+j].t == FLOOR){
-		}
-                        switch(map.cells[i+j].t){
-                                case JAIL:
-                                        c.t = FLOOR;
-                                        break;
-                                case '#':
-                                        c.t = WALL;
-                                        break;
-                                case 'h':
-                                        c.t = HOME;
-                                        c.c = RED;
-                                        break;
-                                case 'H':
-                                        c.t = HOME;
-                                        c.c = GREEN;
-                                        break;
-                                case 'j':
-                                        c.t = JAIL;
-                                        c.c = RED;
-                                        break;
-                                case 'J':
-                                        c.t = JAIL;
-                                        c.c = GREEN;
-                                        break;
-                                default:
-                                        return -1;
+                c = map->cells[i+(j*200)];
+			if (c.t == FLOOR){
+				map->data_ascii[i+(j*200)] = ' ';
+			}else if (c.t == WALL){
+				map->data_ascii[i+(j*200)] = '#';
+			}else if (c.t == HOME && c.c == RED ){
+                        	map->data_ascii[i+(j*200)] = 'h';
+                	}else if (c.t == HOME && c.c == GREEN ){
+                                map->data_ascii[i+(j*200)] = 'H';
+                        }else if (c.t == JAIL && c.c == RED ){
+                                map->data_ascii[i+(j*200)] = 'j';
+                        }else if (c.t == JAIL && c.c == GREEN ){
+                                map->data_ascii[i+(j*200)] = 'J';
                         }
-                        c.p.x = i;
-                        c.p.y = j;
-                        map->cells[i+j] = c;
-                }
-  }*/
-  return map.data_ascii;
+	}
+  }
+  return map->data_ascii;
 }
 
 int map_loop_team(Color c, Cell_Type t, Map map){
