@@ -35,10 +35,10 @@ typedef struct
 
 typedef struct
 {
-  char* data_ascii;
+  char data_ascii[40000];
   int w;
   int h;
   int num_wall_cells;
   int num_floor_cells;
-  Cell cells[sizeof(Cell)*20000];
+  Cell cells[sizeof(Cell)*40000];
 } __attribute__((__packed__)) Map;

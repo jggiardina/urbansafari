@@ -198,8 +198,9 @@ doConnect(Client *C)
   //VPRINTF("BEGIN: %s\n", globals.in.data);
 
   if (globals.connected==1) {
-     //fprintf(stderr, "Already connected to server"); //do nothing
-     fprintf(stderr, "\n"); //do nothing
+     fprintf(stderr, "Already connected to server"); //do nothing
+     //fprintf(stderr, "\n"); //do nothing
+     return 1;
   } else {
     for (i=0; i<len; i++) if (globals.in.data[i]==':') globals.in.data[i]=' ';
     sscanf(globals.in.data, "%*s %" XSTR(STRLEN) "s %d", globals.host,
@@ -248,12 +249,18 @@ doMapDump(Client *C)
 {
   int rc = 0;
   printf("pressed dump\n");
-  if (globals.connected!=0) {
+  if (globals.connected!=1) {
     fprintf(stderr, "You are not connected\n"); //do nothing
     return 1;
   }
   rc = proto_client_map_dump(C->ph);
-  return 1;
+  if (rc < 0) {
+    fprintf(stderr, "Something went wrong with dump.\n");
+    return 1; // temporarily dont quit
+  } else {
+    fprintf(stderr, "Dumped on server.\n");
+  }
+  return rc;
 }
 
 int
@@ -262,19 +269,28 @@ doMapInfoTeam(Client *C, char c)
   printf("pressed %c \n", c);
   int team_num = 0;
   int rc = 0;
+  Pos tuple = {0, 0};  
 
   if (globals.connected!=1) {
      fprintf(stderr, "You are not connected\n"); //do nothing
      return 1;
   } else {
-    sscanf(globals.in.data, "%d", &team_num);
+    sscanf(globals.in.data, "%*s %d", &team_num);
   }
-  if (team_num < 3) rc = proto_client_map_info_team(C->ph, team_num);
-  else fprintf(stderr, "Invalid team number\n");
-  
-  if (c == 'h') fprintf(stderr, "numhome=%d\n", rc);
-  if (c == 'j') fprintf(stderr, "numjail=%d\n", rc);
-  return 1;
+  if (team_num == 1) rc = proto_client_map_info_team_1(C->ph, &tuple);
+  else if (team_num == 2) rc = proto_client_map_info_team_2(C->ph, &tuple);
+  else {
+    fprintf(stderr, "Invalid team number\n");
+    return 1;
+  }
+  if (rc < 0) {
+    fprintf(stderr, "Something went wrong with %c.\n", c);
+    return 1; // temporarily dont quit
+  } else {
+    if (c == 'h') fprintf(stderr, "numhome=%d\n", tuple.x);
+    if (c == 'j') fprintf(stderr, "numjail=%d\n", tuple.y);
+  }
+  return rc;
 }
 
 int
@@ -282,14 +298,20 @@ doMapInfo(Client *C, char c)
 {
   printf("pressed %c \n", c);
   int rc = 0;
+  Pos tuple = {0, 0};
+
   if (globals.connected!=1) {
      fprintf(stderr, "You are not connected\n"); //do nothing
   }
-  rc = proto_client_map_info(C->ph);
-  if (c == 'w') fprintf(stderr, "numwall=%d\n", rc);
-  if (c == 'f') fprintf(stderr, "numfloor=%d\n", rc);
-
-  return 1;
+  rc = proto_client_map_info(C->ph, &tuple);
+  if(rc < 0) {
+    fprintf(stderr, "Something went wrong with %c.\n", c);
+    return 1; // temporarily dont quit
+  } else {
+    if (c == 'w') fprintf(stderr, "numwall=%d\n", tuple.x);
+    if (c == 'f') fprintf(stderr, "numfloor=%d\n", tuple.y);
+  }
+  return rc;
 }
 
 int
@@ -304,35 +326,47 @@ doMapDim(Client *C)
      return 1;
   }
   rc = proto_client_map_dim(C->ph, &dim);
+  if (rc < 0) {
+    fprintf(stderr, "Something went wrong with dim.\n");
+    return 1; // temporarily dont quit
+  } else {
+    fprintf(stderr, "Maze Dimensions: %d x %d (width x height)\n", dim.x, dim.y);
+  }
   
-  fprintf(stderr, "Maze Dimensions: %d x %d (width x height)\n", dim.x, dim.y);
-  return 1;
+  return rc;
 }
 
 int
 doMapCinfo(Client *C)
 {
-  printf("pressed dim \n");
+  printf("pressed cinfo \n");
   int rc = 0;
   int x,y = 0;
   Cell_Type *cell_type;
   int team = 0;
-  int occupied = 0;
+  int occupied = -1;
   if (globals.connected!=1) {
      fprintf(stderr, "You are not connected\n"); //do nothing
      return 1;
   }
   int i, len = strlen(globals.in.data);
-  for (i=0; i<len; i++) if (globals.in.data[i]=='<' || globals.in.data[i]==',' || globals.in.data[i]=='>') globals.in.data[i]=' ';
-    sscanf(globals.in.data, "%d" XSTR(STRLEN) "s %d", &x,
-           &y);
+  for (i=0; i<len; i++) if (globals.in.data[i]==',') globals.in.data[i]=' ';
+  sscanf(globals.in.data, "%*s %d %d", &x, &y);
+  if (x < 0 || y < 0) {
+    fprintf(stderr, "Invalid coordinates: <%d,%d>, x and y cannot be negative", x, y);
+    return 1;
+  }
   Pos pos = {x, y};
-  //pos->x = x;
-  //pos->y = y;
+  
   rc = proto_client_map_cinfo(C->ph, &pos, cell_type, &team, &occupied);
-
-  fprintf(stderr, "Cell Info for <%d,%d>: Cell Type: %s, Team: %d, Occupied: %d\n", x, y, *cell_type, team, occupied);
-  return 1;
+  if (rc < 0) {
+    fprintf(stderr, "Something went wrong with cinfo.\n");
+    return 1; // temporarily dont quit
+  } else {
+    fprintf(stderr, "Cell Info for <%d,%d>: Cell Type: %s, Team: %d, Occupied: %d\n", x, y, *cell_type, team, occupied);
+  }
+  
+  return rc;
 }
 
 int

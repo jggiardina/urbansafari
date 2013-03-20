@@ -316,7 +316,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
 }
 
 static int
-do_map_dim_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *dim)
+do_unmarshall_two_ints_from_body_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *dim)
 {
   int rc;
   Proto_Session *s;
@@ -350,6 +350,9 @@ do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type
 
   // marshall
   marshall_mtonly(s, mt);
+  proto_session_body_marshall_int(s, pos->x);
+  proto_session_body_marshall_int(s, pos->y);
+  
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
     proto_session_body_unmarshall_int(s, 0, (int*)cell_type);
@@ -371,26 +374,27 @@ proto_client_hello(Proto_Client_Handle ch)
 }
 
 extern int
-proto_client_map_info_team(Proto_Client_Handle ch, int team_num)
+proto_client_map_info_team_1(Proto_Client_Handle ch, Pos *tuple)
 {
-  Proto_Msg_Types mt;
-  if (team_num == 1) mt = PROTO_MT_REQ_BASE_MAP_INFO_1;
-  else if (team_num == 2) mt = PROTO_MT_REQ_BASE_MAP_INFO_2;
-  else return -1;
-
-  return do_generic_dummy_rpc(ch,mt);
+  return do_unmarshall_two_ints_from_body_rpc(ch,PROTO_MT_REQ_BASE_MAP_INFO_1, tuple);
 }
 
 extern int
-proto_client_map_info(Proto_Client_Handle ch)
+proto_client_map_info_team_2(Proto_Client_Handle ch, Pos *tuple)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MAP_INFO);
+  return do_unmarshall_two_ints_from_body_rpc(ch,PROTO_MT_REQ_BASE_MAP_INFO_2, tuple);
+}
+
+extern int
+proto_client_map_info(Proto_Client_Handle ch, Pos *tuple)
+{
+  return do_unmarshall_two_ints_from_body_rpc(ch,PROTO_MT_REQ_BASE_MAP_INFO, tuple);
 }
 
 extern int
 proto_client_map_dim(Proto_Client_Handle ch, Pos *dim)
 {
-  return do_map_dim_rpc(ch,PROTO_MT_REQ_BASE_MAP_DIM, dim);
+  return do_unmarshall_two_ints_from_body_rpc(ch,PROTO_MT_REQ_BASE_MAP_DIM, dim);
 }
 
 extern int
@@ -402,7 +406,7 @@ proto_client_map_cinfo(Proto_Client_Handle ch, Pos *pos, Cell_Type *cell_type, i
 extern int
 proto_client_map_dump(Proto_Client_Handle ch)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_DUMP);
+  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MAP_DUMP);
 }
 
 /*
