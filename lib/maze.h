@@ -28,8 +28,8 @@ typedef struct
 {
   Pos p;
   Color c;
-  Hammer hammer; //Dont know if we want these
-  Flag flag;  //Dont know if we want these 
+  Hammer *hammer; //Dont know if we want these
+  Flag *flag;  //Dont know if we want these 
   Cell_Type t;
 } __attribute__((__packed__)) Cell;
 

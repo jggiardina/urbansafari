@@ -465,36 +465,39 @@ proto_server_mt_cinfo_handler(Proto_Session *s){
   proto_session_body_unmarshall_int(s, 0, &x);
   proto_session_body_unmarshall_int(s, sizeof(int), &y);
 
-  cinfo(getMap(), &cell_xy, x, y);
+  if (cinfo(getMap(), &cell_xy, x, y)<0) {
+    proto_session_body_marshall_int(s, -1);
+    rc = proto_session_send_msg(s,1);
+  } else {
   
-  if(cell_xy.t == -1 || cell_xy.c == -1){
-    t = -1;
-    team = -1;
-    occupied = -1;
-  }else{
-    t = cell_xy.t;
-
-    if(cell_xy.c == RED){
-      team = 1;
+    if(cell_xy.t == -1 || cell_xy.c == -1){
+      t = -1;
+      team = -1;
+      occupied = -1;
     }else{
-      team = 2;
+      t = cell_xy.t;
+
+      if(cell_xy.c == RED){
+        team = 1;
+      }else{
+        team = 2;
+      }
+
+      if(cell_xy.hammer || cell_xy.flag){
+        occupied = 1;
+      }else{
+        occupied = 0;
+      }
     }
 
-    if(&cell_xy.hammer || &cell_xy.flag){
-      occupied = 1;
-    }else{
-      occupied = 0;
-    }
+    proto_session_hdr_marshall(s, &h);
+  
+    proto_session_body_marshall_int(s, t);
+    proto_session_body_marshall_int(s, team);
+    proto_session_body_marshall_int(s, occupied);
+
+    rc=proto_session_send_msg(s,1);
   }
-
-  proto_session_hdr_marshall(s, &h);
-  
-  proto_session_body_marshall_int(s, t);
-  proto_session_body_marshall_int(s, team);
-  proto_session_body_marshall_int(s, occupied);
-
-  rc=proto_session_send_msg(s,1);
-
   return rc;
 }
 

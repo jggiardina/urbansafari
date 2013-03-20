@@ -11,13 +11,12 @@
 
 int load_map(char* map_file, Map *map){
   int rc=1;
-  Cell ctest;
   int i, j;
-	map->num_floor_cells = 0;
-	map->num_wall_cells = 0;
+  map->num_floor_cells = 0;
+  map->num_wall_cells = 0;
   for (j = 0; j < 200; j++){
   	for (i = 0; i < 200; i++){
-		Cell c;
+             Cell c;
              if (i > 99) {
                                 c.c = GREEN;
                         }else{
@@ -138,11 +137,10 @@ int dim(Map *map, Pos *d){
 }
 
 int cinfo(Map *map, Cell *cell, int x, int y){
-  if(x > map->w || y > map->h){
-    cell->t = -1;
-    cell->c = -1;
+  if(x > map->w-1 || y > map->h-1){
+    return -1;
   }else{
-    cell = &map->cells[x+(y*200)];
+    *cell = map->cells[x+(y*200)];
   }
 
   return 1;
