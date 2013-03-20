@@ -78,35 +78,41 @@ proto_dump_mt(Proto_Msg_Types type)
   case PROTO_MT_EVENT_BASE_GOODBYE:
     fprintf(stderr, "PROTO_MT_EVENT_BASE_GOODBYE");
     break;
-  case PROTO_MT_REQ_BASE_DUMP:
-    fprintf(stderr, "PROTO_MT_REQ_BASE_DUMP");
+  case PROTO_MT_REQ_BASE_MAP_DUMP:
+    fprintf(stderr, "PROTO_MT_REQ_BASE_MAP_DUMP");
     break;
-  case PROTO_MT_REP_BASE_DUMP:
-    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+  case PROTO_MT_REP_BASE_MAP_DUMP:
+    fprintf(stderr, "PROTO_MT_REP_BASE_MAP_DUMP");
     break;
-  case PROTO_MT_REQ_BASE_DIM:
-    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+  case PROTO_MT_REQ_BASE_MAP_DIM:
+    fprintf(stderr, "PROTO_MT_REQ_BASE_MAP_DIM");
     break;
-  case PROTO_MT_REP_BASE_DIM:
-    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+  case PROTO_MT_REP_BASE_MAP_DIM:
+    fprintf(stderr, "PROTO_MT_REP_BASE_MAP_DIM");
     break;
   case PROTO_MT_REQ_BASE_MAP_INFO_1:
-    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    fprintf(stderr, "PROTO_MT_REQ_BASE_MAP_INFO_1");
     break;
   case PROTO_MT_REP_BASE_MAP_INFO_1:
-    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    fprintf(stderr, "PROTO_MT_REP_BASE_MAP_INFO_1");
     break;
   case PROTO_MT_REQ_BASE_MAP_INFO_2:
-    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    fprintf(stderr, "PROTO_MT_REQ_BASE_MAP_INFO_2");
     break;
   case PROTO_MT_REP_BASE_MAP_INFO_2:
-    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    fprintf(stderr, "PROTO_MT_REP_BASE_MAP_INFO_2");
     break;
   case PROTO_MT_REQ_BASE_MAP_INFO:
-    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    fprintf(stderr, "PROTO_MT_REQ_BASE_MAP_INFO");
     break;
   case PROTO_MT_REP_BASE_MAP_INFO:
-    fprintf(stderr, "PROTO_MT_REP_BASE_DUMP");
+    fprintf(stderr, "PROTO_MT_REP_BASE_MAP_INFO");
+    break;
+  case PROTO_MT_REQ_BASE_MAP_CINFO:
+    fprintf(stderr, "PROTO_MT_REQ_BASE_MAP_CINFO");
+    break;
+  case PROTO_MT_REP_BASE_MAP_CINFO:
+    fprintf(stderr, "PROTO_MT_REP_BASE_MAP_CINFO");
     break;
   default:
     fprintf(stderr, "UNKNOWN=%d", type);
