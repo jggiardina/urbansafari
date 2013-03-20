@@ -146,12 +146,21 @@ int num_wall(Map map){
 }
 
 Pos* dim(Map map){
-  Pos d;
-  d.x = 10;//map.w;
-  d.y = 20;//map.h;
-  return &d;
+  Pos* d;
+  d->x = 10;//map.w;
+  d->y = 20;//map.h;
+  return d;
 }
 
-int cinfo(){
-  NYI;assert(0);
+Cell* cinfo(Map map, int x, int y){
+  Cell* cell;
+
+  if(x > map.w || y > map.h){
+    cell->t = -1;
+    cell->c = -1;
+  }else{
+    cell = &map.cells[x,y];
+  }
+
+  return cell;
 }

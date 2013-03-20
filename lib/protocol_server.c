@@ -347,7 +347,7 @@ proto_server_mt_dump_handler(Proto_Session *s){
   proto_session_hdr_marshall(s, &h);
   
   //Dump out ASCII of map
-  char* map_data = dump_map(game_map);
+  char* map_data = (char*)dump_map(game_map);
   fprintf(stderr, "%s", map_data);
  
   rc=proto_session_send_msg(s,1);
@@ -422,7 +422,7 @@ static int
 proto_server_mt_dim_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
-  Pos *dimensions;
+  Pos* dimensions;
 
   fprintf(stderr, "proto_server_mt_dim_handler: invoked for session:\n");
   proto_session_dump(s);
@@ -432,11 +432,66 @@ proto_server_mt_dim_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
   
-  dimensions = dim(game_map);
+  dimensions = (Pos*)dim(game_map);
   int x = dimensions->x;
   int y = dimensions->y;
   proto_session_body_marshall_int(s, x);
   proto_session_body_marshall_int(s, y);
+
+  rc=proto_session_send_msg(s,1);
+
+  return rc;
+}
+
+/* Handler for returning cinfo */
+static int
+proto_server_mt_cinfo_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+  Cell_Type t;
+  int team=0;
+  int occupied=0;
+  Cell* cell_xy;  
+
+  int x;
+  int y;  
+
+  fprintf(stderr, "proto_server_mt_dim_handler: invoked for session:\n");
+  proto_session_dump(s);
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+
+  proto_session_body_unmarshall_int(s, 0, &x);
+  proto_session_body_unmarshall_int(s, sizeof(int), &y);
+
+  cell_xy = (Cell*)cinfo(game_map, x, y);
+  
+  if(cell_xy->t == -1 || cell_xy->c == -1){
+    t = -1;
+    team = -1;
+    occupied = -1;
+  }else{
+    t = cell_xy->t;
+
+    if(cell_xy->c == RED){
+      team = 1;
+    }else{
+      team = 2;
+    }
+
+    if(&cell_xy->hammer || &cell_xy->flag){
+      occupied = 1;
+    }else{
+      occupied = 0;
+    }
+  }
+
+  proto_session_hdr_marshall(s, &h);
+  
+  proto_session_body_marshall_int(s, t);
+  proto_session_body_marshall_int(s, team);
+  proto_session_body_marshall_int(s, occupied);
 
   rc=proto_session_send_msg(s,1);
 
