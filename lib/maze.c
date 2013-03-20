@@ -127,8 +127,8 @@ int num_wall(Map *map){
 
 Pos* dim(Map *map){
   Pos* d;
-  d->x = map.w;
-  d->y = map.h;
+  d->x = map->w;
+  d->y = map->h;
   return d;
 }
 
