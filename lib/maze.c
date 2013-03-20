@@ -13,6 +13,8 @@ int load_map(char* map_file, Map *map){
   int rc=1;
   Cell ctest;
   int i, j;
+	map->num_floor_cells = 0;
+	map->num_wall_cells = 0;
   for (j = 0; j < 200; j++){
   	for (i = 0; i < 200; i++){
 		Cell c;
@@ -23,9 +25,11 @@ int load_map(char* map_file, Map *map){
                         }
                         switch(map_file[i+(j*200)]){
                                 case ' ':
+					map->num_floor_cells++;
                                         c.t = FLOOR;
                                         break;
                                 case '#':
+					map->num_wall_cells++;
                                         c.t = WALL;
                                         break;
                                 case 'h':
@@ -55,6 +59,8 @@ int load_map(char* map_file, Map *map){
 			}*/
                 }
   }
+  map->w = 200;
+  map->h = 200;
   fprintf(stderr, "Read in %d rows and %d columns\n", j, i);
   return rc;
 }
