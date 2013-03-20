@@ -302,6 +302,7 @@ doMapInfo(Client *C, char c)
 
   if (globals.connected!=1) {
      fprintf(stderr, "You are not connected\n"); //do nothing
+     return 1;
   }
   rc = proto_client_map_info(C->ph, &tuple);
   if(rc < 0) {
