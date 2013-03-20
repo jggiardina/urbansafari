@@ -36,10 +36,8 @@
 #include "protocol_utils.h"
 #include "protocol_server.h"
 #include "misc.h"
-#include "maze.c"
+#include "maze.h"
 #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
-
-Map game_map;
 
 struct {
   FDType   RPCListenFD;
@@ -60,6 +58,7 @@ struct {
 				       PROTO_MT_REQ_BASE_RESERVED_FIRST-1];
 } Proto_Server;
 
+Map game_map;
 
 extern PortType proto_server_rpcport(void) { return Proto_Server.RPCPort; }
 extern PortType proto_server_eventport(void) { return Proto_Server.EventPort; }
@@ -381,8 +380,9 @@ proto_server_mt_map_info_team_handler(Proto_Session *s){
   jail_cells = num_jail(c, game_map);
 
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  h.gstate.v0.raw = home_cells;
-  h.gstate.v1.raw = jail_cells;
+  proto_session_body_marshall_int(s, home_cells);
+  proto_session_body_marshall_int(s, jail_cells);
+
   proto_session_hdr_marshall(s, &h);
   
   rc=proto_session_send_msg(s,1);
@@ -408,9 +408,9 @@ proto_server_mt_map_info_handler(Proto_Session *s){
   floor_cells = num_floor(game_map);
 
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  h.gstate.v0.raw = wall_cells;
-  h.gstate.v1.raw = floor_cells;
   proto_session_hdr_marshall(s, &h);
+  proto_session_body_marshall_int(s, wall_cells);
+  proto_session_body_marshall_int(s, floor_cells);
 
   rc=proto_session_send_msg(s,1);
 
@@ -422,7 +422,7 @@ static int
 proto_server_mt_dim_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
-  Pos dimensions;
+  Pos *dimensions;
 
   fprintf(stderr, "proto_server_mt_dim_handler: invoked for session:\n");
   proto_session_dump(s);
@@ -433,8 +433,8 @@ proto_server_mt_dim_handler(Proto_Session *s){
   proto_session_hdr_marshall(s, &h);
   
   dimensions = dim(game_map);
-  int x = dimensions.x;
-  int y = dimensions.y;
+  int x = dimensions->x;
+  int y = dimensions->y;
   proto_session_body_marshall_int(s, x);
   proto_session_body_marshall_int(s, y);
 

@@ -9,14 +9,78 @@
 #include "misc.h"
 #include "maze.h"
 
-int load_map(char* map_file, Map map){
+int load_map(char* map_file, Map *map){
   int rc=1;
-  
+  Cell ctest;
+  int i, j;
+  for (j = 0; j < 200; j++){
+  	for (i = 0; i < 200; i++){
+		Cell c;
+             if (i > 99) {
+                                c.c = GREEN;
+                        }else{
+                                c.c = RED;
+                        }
+                        switch(map_file[i+(j*200)]){
+                                case ' ':
+                                        c.t = FLOOR;
+                                        break;
+                                case '#':
+                                        c.t = WALL;
+                                        break;
+                                case 'h':
+                                        c.t = HOME;
+                                        c.c = RED;
+                                        break;
+                                case 'H':
+                                        c.t = HOME;
+                                        c.c = GREEN;
+                                        break;
+                                case 'j':
+                                        c.t = JAIL;
+                                        c.c = RED;
+                                        break;
+                                case 'J':
+                                        c.t = JAIL;
+                                        c.c = GREEN;
+                                        break;
+                                default:
+                                        return -1;
+                        }
+                        c.p.x = i;
+                        c.p.y = j;
+                        map->cells[i+(j*200)] = c;
+			/*if (i+j == (198)){
+				fprintf(stderr, "Last cell type = %d, Team = %d, x = %d, y = %d\n", c.t, c.c, c.p.x, c.p.y);
+			}*/
+                }
+  }
+  fprintf(stderr, "Read in %d rows and %d columns\n", j, i);
   return rc;
 }
 
-char* dump_map(Map map){
-  return map.data_ascii;
+char* dump_map(Map *map){ 
+  int j, i;
+  Cell c;
+  for (j = 0; j < 200; j++){
+        for (i = 0; i < 200; i++){
+                c = map->cells[i+(j*200)];
+			if (c.t == FLOOR){
+				map->data_ascii[i+(j*200)] = ' ';
+			}else if (c.t == WALL){
+				map->data_ascii[i+(j*200)] = '#';
+			}else if (c.t == HOME && c.c == RED ){
+                        	map->data_ascii[i+(j*200)] = 'h';
+                	}else if (c.t == HOME && c.c == GREEN ){
+                                map->data_ascii[i+(j*200)] = 'H';
+                        }else if (c.t == JAIL && c.c == RED ){
+                                map->data_ascii[i+(j*200)] = 'j';
+                        }else if (c.t == JAIL && c.c == GREEN ){
+                                map->data_ascii[i+(j*200)] = 'J';
+                        }
+	}
+  }
+  return map->data_ascii;
 }
 
 int map_loop_team(Color c, Cell_Type t, Map map){
@@ -61,11 +125,11 @@ int num_wall(Map map){
   return map.num_wall_cells;
 }
 
-Pos dim(Map map){
+Pos* dim(Map map){
   Pos d;
   d.x = 10;//map.w;
   d.y = 20;//map.h;
-  return d;
+  return &d;
 }
 
 int cinfo(){
