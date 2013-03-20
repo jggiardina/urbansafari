@@ -2,7 +2,7 @@
 #include "protocol.h"
 #include "protocol_session.h"
 
-typedef enum {JAIL, HOME, FLOOR} Cell_Type;
+typedef enum {JAIL, HOME, FLOOR, WALL} Cell_Type;
 
 typedef enum {RED, GREEN} Color;
 
@@ -40,5 +40,5 @@ typedef struct
   int h;
   int num_wall_cells;
   int num_floor_cells;
-  Cell cells[];
+  Cell cells[sizeof(Cell)*20000];
 } __attribute__((__packed__)) Map;
