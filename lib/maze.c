@@ -83,13 +83,13 @@ char* dump_map(Map *map){
   return map->data_ascii;
 }
 
-int map_loop_team(Color c, Cell_Type t, Map map){
+int map_loop_team(Color c, Cell_Type t, Map *map){
   int cells=0;  
   int i,j = 0;
   
-  for(i=0;i<map.h;i++){
-    for(j=0;j<map.w;j++){
-      Cell cur_cell = map.cells[i,j];
+  for(i=0;i<map->h;i++){
+    for(j=0;j<map->w;j++){
+      Cell cur_cell = map->cells[i,j];
       if(cur_cell.t == t && cur_cell.c == c){
         cells++;  
       }   
@@ -99,7 +99,7 @@ int map_loop_team(Color c, Cell_Type t, Map map){
   return cells;
 }
 
-int num_home(Color c, Map map){
+int num_home(Color c, Map *map){
   int cells=0;
   Cell_Type t = HOME;
 
@@ -108,7 +108,7 @@ int num_home(Color c, Map map){
   return cells;
 }
 
-int num_jail(Color c, Map map){
+int num_jail(Color c, Map *map){
   int cells=0;
   Cell_Type t = JAIL;
 
@@ -117,29 +117,29 @@ int num_jail(Color c, Map map){
   return cells;
 }
 
-int num_floor(Map map){
-  return map.num_floor_cells;
+int num_floor(Map *map){
+  return map->num_floor_cells;
 }
 
-int num_wall(Map map){
-  return map.num_wall_cells;
+int num_wall(Map *map){
+  return map->num_wall_cells;
 }
 
-Pos* dim(Map map){
+Pos* dim(Map *map){
   Pos* d;
   d->x = 10;//map.w;
   d->y = 20;//map.h;
   return d;
 }
 
-Cell* cinfo(Map map, int x, int y){
+Cell* cinfo(Map *map, int x, int y){
   Cell* cell;
 
-  if(x > map.w || y > map.h){
+  if(x > map->w || y > map->h){
     cell->t = -1;
     cell->c = -1;
   }else{
-    cell = &map.cells[x,y];
+    cell = &map->cells[x,y];
   }
 
   return cell;

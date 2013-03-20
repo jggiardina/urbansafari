@@ -347,7 +347,7 @@ proto_server_mt_dump_handler(Proto_Session *s){
   proto_session_hdr_marshall(s, &h);
   
   //Dump out ASCII of map
-  char* map_data = (char*)dump_map(game_map);
+  char* map_data = (char*)dump_map(getMap());
   fprintf(stderr, "%s", map_data);
  
   rc=proto_session_send_msg(s,1);
@@ -376,8 +376,8 @@ proto_server_mt_map_info_team_handler(Proto_Session *s){
     c = GREEN;
   }
 
-  home_cells = num_home(c, game_map);
-  jail_cells = num_jail(c, game_map);
+  home_cells = num_home(c, getMap());
+  jail_cells = num_jail(c, getMap());
 
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_body_marshall_int(s, home_cells);
@@ -404,8 +404,8 @@ proto_server_mt_map_info_handler(Proto_Session *s){
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
 
-  wall_cells = num_wall(game_map);
-  floor_cells = num_floor(game_map);
+  wall_cells = num_wall(getMap());
+  floor_cells = num_floor(getMap());
 
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
@@ -432,7 +432,7 @@ proto_server_mt_dim_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
   
-  dimensions = (Pos*)dim(game_map);
+  dimensions = (Pos*)dim(getMap());
   int x = dimensions->x;
   int y = dimensions->y;
   proto_session_body_marshall_int(s, x);
@@ -465,7 +465,7 @@ proto_server_mt_cinfo_handler(Proto_Session *s){
   proto_session_body_unmarshall_int(s, 0, &x);
   proto_session_body_unmarshall_int(s, sizeof(int), &y);
 
-  cell_xy = (Cell*)cinfo(game_map, x, y);
+  cell_xy = (Cell*)cinfo(getMap(), x, y);
   
   if(cell_xy->t == -1 || cell_xy->c == -1){
     t = -1;
