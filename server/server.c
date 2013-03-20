@@ -26,6 +26,7 @@
 
 #include <sys/types.h>
 #include <poll.h>
+#include "../lib/maze.c"
 #include "../lib/types.h"
 #include "../lib/protocol_server.h"
 #include "../lib/protocol_utils.h"
@@ -41,6 +42,8 @@ struct LineBuffer {
 
 struct Globals {
   struct LineBuffer in;
+  Map map;
+  char mapbuf[20000];
 } globals;
 
 int 
@@ -57,7 +60,8 @@ doUpdateClients(void)
 }
 
 char MenuString[] =
-  "d/D-debug on/off u-update clients q-quit";
+  "server>";
+
 
 int 
 docmd(char cmd)
@@ -73,69 +77,30 @@ docmd(char cmd)
   return rc;
 }
 int
-doLoad(Map map){
+doLoad(){
   char filename[256];
   char linebuf[240];
-  char mapbuf[20000];
   FILE * myfile;
-  int i, n, len = strlen(globals.in.data);
+  int i, n, len;
   sscanf(globals.in.data, "%*s %s", filename);
+  fprintf(stderr, "Opening file %s \n", filename);
   myfile = fopen(filename, "r");
-  if ( myfile == 0 ){
+  if ( myfile == NULL ){
     fprintf( stderr, "Could not open file\n" );
-  }
-        else{
-		n = 0;
-         while(fgets(linebuf, sizeof(linebuf), myfile)){
-		for (i = 0; i < 200; i++){
-			mapbuf[i+n] = linebuf[i+n];
-			 
-			/*if (i > 99) {
-				c.c = GREEN;
-			}else{
-				c.c = RED;
-			}
-			switch(linebuf[i]){
-				case ' ':
-					c.t = FLOOR;
-					break;
-				case '#':
-					c.t = WALL;
-					break;
-				case 'h':
-					c.t = HOME;
-					c.c = RED;
-					break;
-				case 'H':
-					c.t = HOME;
-					c.c = GREEN;
-					break;
-				case 'j':
-					c.t = JAIL;
-					c.c = RED;
-					break;
-				case 'J':
-					c.t = JAIL;
-					c.c = GREEN;
-					break;
-				default:
-					fprintf(stderr, "Invalid input character: %s", linebuf[i]);
-					return -1;
-			}
-			c.p.x = i;
-			c.p.y = n;
-			map.cells[i+n] = c;
-		}
-		n+= 200;
+  }else{
+	n = 0;
+        while(fgets(linebuf, sizeof(linebuf), myfile) != NULL){
+  		for (i = 0; i < 200; i++){
+			globals.mapbuf[i+(n*200)] = linebuf[i];
+  		}		 
 		bzero(linebuf, sizeof(linebuf));
-		*/
+		n++;
 	}
-}
-load_map(mapbuf);
-    }
-
+	fclose(myfile);
+	fprintf( stderr, "Read %d lines\n", n);
+	load_map(globals.mapbuf, &globals.map);
+	}
   return 1;
-
 }
 int
 doDump(){

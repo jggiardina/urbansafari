@@ -36,10 +36,8 @@
 #include "protocol_utils.h"
 #include "protocol_server.h"
 #include "misc.h"
-#include "maze.c"
+#include "maze.h"
 #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
-
-Map game_map;
 
 struct {
   FDType   RPCListenFD;
@@ -60,6 +58,7 @@ struct {
 				       PROTO_MT_REQ_BASE_RESERVED_FIRST-1];
 } Proto_Server;
 
+Map game_map;
 
 extern PortType proto_server_rpcport(void) { return Proto_Server.RPCPort; }
 extern PortType proto_server_eventport(void) { return Proto_Server.EventPort; }
@@ -422,7 +421,7 @@ static int
 proto_server_mt_dim_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
-  Pos dimensions;
+  Pos *dimensions;
 
   fprintf(stderr, "proto_server_mt_dim_handler: invoked for session:\n");
   proto_session_dump(s);
@@ -433,8 +432,8 @@ proto_server_mt_dim_handler(Proto_Session *s){
   proto_session_hdr_marshall(s, &h);
   
   dimensions = dim(game_map);
-  int x = dimensions.x;
-  int y = dimensions.y;
+  int x = dimensions->x;
+  int y = dimensions->y;
   proto_session_body_marshall_int(s, x);
   proto_session_body_marshall_int(s, y);
 
