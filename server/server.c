@@ -42,6 +42,7 @@ struct LineBuffer {
 
 struct Globals {
   struct LineBuffer in;
+  int isLoaded;
   Map map;
   char mapbuf[40000];
 } globals;
@@ -100,13 +101,18 @@ doLoad(){
 	fclose(myfile);
 	//fprintf( stderr, "Read %d lines\n", n);
 	load_map(globals.mapbuf, &globals.map);
+	globals.isLoaded = 1;
 	}
   return 1;
 }
 int
 doDump(){
-	dump_map(&globals.map);
-	fprintf(stderr, "%s \n", globals.map.data_ascii);
+	if (globals.isLoaded == 1){
+		dump_map(&globals.map);
+		fprintf(stderr, "%s \n", globals.map.data_ascii);
+	}else{
+		fprintf(stderr, "no file loaded yet \n", globals.map.data_ascii);
+	}
 	return 1;
 }
 int
@@ -122,6 +128,10 @@ doCheck(){
 	}
 	fprintf(stderr, "All the same.\n");
 	return 1;
+}
+Map*
+getMap(){
+  return &globals.map;
 }
 int
 prompt(int menu) 
@@ -163,6 +173,7 @@ shell(void *arg)
   int c;
   int rc=1;
   int menu=1;
+  globals.isLoaded = 0;
 
   while (1) {
     if ((c=prompt(menu))!=0) rc=docmd(c);
