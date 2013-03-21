@@ -17,6 +17,7 @@ int load_map(char* map_file, Map *map){
   for (j = 0; j < 200; j++){
   	for (i = 0; i < 200; i++){
              Cell c;
+	     c.hammer = NULL; c.flag = NULL;
              if (i > 99) {
                                 c.c = GREEN;
                         }else{
