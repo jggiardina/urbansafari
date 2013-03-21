@@ -141,7 +141,7 @@ prompt(int menu)
   int ret;
   int c=0;
 
-  if (menu) printf("%s:", MenuString);
+  if (menu) printf("%s", MenuString);
   fflush(stdout);
   c=getInput();
   return c;
