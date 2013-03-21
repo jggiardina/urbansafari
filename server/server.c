@@ -76,6 +76,8 @@ docmd(char cmd)
                    sizeof("dump")-1)==0) rc = doDump();
   else if (strncmp(globals.in.data, "check",
                    sizeof("check")-1)==0) rc = doCheck();
+  else if (strncmp(globals.in.data, "quit",
+		sizeof("check")-1)==0) rc = -1;
   return rc;
 }
 int
