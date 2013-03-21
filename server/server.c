@@ -44,7 +44,7 @@ struct Globals {
   struct LineBuffer in;
   int isLoaded;
   Map map;
-  char mapbuf[40000];
+  char mapbuf[MAPHEIGHT*MAPWIDTH];
 } globals;
 
 int 
@@ -94,8 +94,8 @@ doLoad(){
   }else{
 	n = 0;
         while(fgets(linebuf, sizeof(linebuf), myfile) != NULL){
-  		for (i = 0; i < 200; i++){
-			globals.mapbuf[i+(n*200)] = linebuf[i];
+  		for (i = 0; i < MAPWIDTH; i++){
+			globals.mapbuf[i+(n*MAPHEIGHT)] = linebuf[i];
   		}		 
 		bzero(linebuf, sizeof(linebuf));
 		n++;
@@ -122,7 +122,7 @@ doCheck(){
 	int i;
 	doLoad();
 	doDump();
-	for (i = 0; i < 40000; i++){
+	for (i = 0; i < MAPHEIGHT*MAPWIDTH; i++){
 		if (globals.mapbuf[i] != globals.map.data_ascii[i]){
 			fprintf(stderr, "Not the same.\n");
 			return 1;

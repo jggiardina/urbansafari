@@ -1,6 +1,8 @@
 #include "net.h"
 #include "protocol.h"
 #include "protocol_session.h"
+#define MAPHEIGHT 200
+#define MAPWIDTH 200
 
 typedef enum {JAIL, HOME, FLOOR, WALL} Cell_Type;
 
