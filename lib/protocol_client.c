@@ -356,6 +356,8 @@ do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
     proto_session_body_unmarshall_int(s, 0, (int*)cell_type);
+    if (*cell_type==-1)
+      return -1;//failed, so return -1
     proto_session_body_unmarshall_int(s, sizeof(int), team);
     proto_session_body_unmarshall_int(s, 2*sizeof(int), occupied);
   } else {

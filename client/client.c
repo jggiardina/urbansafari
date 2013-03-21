@@ -260,7 +260,7 @@ doMapDump(Client *C)
   } else {
     fprintf(stderr, "Dumped on server.\n");
   }
-  return rc;
+  return 1;
 }
 
 int
@@ -302,6 +302,7 @@ doMapInfo(Client *C, char c)
 
   if (globals.connected!=1) {
      fprintf(stderr, "You are not connected\n"); //do nothing
+     return 1;
   }
   rc = proto_client_map_info(C->ph, &tuple);
   if(rc < 0) {
@@ -342,7 +343,7 @@ doMapCinfo(Client *C)
   printf("pressed cinfo \n");
   int rc = 0;
   int x,y = 0;
-  Cell_Type *cell_type;
+  Cell_Type cell_type;
   int team = 0;
   int occupied = -1;
   if (globals.connected!=1) {
@@ -358,12 +359,12 @@ doMapCinfo(Client *C)
   }
   Pos pos = {x, y};
   
-  rc = proto_client_map_cinfo(C->ph, &pos, cell_type, &team, &occupied);
+  rc = proto_client_map_cinfo(C->ph, &pos, &cell_type, &team, &occupied);
   if (rc < 0) {
-    fprintf(stderr, "Something went wrong with cinfo.\n");
+    fprintf(stderr, "Something went wrong with cinfo, check coords.\n");
     return 1; // temporarily dont quit
   } else {
-    fprintf(stderr, "Cell Info for <%d,%d>: Cell Type: %s, Team: %d, Occupied: %d\n", x, y, *cell_type, team, occupied);
+    fprintf(stderr, "Cell Info for <%d,%d>: Cell Type: %d, Team: %d, Occupied: %d\n", x, y, cell_type, team, occupied);
   }
   
   return rc;

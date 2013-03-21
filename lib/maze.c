@@ -11,13 +11,12 @@
 
 int load_map(char* map_file, Map *map){
   int rc=1;
-  Cell ctest;
   int i, j;
-	map->num_floor_cells = 0;
-	map->num_wall_cells = 0;
+  map->num_floor_cells = 0;
+  map->num_wall_cells = 0;
   for (j = 0; j < 200; j++){
   	for (i = 0; i < 200; i++){
-		Cell c;
+             Cell c;
              if (i > 99) {
                                 c.c = GREEN;
                         }else{
@@ -95,7 +94,7 @@ int map_loop_team(Color c, Cell_Type t, Map *map){
   
   for(i=0;i<map->h;i++){
     for(j=0;j<map->w;j++){
-      Cell cur_cell = map->cells[i,j];
+      Cell cur_cell = map->cells[j+(i*200)];
       if(cur_cell.t == t && cur_cell.c == c){
         cells++;  
       }   
@@ -131,22 +130,18 @@ int num_wall(Map *map){
   return map->num_wall_cells;
 }
 
-Pos* dim(Map *map){
-  Pos* d;
+int dim(Map *map, Pos *d){
   d->x = map->w;
   d->y = map->h;
-  return d;
+  return 1;
 }
 
-Cell* cinfo(Map *map, int x, int y){
-  Cell* cell;
-
-  if(x > map->w || y > map->h){
-    cell->t = -1;
-    cell->c = -1;
+int cinfo(Map *map, Cell *cell, int x, int y){
+  if(x > map->w-1 || y > map->h-1){
+    return -1;
   }else{
-    cell = &map->cells[x,y];
+    *cell = map->cells[x+(y*200)];
   }
 
-  return cell;
+  return 1;
 }
