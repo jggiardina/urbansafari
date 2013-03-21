@@ -347,9 +347,7 @@ proto_server_mt_dump_handler(Proto_Session *s){
   proto_session_hdr_marshall(s, &h);
   
   //Dump out ASCII of map
-  char* map_data = (char*)dump_map(getMap());
-  fprintf(stderr, "%s", map_data);
- 
+  doDump();
   rc=proto_session_send_msg(s,1);
   
   return rc;
