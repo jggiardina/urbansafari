@@ -111,7 +111,7 @@ int
 doDump(){
 	if (globals.isLoaded == 1){
 		dump_map(&globals.map);
-		fprintf(stderr, "%s \n", globals.map.data_ascii);
+		fprintf(stdout, "%s \n", globals.map.data_ascii);
 	}else{
 		fprintf(stderr, "no file loaded yet \n", globals.map.data_ascii);
 	}
@@ -128,7 +128,7 @@ doCheck(){
 			return 1;
 		}
 	}
-	fprintf(stderr, "All the same.\n");
+	fprintf(stdout, "All the same.\n");
 	return 1;
 }
 Map*
@@ -194,7 +194,7 @@ main(int argc, char **argv)
     fprintf(stderr, "ERROR: failed to initialize proto_server subsystem\n");
     exit(-1);
   }
-  fprintf(stderr, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(), 
+  fprintf(stdout, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(), 
 	  proto_server_eventport());
 
   if (proto_server_start_rpc_loop()<0) {

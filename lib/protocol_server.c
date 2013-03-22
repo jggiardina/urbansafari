@@ -107,6 +107,7 @@ proto_server_record_event_subscriber(int fd, int *num)
     //Proto_Server.EventLastSubscriber = 0; 
     Proto_Server.EventNumSubscribers++;
     Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = fd;
+    *num=Proto_Server.EventLastSubscriber;
     rc = 1;
   } else {
     int i;
@@ -186,11 +187,12 @@ proto_server_post_event(void)
 	//END ADDED CODE
 	// must have lost an event connection
 	close(Proto_Server.EventSession.fd+1);
+	close(Proto_Server.EventSession.fd);
 	Proto_Server.EventSubscribers[i]=-1;
 	Proto_Server.EventNumSubscribers--;
 	Proto_Server.session_lost_handler(&Proto_Server.EventSession);
 	//Proto_Server.ADD CODE
-      } else {
+      }/* else {
 	//ADDED CODE -WA
 	//fprintf(stderr, "message was sent\n");
       	FD_ZERO(&fdset);//zero the set
@@ -211,7 +213,7 @@ proto_server_post_event(void)
         	//Proto_Server.ADD CODE
 	}
       }
-      //END ADDED CODE -WA
+      *///END ADDED CODE -WA
       // FIXME: add ack message here to ensure that game is updated 
       // correctly everywhere... at the risk of making server dependent
       // on client behaviour  (use time out to limit impact... drop
@@ -541,14 +543,14 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
   int i;
   
   pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
- fprintf(stderr, "looking for %d", userfd+1);
+ fprintf(stderr, "looking for %d\n", userfd);
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
     if(Proto_Server.EventSubscribers[i] == userfd-1){
       Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
       Proto_Server.EventSubscribers[i] = -1;
       Proto_Server.EventNumSubscribers--;
       //Proto_Server.EventLastSubscriber = (i==0 ? 0 : i-1);
-      fprintf(stderr, "disconnected from %d", Proto_Server.EventSession.fd);
+      fprintf(stderr, "disconnected from %d\n", Proto_Server.EventSession.fd);
       close(Proto_Server.EventSession.fd);
       close(Proto_Server.EventSession.fd+1);
       Proto_Server.session_lost_handler(&Proto_Server.EventSession);

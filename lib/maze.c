@@ -86,7 +86,7 @@ char* dump_map(Map *map){
                         }
 	}
   }
-  return &map->data_ascii;
+  return (char*)&map->data_ascii;
 }
 
 int map_loop_team(Color c, Cell_Type t, Map *map){

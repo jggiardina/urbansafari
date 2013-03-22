@@ -80,7 +80,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 {
   if (globals.host[0]!=0 && globals.port!=0) {
     if(proto_client_connect(C->ph, host, port)!=0) {
-      fprintf(stderr, "failed to connect\n");
+      //fprintf(stderr, "failed to connect\n");
       return -1;
     }
     proto_session_set_data(proto_client_event_session(C->ph), C);
@@ -94,14 +94,16 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 }
 
 int
-startDisconnection(Client *C, char *host, PortType port)
+startDisconnection(Client *C)
 {
-  if (globals.host[0]!=0 && globals.port!=0) {
-    if(proto_client_goodbye(C->ph/*, host, port*/)<0)
-      return -1;
-  }
-  globals.connected = 0;
-  //C->player_type = '?';
+  if(proto_client_goodbye(C->ph)<0)
+    return -1;
+  // close connection to rpc and event channel
+  Proto_Session* sr = proto_client_rpc_session(C->ph);
+  Proto_Session* se = proto_client_event_session(C->ph);
+  close(sr->fd);
+  close(se->fd);
+  globals.connected = 0; // TODO: TESTING RPC DISCONNECT AND SUCH
   return 0;
 }
 
@@ -218,29 +220,29 @@ doConnect(Client *C)
     }
   }
   globals.connected = 1;
-  fprintf(stderr, "Connected to <%s:%d>\n", globals.host, globals.port);
+  fprintf(stdout, "Connected to <%s:%d>\n", globals.host, globals.port);
   //VPRINTF("END: %s %d %d\n", globals.server, globals.port, globals.serverFD);
   return 1;
 }
-/*
+
 int
 doDisconnect(Client *C)
 {
   if (globals.connected == 0)
     return 1; // do nothing
-  if (startDisconnection(C, globals.host, globals.port)<0)
+  if (startDisconnection(C)<0)
   {
     fprintf(stderr, "Not able to disconnect from <%s:%d>\n", globals.host, globals.port);
-        return 1;
+    return 1;
   }
-  printf("Game Over: You Quit\n");
+  fprintf(stdout, "Disconnected\n");
   return 1;
 }
-*/
+
 int
 doEnter(Client *C)
 {
-  printf("pressed enter\n");
+  //printf("pressed enter\n");
   return 1;
 }
 
@@ -248,7 +250,7 @@ int
 doMapDump(Client *C)
 {
   int rc = 0;
-  printf("pressed dump\n");
+  //printf("pressed dump\n");
   if (globals.connected!=1) {
     fprintf(stderr, "You are not connected\n"); //do nothing
     return 1;
@@ -258,7 +260,7 @@ doMapDump(Client *C)
     fprintf(stderr, "Something went wrong with dump.\n");
     return 1; // temporarily dont quit
   } else {
-    fprintf(stderr, "Dumped on server.\n");
+    fprintf(stdout, "Dumped on server.\n");
   }
   return 1;
 }
@@ -266,7 +268,7 @@ doMapDump(Client *C)
 int
 doMapInfoTeam(Client *C, char c)
 {
-  printf("pressed %c \n", c);
+  //printf("pressed %c \n", c);
   int team_num = 0;
   int rc = 0;
   Pos tuple = {0, 0};  
@@ -287,8 +289,8 @@ doMapInfoTeam(Client *C, char c)
     fprintf(stderr, "Something went wrong with %c.\n", c);
     return 1; // temporarily dont quit
   } else {
-    if (c == 'h') fprintf(stderr, "numhome=%d\n", tuple.x);
-    if (c == 'j') fprintf(stderr, "numjail=%d\n", tuple.y);
+    if (c == 'h') fprintf(stdout, "numhome=%d\n", tuple.x);
+    if (c == 'j') fprintf(stdout, "numjail=%d\n", tuple.y);
   }
   return rc;
 }
@@ -296,7 +298,7 @@ doMapInfoTeam(Client *C, char c)
 int
 doMapInfo(Client *C, char c)
 {
-  printf("pressed %c \n", c);
+  //printf("pressed %c \n", c);
   int rc = 0;
   Pos tuple = {0, 0};
 
@@ -309,8 +311,8 @@ doMapInfo(Client *C, char c)
     fprintf(stderr, "Something went wrong with %c.\n", c);
     return 1; // temporarily dont quit
   } else {
-    if (c == 'w') fprintf(stderr, "numwall=%d\n", tuple.x);
-    if (c == 'f') fprintf(stderr, "numfloor=%d\n", tuple.y);
+    if (c == 'w') fprintf(stdout, "numwall=%d\n", tuple.x);
+    if (c == 'f') fprintf(stdout, "numfloor=%d\n", tuple.y);
   }
   return rc;
 }
@@ -318,7 +320,7 @@ doMapInfo(Client *C, char c)
 int
 doMapDim(Client *C)
 {
-  printf("pressed dim \n");
+  //printf("pressed dim \n");
   int rc = 0;
   Pos dim = {0, 0};
   //dim->x = 0; dim->y = 0;
@@ -331,7 +333,7 @@ doMapDim(Client *C)
     fprintf(stderr, "Something went wrong with dim.\n");
     return 1; // temporarily dont quit
   } else {
-    fprintf(stderr, "Maze Dimensions: %d x %d (width x height)\n", dim.x, dim.y);
+    fprintf(stdout, "Maze Dimensions: %d x %d (width x height)\n", dim.x, dim.y);
   }
   
   return rc;
@@ -340,9 +342,10 @@ doMapDim(Client *C)
 int
 doMapCinfo(Client *C)
 {
-  printf("pressed cinfo \n");
+  //printf("pressed cinfo \n");
   int rc = 0;
-  int x,y = 0;
+  int x = -1;
+  int y = -1;
   Cell_Type cell_type;
   int team = 0;
   int occupied = -1;
@@ -353,18 +356,18 @@ doMapCinfo(Client *C)
   int i, len = strlen(globals.in.data);
   for (i=0; i<len; i++) if (globals.in.data[i]==',') globals.in.data[i]=' ';
   sscanf(globals.in.data, "%*s %d %d", &x, &y);
-  if (x < 0 || y < 0) {
-    fprintf(stderr, "Invalid coordinates: <%d,%d>, x and y cannot be negative", x, y);
+  if (x < 0 || y < 0 || x > MAPWIDTH-1 || y > MAPHEIGHT-1) {
+    fprintf(stderr, "Invalid coordinates.\n");
     return 1;
   }
   Pos pos = {x, y};
   
   rc = proto_client_map_cinfo(C->ph, &pos, &cell_type, &team, &occupied);
   if (rc < 0) {
-    fprintf(stderr, "Something went wrong with cinfo, check coords.\n");
+    fprintf(stderr, "Something went wrong with cinfo, try again later.\n");
     return 1; // temporarily dont quit
   } else {
-    fprintf(stderr, "Cell Info for <%d,%d>: Cell Type: %d, Team: %d, Occupied: %d\n", x, y, cell_type, team, occupied);
+    fprintf(stdout, "Cell Info for <%d,%d>: Cell Type: %d, Team: %d, Occupied: %d\n", x, y, cell_type, team, occupied);
   }
   
   return rc;
@@ -373,11 +376,11 @@ doMapCinfo(Client *C)
 int
 doQuit(Client *C)
 {
-  printf("quit pressed\n");
+  //printf("quit pressed\n");
   if (globals.connected == 1) {
     // disconnect first
-    //startDisconnection(C, globals.host, globals.port);
-    //printf("Game Over: You Quit\n");
+    //if (startDisconnection(C)<0) printf("Not able to disconnect. Quitting.\n");
+    //else fprintf(stdout, "Disconnected.\n");
   }
   return -1;
 }
@@ -429,7 +432,7 @@ shell(void *arg)
     if (rc==1) menu=1; else menu=0;
   }
 
-  //fprintf(stderr, "terminating\n");
+  fprintf(stderr, "terminating\n");
   fflush(stdout);
   return NULL;
 }

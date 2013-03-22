@@ -294,6 +294,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
 	n = net_writen(s->fd, &s->shdr, header_length);//write header to body-WA
 	if (n < 0 && proto_debug()) {
 		fprintf(stderr, "%p: proto_session_send_msg: write error:\n", pthread_self());
+		return -1;
 	}
 	if (s->slen){
   		n = net_writen(s->fd, &s->sbuf, s->slen);//write body (if it exists) to socket
