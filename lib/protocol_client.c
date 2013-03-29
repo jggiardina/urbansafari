@@ -306,6 +306,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
     proto_session_body_unmarshall_int(s, 0, (int *)&rc); 
+    //bzero(s->rbuf, sizeof(s->rbuf)); // clear out the rbuf
   } else {
     //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
     c->session_lost_handler(s);

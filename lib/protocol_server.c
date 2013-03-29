@@ -186,7 +186,7 @@ proto_server_post_event(void)
       if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {//here we push to the client the updated state -WA
 	//END ADDED CODE
 	// must have lost an event connection
-	close(Proto_Server.EventSession.fd+1);
+	//close(Proto_Server.EventSession.fd+1); -JG
 	close(Proto_Server.EventSession.fd);
 	Proto_Server.EventSubscribers[i]=-1;
 	Proto_Server.EventNumSubscribers--;
@@ -542,8 +542,8 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
   int userfd = s->fd;
   int i;
   
-  pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
- fprintf(stderr, "looking for %d\n", userfd);
+  /*pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+  fprintf(stderr, "looking for %d\n", userfd);
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
     if(Proto_Server.EventSubscribers[i] == userfd-1){
       Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
@@ -561,7 +561,7 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
   }
   
   pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
-
+  */
   Proto_Session *se;
   Proto_Msg_Hdr hdr;
   

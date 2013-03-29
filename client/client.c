@@ -74,6 +74,14 @@ update_event_handler(Proto_Session *s)
   return 1;
 }
 
+static int
+goodbye_event_handler(Proto_Session *s)
+{
+  Client *C = proto_session_get_data(s);
+
+  fprintf(stderr, "%s: called", __func__);
+  return 1;
+}
 
 char 
 startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
@@ -85,8 +93,8 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
     }
     proto_session_set_data(proto_client_event_session(C->ph), C);
     if (h != NULL) {// THIS IS KEY - this is where we set event handlers
-      proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, 
-				     h);
+      proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, h); 
+      proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_GOODBYE, goodbye_event_handler);
     }
     return 1;
   }
@@ -96,14 +104,13 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 int
 startDisconnection(Client *C)
 {
-  if(proto_client_goodbye(C->ph)<0)
-    return -1;
+  Proto_Session* se = proto_client_event_session(C->ph);
+  close(se->fd);
+  int rc = proto_client_goodbye(C->ph);
   // close connection to rpc and event channel
   Proto_Session* sr = proto_client_rpc_session(C->ph);
-  Proto_Session* se = proto_client_event_session(C->ph);
   close(sr->fd);
-  close(se->fd);
-  globals.connected = 0; // TODO: TESTING RPC DISCONNECT AND SUCH
+  globals.connected = 0;
   return 0;
 }
 
@@ -231,7 +238,7 @@ doDisconnect(Client *C)
   if (globals.connected == 0)
     return 1; // do nothing
   if (startDisconnection(C)<0)
-  {
+  {// always returns 0 so this never hits
     fprintf(stderr, "Not able to disconnect from <%s:%d>\n", globals.host, globals.port);
     return 1;
   }
@@ -379,8 +386,8 @@ doQuit(Client *C)
   //printf("quit pressed\n");
   if (globals.connected == 1) {
     // disconnect first
-    //if (startDisconnection(C)<0) printf("Not able to disconnect. Quitting.\n");
-    //else fprintf(stdout, "Disconnected.\n");
+    if (startDisconnection(C)<0) printf("Not able to disconnect. Quitting.\n");
+    else fprintf(stdout, "Disconnected.\n");
   }
   return -1;
 }
@@ -393,8 +400,8 @@ docmd(Client *C)
   if (strlen(globals.in.data)==0) rc = doEnter(C);
   else if (strncmp(globals.in.data, "connect", 
 		   sizeof("connect")-1)==0) rc = doConnect(C);
-  /*else if (strncmp(globals.in.data, "disconnect", 
-		   sizeof("disconnect")-1)==0) rc = doDisconnect(C);*/
+  else if (strncmp(globals.in.data, "disconnect", 
+		   sizeof("disconnect")-1)==0) rc = doDisconnect(C);
   else if (strncmp(globals.in.data, "quit", 
 		   sizeof("quit")-1)==0) rc = doQuit(C);
   else if (strncmp(globals.in.data, "numhome",

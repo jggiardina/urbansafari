@@ -300,7 +300,8 @@ proto_session_send_msg(Proto_Session *s, int reset)
   		n = net_writen(s->fd, &s->sbuf, s->slen);//write body (if it exists) to socket
 		if (n < 0 && proto_debug()) {
                 	fprintf(stderr, "%p: proto_session_send_msg: write error:\n", pthread_self());
-        	}
+        		return -1;
+		}
  	} //end of added code
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
@@ -324,21 +325,24 @@ proto_session_rcv_msg(Proto_Session *s)
 	n = net_readn(s->fd, &s->rhdr, header_length);//read the header into rhdr -WA
 	if (n < 0 && proto_debug()){
 		fprintf(stderr, "%p: proto_session_rcv_msg: read error\n", pthread_self());
+		return -1;
 	}
 	s->rlen = ntohl(s->rhdr.blen);
 	if (s->rlen){
     		n = net_readn(s->fd, &s->rbuf, s->rlen); //if a body exists, read it in -WA
 		if (n < 0 && proto_debug()){
                 	fprintf(stderr, "%p: proto_session_rcv_msg: read error\n", pthread_self());
-        	}
+        		return -1;
+		}
 	}
-	//bzero(&s->rbuf, sizeof(s->rbuf));
+	bzero(&s->rbuf, sizeof(s->rbuf));
   //end added code
 
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
     proto_session_dump(s);
   }
+
   return 1;
 }
 
