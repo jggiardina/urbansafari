@@ -1,4 +1,3 @@
-
 # Copyright (C) 2011 by Jonathan Appavoo, Boston University
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
 UISYSTEM=$(shell uname)
 
 ifeq ($(UISYSTEM),Darwin)
@@ -32,24 +30,31 @@ endif
 
 CFLAGS := -g $(UIINCDIR) -std=c99
 
-all: client
+MODULE := $(shell basename $CURDIR)
+
+DAGAMELIBHDRS := types.h net.h protocol.h protocol_utils.h            \
+	protocol_session.h protocol_client.h protocol_server.h maze.h \
+	player.h ui.h game.h
+DAGAMELIBFILE := libdagame.a
+DAGAMELIBARCHIVE := ../lib/$(DAGAMELIBFILE)
+DAGAMELIB := -L../lib -ldagame
+
+
+src  = $(wildcard *.c)
+objs = $(patsubst %.c,%.o,$(src))
+
+ifeq ($(MODULE),lib)
+  DAGAMELIBINCS:=$(DAGAMELIBHDRS)
+else
+  DAGAMELIBINCS:=$(addprefix ../lib/,$(DAGAMELIBHDRS))
+endif
+
+
+all: $(targets)
 .PHONY: all
 
-ttymodse.o: ttymodes.c
-	gcc $(CFLAGS) ttymodes.c -c
-
-tty.o: tty.c tty.h ttymodes.h
-	gcc $(CFLAGS) tty.c -c
-
-uistandalone.o: uistandalone.c uistandalone.h
-	gcc ${CFLAGS} uistandalone.c -c
-
-client.o: client.c uistandalone.h
-	gcc $(CFLAGS) client.c -c 
-
-client: uistandalone.o client.o tty.o ttymodes.o
-	gcc $(CFLAGS) uistandalone.o client.o tty.o ttymodes.o -o client ${UILIBS}
+$(objs) : $(src) $(DAGAMELIBINCS)
 
 clean:
-	rm client *.o
+	rm $(objs) $(targets)
 
