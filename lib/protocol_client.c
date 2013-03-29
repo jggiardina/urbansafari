@@ -424,7 +424,7 @@ proto_client_move(Proto_Client_Handle ch, char data)
 }
 */
 extern int 
-proto_client_goodbye(Proto_Client_Handle ch/*, char *host, PortType port*/)
+proto_client_goodbye(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_GOODBYE);  
 }

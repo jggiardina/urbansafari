@@ -1,6 +1,8 @@
 #include "net.h"
 #include "protocol.h"
 #include "protocol_session.h"
+#define MAPHEIGHT 200
+#define MAPWIDTH 200
 
 typedef enum {JAIL, HOME, FLOOR, WALL} Cell_Type;
 
@@ -35,10 +37,10 @@ typedef struct
 
 typedef struct
 {
-  char data_ascii[40000];
+  char data_ascii[MAPHEIGHT*MAPWIDTH];
   int w;
   int h;
   int num_wall_cells;
   int num_floor_cells;
-  Cell cells[sizeof(Cell)*40000];
+  Cell cells[sizeof(Cell)*MAPHEIGHT*MAPWIDTH];
 } __attribute__((__packed__)) Map;
