@@ -26,7 +26,7 @@ client_objs = $(objs)
 libs = $(DAGAMELIB) -lpthread
 uilibs = $(UILIB) 
 
-CFLAGS := -g $(UIINCDIR) -std=c99
+#CFLAGS := -g $(UIINCDIR) -std=c99
 
 client: $(client_objs) $(DAGAMELIBARCHIVE)
 	gcc $(CFLAGS) -o $@ $(client_objs) $(libs) $(uilibs) $(UILIBS)
