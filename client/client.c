@@ -26,9 +26,9 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "types.h"
-#include "tty.h"
-#include "uistandalone.h"
+#include "../ui/types.h"
+#include "../ui/tty.h"
+#include "../ui/uistandalone.h"
 
 UI *ui;
 
