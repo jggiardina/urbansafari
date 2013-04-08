@@ -26,6 +26,7 @@
 #include <assert.h>
 #include "types.h"
 #include "uistandalone.h"
+#include "../lib/maze.h"
 
 /* A lot of this code comes from http://www.libsdl.org/cgi/docwiki.cgi */
 
@@ -314,16 +315,28 @@ draw_cell(UI *ui, SPRITE_INDEX si, SDL_Rect *t, SDL_Surface *s)
 }
 
 static sval
-ui_paintmap(UI *ui) 
+ui_paintmap(UI *ui, Map *map) 
 {
+  //Map m = *map;
   SDL_Rect t;
-  int i, j;
+  int i, j = 0;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
     for (t.x=0; t.x<ui->screen->w; t.x+=t.w) {
-      draw_cell(ui, FLOOR_S, &t, ui->screen);
+      Cell_Type type = map->cells[i + (j*map->w)].t;
+      Color c = map->cells[i + (j*map->w)].c;
+      if (type == WALL && c == RED) {
+        draw_cell(ui, REDWALL_S, &t, ui->screen);
+      } else if (type == WALL && c == GREEN) {
+        draw_cell(ui, GREENWALL_S, &t, ui->screen);
+      } else {
+        draw_cell(ui, FLOOR_S, &t, ui->screen);
+      }
+      i++;
+      //draw_cell(ui, FLOOR_S, &t, ui->screen);
     }
+    j++;i=0;
   }
 
   dummyPlayer_paint(ui, &t);
@@ -405,7 +418,7 @@ ui_userevent(UI *ui, SDL_UserEvent *e)
 }
 
 static sval
-ui_process(UI *ui)
+ui_process(UI *ui, Map *map)
 {
   SDL_Event e;
   sval rc = 1;
@@ -426,7 +439,7 @@ ui_process(UI *ui)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { ui_paintmap(ui); }
+    if (rc==2) { ui_paintmap(ui, map); }
     if (rc<0) break;
   }
   return rc;
@@ -477,8 +490,12 @@ ui_quit(UI *ui)
 }
 
 extern void
-ui_main_loop(UI *ui, uval h, uval w)
+ui_main_loop(UI *ui, int m)
 {
+  Map *map = (Map *)m;
+  uval h = 320;
+  uval w = 320;
+
   sval rc;
   
   assert(ui);
@@ -487,11 +504,11 @@ ui_main_loop(UI *ui, uval h, uval w)
 
   dummyPlayer_init(ui);
 
-  ui_paintmap(ui);
+  ui_paintmap(ui, map);
    
   
   while (1) {
-    if (ui_process(ui)<0) break;
+    if (ui_process(ui, map)<0) break;
   }
 
   ui_shutdown_sdl();

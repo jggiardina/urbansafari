@@ -30,6 +30,14 @@
 #include "../ui/tty.h"
 #include "../ui/uistandalone.h"
 
+#include "../lib/maze.c"
+
+struct Globals {
+  int isLoaded;
+  Map map;
+  char mapbuf[MAPHEIGHT*MAPWIDTH];
+} globals;
+
 UI *ui;
 
 
@@ -121,7 +129,31 @@ main(int argc, char **argv)
 
   // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
   // SO JUMP THROW HOOPS :-(
-  ui_main_loop(ui, 320, 320);
+  
+  /* TESTING LOAD MAP */
+  char linebuf[240];
+  FILE * myfile;
+  int i, n, len;  
+  myfile = fopen("../server/daGame.map", "r");
+  if ( myfile == NULL ){
+    fprintf( stderr, "Could not open file\n" );
+  }else{
+        n = 0;
+        while(fgets(linebuf, sizeof(linebuf), myfile) != NULL){
+                for (i = 0; i < MAPWIDTH; i++){
+                        globals.mapbuf[i+(n*MAPHEIGHT)] = linebuf[i];
+                }
+                bzero(linebuf, sizeof(linebuf));
+                n++;
+        }
+        fclose(myfile);
+        //fprintf( stderr, "Read %d lines\n", n);
+        load_map(globals.mapbuf, &globals.map);
+        globals.isLoaded = 1;
+  }
+  //load_map("../server/daGame.map", &globals.map);
+  ui_main_loop(ui, (int)&globals.map);
+  //ui_main_loop(ui, 320, 320);
 
   return 0;
 }

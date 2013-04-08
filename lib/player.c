@@ -1,6 +1,6 @@
 #include "types.h"
 #include "player.h"
-#include "maze.h"
+//#include "maze.h"
 
 struct {
   pthread_mutex_t lock;
