@@ -2,7 +2,16 @@
 #include "player.h"
 #include "maze.h"
 
-/*static void player_init(UI *ui)
+struct {
+  pthread_mutex_t lock;
+  UI_Player *uip;
+  int id;
+  int x, y;
+  int team;
+  int state;
+} __attribute__((__packed__)) Player;
+
+static void player_init(UI *ui)
 {
   pthread_mutex_init(&(Player.lock), NULL);
   Player.id = 0;
@@ -115,4 +124,3 @@ ui_inc_id(UI *ui)
   pthread_mutex_unlock(&Player.lock);
   return 2;
 }
-*/
