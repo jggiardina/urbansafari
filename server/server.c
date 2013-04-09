@@ -23,9 +23,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#include <unistd.h>
+#include <pthread.h>
+
 
 #include <sys/types.h>
 #include <poll.h>
+#include "../ui/types.h"
+#include "../ui/tty.h"
+#include "../ui/uistandalone.h"
 #include "../lib/maze.c"
 #include "../lib/types.h"
 #include "../lib/protocol_server.h"
@@ -46,7 +53,7 @@ struct Globals {
   Map map;
   char mapbuf[MAPHEIGHT*MAPWIDTH];
 } globals;
-
+UI *ui;
 int 
 doUpdateClients(void)
 {
@@ -189,20 +196,116 @@ shell(void *arg)
 
 int
 main(int argc, char **argv)
-{ 
+{
+  pthread_t tid;
+
+  tty_init(STDIN_FILENO);
+
+  ui_init(&(ui));
+
+  pthread_create(&tid, NULL, shell, NULL);
+
+  // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
+  // SO JUMP THROW HOOPS :-(
+
+  /* TESTING LOAD MAP */
+  char linebuf[240];
+  FILE * myfile;
+  int i, n, len;
+  myfile = fopen("../server/daGame.map", "r");
+  if ( myfile == NULL ){
+    fprintf( stderr, "Could not open file\n" );
+  }else{
+        n = 0;
+        while(fgets(linebuf, sizeof(linebuf), myfile) != NULL){
+                for (i = 0; i < MAPWIDTH; i++){
+                        globals.mapbuf[i+(n*MAPHEIGHT)] = linebuf[i];
+                }
+                bzero(linebuf, sizeof(linebuf));
+                n++;
+        }
+        fclose(myfile);
+        //fprintf( stderr, "Read %d lines\n", n);
+        load_map(globals.mapbuf, &globals.map);
+        globals.isLoaded = 1;
+  }
   if (proto_server_init()<0) {
     fprintf(stderr, "ERROR: failed to initialize proto_server subsystem\n");
     exit(-1);
   }
-  fprintf(stdout, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(), 
-	  proto_server_eventport());
+  fprintf(stdout, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(),
+          proto_server_eventport());
 
   if (proto_server_start_rpc_loop()<0) {
     fprintf(stderr, "ERROR: failed to start rpc loop\n");
     exit(-1);
   }
-    
-  shell(NULL);
-
+  //load_map("../server/daGame.map", &globals.map);
+  ui_main_loop(ui, (int)&globals.map);
+  //ui_main_loop(ui, 320, 320);
+ 
   return 0;
 }
+extern sval
+ui_keypress(UI *ui, SDL_KeyboardEvent *e)
+{
+  SDLKey sym = e->keysym.sym;
+  SDLMod mod = e->keysym.mod;
+
+  if (e->type == SDL_KEYDOWN) {
+    if (sym == SDLK_LEFT && mod == KMOD_NONE) {
+      fprintf(stderr, "%s: move left\n", __func__);
+      return ui_dummy_left(ui);
+    }
+    if (sym == SDLK_RIGHT && mod == KMOD_NONE) {
+      fprintf(stderr, "%s: move right\n", __func__);
+      return ui_dummy_right(ui);
+    }
+    if (sym == SDLK_UP && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: move up\n", __func__);
+      return ui_dummy_up(ui);
+    }
+    if (sym == SDLK_DOWN && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: move down\n", __func__);
+      return ui_dummy_down(ui);
+    }
+    if (sym == SDLK_r && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
+      return ui_dummy_pickup_red(ui);
+    }
+    if (sym == SDLK_g && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: dummy pickup green flag\n", __func__);
+      return ui_dummy_pickup_green(ui);
+    }
+    if (sym == SDLK_j && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: dummy jail\n", __func__);
+      return ui_dummy_jail(ui);
+    }
+    if (sym == SDLK_n && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: dummy normal state\n", __func__);
+      return ui_dummy_normal(ui);
+    }
+    if (sym == SDLK_t && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: dummy toggle team\n", __func__);
+      return ui_dummy_toggle_team(ui);
+    }
+    if (sym == SDLK_i && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: dummy inc player id \n", __func__);
+      return ui_dummy_inc_id(ui);
+    }
+    if (sym == SDLK_q) return -1;
+    if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
+    if (sym == SDLK_z && mod & KMOD_SHIFT ) return ui_zoom(ui,-1);
+    if (sym == SDLK_LEFT && mod & KMOD_SHIFT) return ui_pan(ui,-1,0);
+    if (sym == SDLK_RIGHT && mod & KMOD_SHIFT) return ui_pan(ui,1,0);
+    if (sym == SDLK_UP && mod & KMOD_SHIFT) return ui_pan(ui, 0,-1);
+    if (sym == SDLK_DOWN && mod & KMOD_SHIFT) return ui_pan(ui, 0,1);
+    else {
+      fprintf(stderr, "%s: key pressed: %d\n", __func__, sym);
+    }
+  } else {
+    fprintf(stderr, "%s: key released: %d\n", __func__, sym);
+  }
+  return 1;
+}
+
