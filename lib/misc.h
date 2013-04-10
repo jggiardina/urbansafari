@@ -24,4 +24,10 @@
 
 #define NYI fprintf(stderr, "%s: NYI\n", __func__)
 
+typedef struct
+{
+  int x;
+  int y;
+} __attribute__((__packed__)) Tuple;
+
 #endif

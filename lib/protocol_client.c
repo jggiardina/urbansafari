@@ -31,7 +31,6 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_client.h"
-#include "misc.h"
 
 typedef struct {
   Proto_Session rpc_session;
@@ -258,7 +257,7 @@ proto_client_init(Proto_Client_Handle *ch)
 }
 
 int
-proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
+proto_client_connect(Proto_Client_Handle ch, char *host, PortType port, int *id, int *team, int *team_color, Tuple *pos)
 {
   Proto_Client *c = (Proto_Client *)ch;
 
@@ -276,7 +275,7 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
     return -3;
   }
 
-  int rc = proto_client_hello(ch);
+  int rc = proto_client_hello(c, id, team, team_color, pos);
   return rc;
 }
 
@@ -370,10 +369,41 @@ do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type
   return rc;
 }
 */
-extern int 
-proto_client_hello(Proto_Client_Handle ch)
+
+
+static int
+do_init_player_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *id, int *team, int *team_color, Tuple *pos)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);  
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+
+  s = proto_client_rpc_session(c);
+
+  // marshall
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, id);
+    proto_session_body_unmarshall_int(s, sizeof(int), &(pos->x));
+    proto_session_body_unmarshall_int(s, 2*sizeof(int), &(pos->y));
+    proto_session_body_unmarshall_int(s, 3*sizeof(int), team_color);
+    proto_session_body_unmarshall_int(s, 4*sizeof(int), team);
+    //bzero(s->rbuf, sizeof(s->rbuf)); // clear out the rbuf
+  } else {
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
+}
+
+extern int 
+proto_client_hello(Proto_Client_Handle ch, int *id, int *team, int *team_color, Tuple *pos)
+{
+  
+  return do_init_player_rpc(ch,PROTO_MT_REQ_BASE_HELLO, id, team, team_color, pos);  
 }
 
 /*extern int

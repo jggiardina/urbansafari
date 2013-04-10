@@ -36,7 +36,7 @@ typedef struct {
   pthread_mutex_t lock;
   UI_Player *uip;
   int id;
-  int x, y;
+  Pos pos;
   Color team_color;
   int team;
   Hammer *hammer;
