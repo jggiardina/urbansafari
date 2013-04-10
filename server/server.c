@@ -51,6 +51,7 @@ struct Globals {
   struct LineBuffer in;
   int isLoaded;
   Map map;
+  Map tempmap;
   char mapbuf[MAPHEIGHT*MAPWIDTH];
 } globals;
 
@@ -154,6 +155,16 @@ prompt(int menu)
   fflush(stdout);
   c=getInput();
   return c;
+}
+char*
+marshall_map_data()
+{
+	marshall_map(&globals.tempmap, &globals.map);
+	return &globals.tempmap.cells;
+}
+int
+getCellsSize(){
+	return sizeof(globals.tempmap.cells);
 }
 int
 getInput()
