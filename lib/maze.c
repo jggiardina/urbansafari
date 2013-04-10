@@ -64,7 +64,112 @@ int load_map(char* map_file, Map *map){
   fprintf(stderr, "Read in %d rows and %d columns\n", j, i);
   return rc;
 }
+/*
+int withinRange(int dx, int dy, int x, int y){
+	for (int j = y-1;
+		for (int i = x-1; i <= x+1; i++){
+}
 
+int valid_move(Map *map, Player *player, Player *players, int numplayers, int x, int y, Flag *redflag, Flag *greenflag){
+	//x, y are the destination coords. we get the current pos of player from *player->x/y
+	Cell c;
+	Player p;
+	previousc = map->cells[player->x +(player->y*MAPHEIGHT)];
+	c = map->cells[x +(y*MAPHEIGHT)];
+	if (c.t == WALL){
+		if (player->hammer){
+			map->cells[x+(Y*MAPHEIGHT)].t = FLOOR;//convert the destination to floor
+			player->x = x;
+			player->y = y;
+			//need to decrease hammer count, not sure how to do so yet
+			//trigger break wall event
+			return 1;
+	}else{
+		//INVALID MOVE
+		return 0;
+	}
+}else{
+	//check if collides with player
+	for (int i = 0; i < numplayers; i++){
+		p = players[i];
+		if (p.x == x && p.y == y){//colliding players
+			if (p.c != player->c){
+				if (player->c != c.c && player->state != 0){//moving player will be jailed
+					//NYI- send player to jail function
+					player->state == 1;
+					return 1;
+				}else if (p.c != c.c && p.state != 0){//stationary player will be jailed
+					//NYI- send stationary player to jail function
+					p.state == 1;
+					player->x = x;
+					player->y = y;
+					//check flag
+					return 1;
+				}
+				
+			}else{
+				//INVALID MOVE
+				return 0;
+			}
+			
+		}	
+	}
+	if (c.t == JAIL && player->c != c.c && previousc.t != JAIL){//Jailbreak
+		for (int i = 0; i < numplayers; i++){
+                	p = players[i];
+			if (p.state == JAILED && p.c == player->c){
+				p.state = FREE;
+			}
+		}
+		
+	}
+	//else check if jail, if foreign jail then free all players
+}
+	
+}	
+
+//wall collision
+//whether 5 away from flag
+//player collision
+//jail collision
+*/
+int marshall_cell(Cell *tosend, Cell *c){
+	tosend->p.x = htonl(c->p.x);
+	tosend->p.y = htonl(c->p.y);
+	tosend->c = htonl(c->c);
+	tosend->hammer = c->hammer;//pointers are left unmarshalled as they're useless anyways
+	tosend->flag = c->flag;
+	tosend->t = htonl(c->t);
+	tosend->player = c->player;
+	return 1;
+}
+int marshall_map(Map *tempmap, Map *map){
+	int i;
+	for (i = 0; i < MAPHEIGHT*MAPWIDTH; i++){
+		marshall_cell(&(tempmap->cells[i]), &(map->cells[i]));
+	}
+	return 1;
+}
+int unmarshall_cell(Cell *c){
+        c->p.x = ntohl(c->p.x);
+        c->p.y = ntohl(c->p.y);
+        c->c = ntohl(c->c);
+        c->t = ntohl(c->t);
+        return 1;
+}
+int unmarshall_map(char *towritefrom, Map *map){
+	memcpy(&(map->cells), towritefrom, sizeof(map->cells));
+	int i;
+        for (i = 0; i < MAPHEIGHT*MAPWIDTH; i++){
+                unmarshall_cell(&(map->cells[i]));
+        }
+        return 1;
+}
+
+/*TO ADD:
+UPDATE ALL PLAYERS EVENT
+UPDATE ALL FLAGS EVENT
+*/ 
 char* dump_map(Map *map){ 
   int j, i;
   Cell c;
@@ -88,7 +193,6 @@ char* dump_map(Map *map){
   }
   return (char*)&map->data_ascii;
 }
-
 int map_loop_team(Color c, Cell_Type t, Map *map){
   int cells=0;  
   int i,j = 0;

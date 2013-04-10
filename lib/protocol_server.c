@@ -352,6 +352,26 @@ proto_server_mt_dump_handler(Proto_Session *s){
   
   return rc;
 }
+static int
+proto_server_mt_update_map_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+  char *cells;  
+
+  fprintf(stderr, "proto_server_mt_hello_handler: invoked for session:\n");
+  proto_session_dump(s);
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  
+  proto_session_hdr_marshall(s, &h);
+  cells = marshall_map_data();
+  proto_session_body_marshall_bytes(s, getCellsSize(), cells);
+  rc=proto_session_send_msg(s,1);
+  
+  return rc;
+} 
+
 
 /* Handler for returning num_home and num_jail */
 /*static int

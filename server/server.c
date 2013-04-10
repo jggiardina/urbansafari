@@ -51,6 +51,7 @@ struct Globals {
   struct LineBuffer in;
   int isLoaded;
   Map map;
+  Map tempmap;
   char mapbuf[MAPHEIGHT*MAPWIDTH];
 } globals;
 
@@ -155,6 +156,16 @@ prompt(int menu)
   c=getInput();
   return c;
 }
+char*
+marshall_map_data()
+{
+	marshall_map(&globals.tempmap, &globals.map);
+	return &globals.tempmap.cells;
+}
+int
+getCellsSize(){
+	return sizeof(globals.tempmap.cells);
+}
 int
 getInput()
 {
@@ -243,7 +254,7 @@ main(int argc, char **argv)
     exit(-1);
   }
   //load_map("../server/daGame.map", &globals.map);
-  ui_main_loop(ui, (int)&globals.map);
+  ui_main_loop(ui, (void *)&globals.map);
   //ui_main_loop(ui, 320, 320);
  
   return 0;
