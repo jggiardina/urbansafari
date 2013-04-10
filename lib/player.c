@@ -1,126 +1,131 @@
 #include "types.h"
 #include "player.h"
-//#include "maze.h"
 
-struct {
-  pthread_mutex_t lock;
-  UI_Player *uip;
-  int id;
-  int x, y;
-  int team;
-  int state;
-} __attribute__((__packed__)) Player;
+int cur_id = 0;
 
-static void player_init(UI *ui)
+static Player player_init(UI *ui)
 {
-  pthread_mutex_init(&(Player.lock), NULL);
-  Player.id = 0;
-  Player.x = 0; Player.y = 0; Player.team = 0; Player.state = 0;
-  ui_uip_init(ui, &Player.uip, Player.id, Player.team);
+  Player new_player;
+  pthread_mutex_init(&(new_player.lock), NULL);
+  new_player.id = cur_id;
+  
+  if (new_player.id>=100){ //increase to 200? -RC
+       new_player.id = 0;
+    }else if(new_player.id % 2 == 1){
+      new_player.team_color = RED;
+      new_player.team = 0;
+    }else if(new_player.id % 2 == 0){
+      new_player.team_color = GREEN;
+      new_player.team = 1;
+    }
+
+  new_player.x = 0; new_player.y = 0; new_player.state = 0;
+  ui_uip_init(ui, &new_player.uip, new_player.id, new_player.team);
+
+  cur_id++;
+
+  return new_player;
 }
 
-static void player_paint(UI *ui, SDL_Rect *t)
+static void player_paint(UI *ui, SDL_Rect *t, Player player)
 {
-  pthread_mutex_lock(&Player.lock);
-    t->y = Player.y * t->h; t->x = Player.x * t->w;
-    Player.uip->clip.x = Player.uip->base_clip_x +
-      pxSpriteOffSet(Player.team, Player.state);
-    SDL_BlitSurface(Player.uip->img, &(Player.uip->clip), ui->screen, t);
-  pthread_mutex_unlock(&Player.lock);
+  pthread_mutex_lock(&player.lock);
+    t->y = player.y * t->h; t->x = player.x * t->w;
+    player.uip->clip.x = player.uip->base_clip_x +
+      pxSpriteOffSet(player.team, player.state);
+    SDL_BlitSurface(player.uip->img, &(player.uip->clip), ui->screen, t);
+  pthread_mutex_unlock(&player.lock);
 }
 
-int
-ui_left(UI *ui)
+int ui_left(UI *ui, Player player)
 {
-  pthread_mutex_lock(&Player.lock);
-  Player.x--;
-  pthread_mutex_unlock(&Player.lock);
+  pthread_mutex_lock(&player.lock);
+  player.x--;
+  pthread_mutex_unlock(&player.lock);
   return 2;
 }
 
-int
-ui_right(UI *ui)
+int ui_right(UI *ui, Player player)
 {
-  pthread_mutex_lock(&Player.lock);
-  Player.x++;
-  pthread_mutex_unlock(&Player.lock);
+  pthread_mutex_lock(&player.lock);
+  player.x++;
+  pthread_mutex_unlock(&player.lock);
   return 2;
 }
 
-int
-ui_down(UI *ui)
+int ui_down(UI *ui, Player player)
 {
-  pthread_mutex_lock(&Player.lock);
-  Player.y++;
-  pthread_mutex_unlock(&Player.lock);
+  pthread_mutex_lock(&player.lock);
+  player.y++;
+  pthread_mutex_unlock(&player.lock);
   return 2;
 }
 
-int
-ui_up(UI *ui)
+int ui_up(UI *ui, Player player)
 {
-  pthread_mutex_lock(&Player.lock);
-  Player.y--;
-  pthread_mutex_unlock(&Player.lock);
+  pthread_mutex_lock(&player.lock);
+  player.y--;
+  pthread_mutex_unlock(&player.lock);
   return 2;
 }
 
-int
-ui_normal(UI *ui)
+int ui_normal(UI *ui, Player player)
 {
-  pthread_mutex_lock(&Player.lock);
-  Player.state = 0;
-  pthread_mutex_unlock(&Player.lock);
+  pthread_mutex_lock(&player.lock);
+  player.state = 0;
+  pthread_mutex_unlock(&player.lock);
   return 2;
 }
 
-int
-ui_pickup_red(UI *ui)
+/*int ui_pickup_red(UI *ui, Player player)
 {
-  pthread_mutex_lock(&Player.lock);
-  Player.state = 1;
-  pthread_mutex_unlock(&Player.lock);
+  pthread_mutex_lock(&player.lock);
+  player.state = 1;
+  pthread_mutex_unlock(&player.lock);
+  return 2;
+}*/
+
+/*int ui_pickup_green(UI *ui, Player player)
+{
+  pthread_mutex_lock(&player.lock);
+  player.state = 2;
+  pthread_mutex_unlock(&player.lock);
+  return 2;
+}*/
+
+
+int ui_jail(UI *ui, Player player)
+{
+  pthread_mutex_lock(&player.lock);
+  player.state = 3;
+  pthread_mutex_unlock(&player.lock);
   return 2;
 }
 
-int
-ui_pickup_green(UI *ui)
+int ui_toggle_team(UI *ui, Player player)
 {
-  pthread_mutex_lock(&Player.lock);
-  Player.state = 2;
-  pthread_mutex_unlock(&Player.lock);
+  pthread_mutex_lock(&player.lock);
+    if (player.uip) free(player.uip);
+    player.team = (player.team) ? 0 : 1;
+    ui_uip_init(ui, &player.uip, player.id, player.team);
+  pthread_mutex_unlock(&player.lock);
   return 2;
 }
 
-
-int
-ui_jail(UI *ui)
+int ui_inc_id(UI *ui)
 {
-  pthread_mutex_lock(&Player.lock);
-  Player.state = 3;
-  pthread_mutex_unlock(&Player.lock);
-  return 2;
-}
-
-int
-ui_toggle_team(UI *ui)
-{
-  pthread_mutex_lock(&Player.lock);
-    if (Player.uip) free(Player.uip);
-    Player.team = (Player.team) ? 0 : 1;
-    ui_uip_init(ui, &Player.uip, Player.id, Player.team);
-  pthread_mutex_unlock(&Player.lock);
-  return 2;
-}
-
-int
-ui_inc_id(UI *ui)
-{
-  pthread_mutex_lock(&Player.lock);
-    if (Player.uip) free(Player.uip);
-    Player.id++;
-    if (Player.id>=100) Player.id = 0;
-    ui_uip_init(ui, &Player.uip, Player.id, Player.team);
-  pthread_mutex_unlock(&Player.lock);
+  /*pthread_mutex_lock(&player.lock);
+    if (player.uip) free(player.uip);
+    player.id++;
+    
+    if (player.id>=100){ //increase to 200? -RC
+       player.id = 0; 
+    }
+    
+    ui_uip_init(ui, &player.uip, player.id, player.team);
+  
+  pthread_mutex_unlock(&player.lock);
+  */
+  
   return 2;
 }

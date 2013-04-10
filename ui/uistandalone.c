@@ -24,9 +24,8 @@
 #include <stdlib.h> /* for exit() */
 #include <pthread.h>
 #include <assert.h>
-#include "types.h"
+//#include "types.h"
 #include "uistandalone.h"
-#include "../lib/maze.h"
 
 /* A lot of this code comes from http://www.libsdl.org/cgi/docwiki.cgi */
 
@@ -339,7 +338,7 @@ ui_paintmap(UI *ui, Map *map)
     j++;i=0;
   }
 
-  dummyPlayer_paint(ui, &t);
+  //dummyPlayer_paint(ui, &t);
 
   SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
   return 1;
@@ -502,7 +501,7 @@ ui_main_loop(UI *ui, int m)
 
   ui_init_sdl(ui, h, w, 32);
 
-  dummyPlayer_init(ui);
+  //dummyPlayer_init(ui);
 
   ui_paintmap(ui, map);
    
@@ -654,3 +653,4 @@ ui_dummy_inc_id(UI *ui)
   pthread_mutex_unlock(&dummyPlayer.lock);
   return 2;
 }
+

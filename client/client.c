@@ -28,9 +28,8 @@
 
 #include "../ui/types.h"
 #include "../ui/tty.h"
-#include "../ui/uistandalone.h"
-
-#include "../lib/maze.c"
+//#include "../ui/uistandalone.h"
+#include "../lib/player.c"
 
 struct Globals {
   int isLoaded;
