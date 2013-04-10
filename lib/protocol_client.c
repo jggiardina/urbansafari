@@ -257,7 +257,7 @@ proto_client_init(Proto_Client_Handle *ch)
 }
 
 int
-proto_client_connect(Proto_Client_Handle ch, char *host, PortType port, int *id, int *team, int *team_color, Tuple *pos)
+proto_client_connect(Proto_Client_Handle ch, char *host, PortType port, int *id, int *team, Tuple *pos)
 {
   Proto_Client *c = (Proto_Client *)ch;
 
@@ -275,7 +275,7 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port, int *id,
     return -3;
   }
 
-  int rc = proto_client_hello(c, id, team, team_color, pos);
+  int rc = proto_client_hello(c, id, team, pos);
   return rc;
 }
 
@@ -372,7 +372,7 @@ do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type
 
 
 static int
-do_init_player_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *id, int *team, int *team_color, Tuple *pos)
+do_init_player_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *id, int *team, Tuple *pos)
 {
   int rc;
   Proto_Session *s;
@@ -387,7 +387,6 @@ do_init_player_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *id, int *tea
     proto_session_body_unmarshall_int(s, 0, id);
     proto_session_body_unmarshall_int(s, sizeof(int), &(pos->x));
     proto_session_body_unmarshall_int(s, 2*sizeof(int), &(pos->y));
-    proto_session_body_unmarshall_int(s, 3*sizeof(int), team_color);
     proto_session_body_unmarshall_int(s, 4*sizeof(int), team);
     //bzero(s->rbuf, sizeof(s->rbuf)); // clear out the rbuf
   } else {
@@ -400,10 +399,10 @@ do_init_player_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *id, int *tea
 }
 
 extern int 
-proto_client_hello(Proto_Client_Handle ch, int *id, int *team, int *team_color, Tuple *pos)
+proto_client_hello(Proto_Client_Handle ch, int *id, int *team, Tuple *pos)
 {
   
-  return do_init_player_rpc(ch,PROTO_MT_REQ_BASE_HELLO, id, team, team_color, pos);  
+  return do_init_player_rpc(ch,PROTO_MT_REQ_BASE_HELLO, id, team, pos);  
 }
 
 /*extern int

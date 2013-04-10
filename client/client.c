@@ -428,7 +428,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
     p->pos.x = pos_tuple.x;
     p->pos.y = pos_tuple.y;
     p->team = team_num;
-    p->team_color = (Color)team_color;
+    p->team_color = (Color)team_num;
     ui_uip_init(ui, &p->uip, p->id, p->team); // init ui component
 
     return 1;
