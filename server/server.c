@@ -36,7 +36,7 @@
 #include "../lib/types.h"
 #include "../lib/protocol_server.h"
 #include "../lib/protocol_utils.h"
-#include "../lib/player.c"
+#include "../ui/uistandalone.c"
 #define STRLEN 81
 #define XSTR(s) STR(s)
 #define BUFLEN 16384

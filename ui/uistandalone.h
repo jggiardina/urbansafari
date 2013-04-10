@@ -23,7 +23,7 @@
 *****************************************************************************/
 
 #include <SDL/SDL.h>   /* All SDL apps need this */
-//#include "../lib/maze.h"
+#include "../lib/maze.h"
 #include "types.h"
 
 typedef enum { 
@@ -67,7 +67,7 @@ sval ui_keypress(UI *ui, SDL_KeyboardEvent *e);
 void ui_update(UI *ui);
 void ui_quit(UI *ui);
 //void ui_main_loop(UI *ui, uval h, uval w);
-void ui_main_loop(UI *ui, int map);
+void ui_main_loop(UI *ui, void *map);
 void ui_init(UI **ui);
 
 

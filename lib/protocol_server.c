@@ -35,7 +35,7 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_server.h"
-#include "player.h"
+#include "maze.h"
 #include "misc.h"
 #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
 
@@ -59,7 +59,6 @@ struct {
 } Proto_Server;
 
 Map game_map;
-UI *ui;
 
 extern PortType proto_server_rpcport(void) { return Proto_Server.RPCPort; }
 extern PortType proto_server_eventport(void) { return Proto_Server.EventPort; }
@@ -519,9 +518,9 @@ proto_server_mt_hello_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
 
   /* Test code for adding player */
-  ui_init(&(ui));
-  Player new_player = player_init(ui);
-  s->extra = &new_player;
+  //ui_init(&(ui));
+  //Player new_player = player_init(ui);
+  //s->extra = &new_player;
 
   proto_session_hdr_marshall(s, &h);  
   rc=proto_session_send_msg(s,1);

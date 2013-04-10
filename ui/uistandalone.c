@@ -24,8 +24,8 @@
 #include <stdlib.h> /* for exit() */
 #include <pthread.h>
 #include <assert.h>
-//#include "types.h"
 #include "uistandalone.h"
+//#include "../lib/maze.h"
 
 /* A lot of this code comes from http://www.libsdl.org/cgi/docwiki.cgi */
 
@@ -48,13 +48,6 @@ static void dummyPlayer_paint(UI *ui, SDL_Rect *t);
 #define UI_JACKHAMMER_BMP "../ui/shovel.bmp"
 
 typedef enum {UI_SDLEVENT_UPDATE, UI_SDLEVENT_QUIT} UI_SDL_Event;
-
-struct UI_Player_Struct {
-  SDL_Surface *img;
-  uval base_clip_x;
-  SDL_Rect clip;
-};
-typedef struct UI_Player_Struct UI_Player;
 
 static inline SDL_Surface *
 ui_player_img(UI *ui, int team)
@@ -489,9 +482,10 @@ ui_quit(UI *ui)
 }
 
 extern void
-ui_main_loop(UI *ui, int m)
+ui_main_loop(UI *ui, void *m)
 {
-  Map *map = (Map *)m;
+  Map *map = (Map *)(m);
+
   uval h = 320;
   uval w = 320;
 
@@ -527,6 +521,31 @@ ui_init(UI **ui)
 
 }
 
+int cur_id = 0;
+
+static Player player_init(UI *ui)
+{
+  Player new_player;
+  pthread_mutex_init(&(new_player.lock), NULL);
+  new_player.id = cur_id;
+
+  if (new_player.id>=100){ //increase to 200? -RC
+       new_player.id = 0;
+    }else if(new_player.id % 2 == 1){
+      new_player.team_color = RED;
+      new_player.team = 0;
+    }else if(new_player.id % 2 == 0){
+      new_player.team_color = GREEN;
+      new_player.team = 1;
+    }
+
+  new_player.x = 0; new_player.y = 0; new_player.state = 0;
+  ui_uip_init(ui, &new_player.uip, new_player.id, new_player.team);
+
+  cur_id++;
+
+  return new_player;
+}
 
 // Kludgy dummy player for testing purposes
 struct DummyPlayerDesc {

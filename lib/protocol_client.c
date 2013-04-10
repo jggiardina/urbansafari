@@ -32,7 +32,6 @@
 #include "protocol_utils.h"
 #include "protocol_client.h"
 #include "misc.h"
-//#include "maze.h"
 
 typedef struct {
   Proto_Session rpc_session;
@@ -315,7 +314,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   
   return rc;
 }
-
+/*
 static int
 do_unmarshall_two_ints_from_body_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *dim)
 {
@@ -339,7 +338,8 @@ do_unmarshall_two_ints_from_body_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt,
 
   return rc;
 }
-
+*/
+/*
 static int
 do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type *cell_type, int *team, int *occupied)
 {
@@ -369,14 +369,14 @@ do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type
 
   return rc;
 }
-
+*/
 extern int 
 proto_client_hello(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);  
 }
 
-extern int
+/*extern int
 proto_client_map_info_team_1(Proto_Client_Handle ch, Pos *tuple)
 {
   return do_unmarshall_two_ints_from_body_rpc(ch,PROTO_MT_REQ_BASE_MAP_INFO_1, tuple);
@@ -411,7 +411,7 @@ proto_client_map_dump(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MAP_DUMP);
 }
-
+*/
 /*
 extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType port){
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_DISCONNECT);  

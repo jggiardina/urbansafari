@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <assert.h>
 
-#include "misc.h"
+//#include "misc.h"
 #include "maze.h"
 
 int load_map(char* map_file, Map *map){
