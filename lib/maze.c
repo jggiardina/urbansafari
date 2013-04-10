@@ -133,6 +133,43 @@ int valid_move(Map *map, Player *player, Player *players, int numplayers, int x,
 //player collision
 //jail collision
 */
+int marshall_cell(char *towriteto, Cell *c){
+	Cell tosend;
+	tosend.p.x = htonl(c->p.x);
+	tosend.p.y = htonl(c->p.y);
+	tosend.c = htonl(c->c);
+	tosend.hammer = c->hammer;//pointers are left unmarshalled as they're useless anyways
+	tosend.flag = c->flag;
+	tosend.t = htonl(c->t);
+	tosend.player = c->player;
+	memcpy(towriteto, &tosend, sizeof(tosend));
+	return 1;
+}
+int marshall_map(char *towriteto, Map *map){
+	for (int i = 0; i < MAPHEIGHT*MAPWIDTH; i++){
+		marshall_cell(towriteto, &(map->cells[i]));
+	}
+	return 1;
+}
+int unmarshall_cell(char *towriteto, Cell *c){
+        c->p.x = ntohl(c->p.x);
+        c->p.y = ntohl(c->p.y);
+        c->c = ntohl(c->c);
+        c->t = ntohl(c->t);
+        return 1;
+}
+int unmarshall_map(char *towritefrom, Map *map){
+	memcpy(&(map->cells), towritefrom, sizeof(map->cells));
+        for (int i = 0; i < MAPHEIGHT*MAPWIDTH; i++){
+                unmarshall_cell(&(map->cells[i]));
+        }
+        return 1;
+}
+
+/*TO ADD:
+UPDATE ALL PLAYERS EVENT
+UPDATE ALL FLAGS EVENT
+ 
 char* dump_map(Map *map){ 
   int j, i;
   Cell c;
