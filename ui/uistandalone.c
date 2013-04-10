@@ -523,9 +523,8 @@ ui_init(UI **ui)
 
 }
 
-static Player player_init(UI *ui, int *p)
+static void player_init(UI *ui, Player *new_player)
 {
-  Player new_player = (Player*) p;
   pthread_mutex_init(&(new_player->lock), NULL);
 
   pthread_mutex_lock(&new_player->lock);

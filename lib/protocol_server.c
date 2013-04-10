@@ -630,7 +630,7 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_hello_handler);
     }else if(i == PROTO_MT_REQ_BASE_GOODBYE){
       proto_server_set_req_handler(i, proto_server_mt_goodbye_handler);
-    }else if(i == PROTO_MT_REQ_BASE_MAP_DUMP){
+    }/*else if(i == PROTO_MT_REQ_BASE_MAP_DUMP){
       proto_server_set_req_handler(i, proto_server_mt_dump_handler);
     }else if(i == PROTO_MT_REQ_BASE_MAP_INFO_1 || i == PROTO_MT_REQ_BASE_MAP_INFO_2){
       proto_server_set_req_handler(i, proto_server_mt_map_info_team_handler);
@@ -640,7 +640,7 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_dim_handler);
     }else if(i == PROTO_MT_REQ_BASE_MAP_CINFO){
       proto_server_set_req_handler(i, proto_server_mt_cinfo_handler);
-    }
+    }*/
   }
 
   for (i=0; i<PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {

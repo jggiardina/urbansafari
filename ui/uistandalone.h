@@ -71,7 +71,7 @@ void ui_main_loop(UI *ui, void *map);
 void ui_init(UI **ui);
 
 
-static Player player_init(UI *ui, int *p);
+static void player_init(UI *ui, Player *p);
 int ui_left(UI *ui, Player p);
 int ui_right(UI *ui, Player p); 
 int ui_down(UI *ui, Player p);
