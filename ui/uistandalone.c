@@ -490,9 +490,10 @@ ui_quit(UI *ui)
 }
 
 extern void
-ui_main_loop(UI *ui, int m)
+ui_main_loop(UI *ui, void *m)
 {
-  Map *map = (Map *)m;
+  Map *map = (Map *)(m);
+
   uval h = 320;
   uval w = 320;
 
