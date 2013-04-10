@@ -35,8 +35,8 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_server.h"
-#include "misc.h"
 #include "maze.h"
+#include "misc.h"
 #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
 
 struct {
@@ -512,10 +512,15 @@ proto_server_mt_hello_handler(Proto_Session *s){
   
   //pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
   //int subscribers = Proto_Server.EventNumSubscribers;
-  
+ 
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+
+  /* Test code for adding player */
+  //ui_init(&(ui));
+  //Player new_player = player_init(ui);
+  //s->extra = &new_player;
 
   proto_session_hdr_marshall(s, &h);  
   rc=proto_session_send_msg(s,1);

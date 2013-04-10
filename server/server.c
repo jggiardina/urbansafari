@@ -32,11 +32,11 @@
 #include <poll.h>
 #include "../ui/types.h"
 #include "../ui/tty.h"
-#include "../ui/uistandalone.h"
-#include "../lib/maze.c"
+//#include "../ui/uistandalone.h"
 #include "../lib/types.h"
 #include "../lib/protocol_server.h"
 #include "../lib/protocol_utils.h"
+#include "../ui/uistandalone.c"
 #define STRLEN 81
 #define XSTR(s) STR(s)
 #define BUFLEN 16384
@@ -53,8 +53,10 @@ struct Globals {
   Map map;
   char mapbuf[MAPHEIGHT*MAPWIDTH];
 } globals;
+
 UI *ui;
-int 
+
+int
 doUpdateClients(void)
 {
   Proto_Session *s;

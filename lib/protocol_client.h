@@ -25,7 +25,7 @@
 #include "net.h"
 #include "protocol.h"
 #include "protocol_session.h"
-#include "maze.h"
+//#include "maze.h"
 
 typedef void * Proto_Client_Handle;
 
@@ -46,18 +46,12 @@ static char proto_client_event_conn_handler(Proto_Session *s);
 
 // client side protocol rpc's
 extern int proto_client_hello(Proto_Client_Handle ch);
-extern int proto_client_map_info(Proto_Client_Handle ch, Pos *tuple);
-extern int proto_client_map_info_team_1(Proto_Client_Handle ch, Pos *tuple);
-extern int proto_client_map_info_team_2(Proto_Client_Handle ch, Pos *tuple);
-extern int proto_client_map_dim(Proto_Client_Handle ch, Pos *dim);
-extern int proto_client_map_dump(Proto_Client_Handle ch);
-extern int proto_client_map_cinfo(Proto_Client_Handle ch, Pos *pos, Cell_Type *cell_type, int *team, int *occupied);
+//extern int proto_client_map_info(Proto_Client_Handle ch, Pos *tuple);
+//extern int proto_client_map_info_team_1(Proto_Client_Handle ch, Pos *tuple);
+//extern int proto_client_map_info_team_2(Proto_Client_Handle ch, Pos *tuple);
+//extern int proto_client_map_dim(Proto_Client_Handle ch, Pos *dim);
+//extern int proto_client_map_dump(Proto_Client_Handle ch);
+//extern int proto_client_map_cinfo(Proto_Client_Handle ch, Pos *pos, Cell_Type *cell_type, int *team, int *occupied);
 //extern int proto_client_move(Proto_Client_Handle ch, char d);
 extern int proto_client_goodbye(Proto_Client_Handle ch);
-//extern char proto_client_conn(Proto_Client_Handle ch, char* boardInit);
-//extern int proto_client_print_board(Proto_Client_Handle ch);
-
-//void printGameBoard();
-//void printGameBoardFromEvent();
-//void printMarker();
 #endif

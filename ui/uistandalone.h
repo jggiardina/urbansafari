@@ -23,6 +23,8 @@
 *****************************************************************************/
 
 #include <SDL/SDL.h>   /* All SDL apps need this */
+#include "../lib/maze.h"
+#include "types.h"
 
 typedef enum { 
   TEAMA_S=0, TEAMB_S, FLOOR_S, REDWALL_S, GREENWALL_S, LOGO_S, JACKHAMMER_S, REDFLAG_S, GREENFLAG_S, NUM_S 

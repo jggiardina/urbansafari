@@ -27,12 +27,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "../lib/types.h"
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
-//#include "../lib/maze.c"
-
-#include "../ui/types.h"
 #include "../ui/tty.h"
 #include "../ui/uistandalone.h"
 
@@ -128,12 +124,12 @@ docmd(Client *C, char cmd)
     //               sizeof("numwall")-1)==0) rc = doMapInfo(C, 'w');
     //else if (strncmp(globals.in.data, "numfloor",
     //               sizeof("numfloor")-1)==0) rc = doMapInfo(C, 'f');
-    else if (strncmp(globals.in.data, "dump",
-                   sizeof("dump")-1)==0) rc = doMapDump(C);
-    else if (strncmp(globals.in.data, "dim",
-                   sizeof("dim")-1)==0) rc = doMapDim(C);
-    else if (strncmp(globals.in.data, "cinfo",
-                   sizeof("cinfo")-1)==0) rc = doMapCinfo(C);
+    //else if (strncmp(globals.in.data, "dump",
+    //               sizeof("dump")-1)==0) rc = doMapDump(C);
+    //else if (strncmp(globals.in.data, "dim",
+    //               sizeof("dim")-1)==0) rc = doMapDim(C);
+    //else if (strncmp(globals.in.data, "cinfo",
+    //              sizeof("cinfo")-1)==0) rc = doMapCinfo(C);
     else {
       fprintf(stderr, "Invalid command\n");
       rc = 1;
@@ -287,7 +283,7 @@ main(int argc, char **argv)
   // SO JUMP THROW HOOPS :-(
   
   // TESTING LOAD MAP
-  /*char linebuf[240];
+  char linebuf[240];
   FILE * myfile;
   int i, n, len;  
   myfile = fopen("../server/daGame.map", "r");
@@ -306,7 +302,7 @@ main(int argc, char **argv)
         //fprintf( stderr, "Read %d lines\n", n);
         load_map(globals.mapbuf, &globals.map);
         globals.isLoaded = 1;
-  }*/
+  }
   ui_main_loop(ui, (void *)&globals.map);
   //ui_main_loop(ui, 320, 320);
   return 0;
@@ -477,7 +473,7 @@ doEnter(Client *C)
   //printf("pressed enter\n");
   return 1;
 }
-
+/*
 int
 doMapDump(Client *C)
 {
@@ -604,7 +600,7 @@ doMapCinfo(Client *C)
   
   return rc;
 }
-
+*/
 int
 doQuit(Client *C)
 {
