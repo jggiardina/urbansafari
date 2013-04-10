@@ -205,7 +205,7 @@ update_event_handler(Proto_Session *s)
 }
 
 static int
-goodbye_event_handler(Proto_Session *s)
+hello_event_handler(Proto_Session *s)
 {
   Client *C = proto_session_get_data(s);
   
@@ -311,7 +311,7 @@ main(int argc, char **argv)
         load_map(globals.mapbuf, &globals.map);
         globals.isLoaded = 1;
   }*/
-  ui_main_loop(ui, (void *)&globals.map);
+  ui_client_main_loop(ui, (void *)&globals.map);
   //ui_main_loop(ui, 320, 320);
   return 0;
 }
@@ -406,11 +406,10 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 {
   int player_id = -1;
   int team_num = -1;
-  int team_color = -1;
   Tuple pos_tuple = {-1, -1};
 
   if (globals.host[0]!=0 && globals.port!=0) {
-    if(proto_client_connect(C->ph, host, port, &player_id, &team_num, &team_color, &pos_tuple)!=0) {
+    if(proto_client_connect(C->ph, host, port, &player_id, &team_num, &pos_tuple)<0) {
       fprintf(stderr, "failed to connect\n");
       return -1;
     }
@@ -429,7 +428,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
     p->pos.y = pos_tuple.y;
     p->team = team_num;
     p->team_color = (Color)team_num;
-    ui_uip_init(ui, &p->uip, p->id, p->team); // init ui component
+    //ui_uip_init(ui, &(p->uip), p->id, p->team); // init ui component
 
     return 1;
   }

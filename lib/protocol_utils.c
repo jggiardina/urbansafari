@@ -78,6 +78,9 @@ proto_dump_mt(Proto_Msg_Types type)
   case PROTO_MT_EVENT_BASE_GOODBYE:
     fprintf(stderr, "PROTO_MT_EVENT_BASE_GOODBYE");
     break;
+  case PROTO_MT_EVENT_BASE_HELLO:
+    fprintf(stderr, "PROTO_MT_EVENT_BASE_HELLO");
+    break;
   case PROTO_MT_REQ_BASE_MAP_DUMP:
     fprintf(stderr, "PROTO_MT_REQ_BASE_MAP_DUMP");
     break;

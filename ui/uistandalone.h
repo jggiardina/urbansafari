@@ -82,5 +82,6 @@ int ui_pickup_green(UI *ui, Player p);
 int ui_jail(UI *ui, Player p);
 //int ui_dummy_toggle_team(UI *ui);
 //int ui_dummy_inc_id(UI *ui);
+static sval ui_uip_init(UI *ui, UI_Player **p, int id, int team);
 
 #endif

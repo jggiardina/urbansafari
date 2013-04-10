@@ -511,6 +511,32 @@ ui_main_loop(UI *ui, void *m)
 
 
 extern void
+ui_client_main_loop(UI *ui, void *m)
+{
+  Map *map = (Map *)(m);
+
+  uval h = 320;
+  uval w = 320;
+
+  sval rc;
+
+  assert(ui);
+
+  ui_init_sdl(ui, h, w, 32);
+
+  //dummyPlayer_init(ui);
+
+  //ui_paintmap(ui, map);
+
+
+  while (1) {
+    if (ui_process(ui, map)<0) break;
+  }
+
+  ui_shutdown_sdl();
+}
+
+extern void
 ui_init(UI **ui)
 {
   *ui = (UI *)malloc(sizeof(UI));
@@ -547,7 +573,7 @@ static void player_init(UI *ui, Player *new_player)
 
   pthread_mutex_unlock(&new_player->lock);
   
-  return new_player;
+  //return new_player;
 }
 
 static void 

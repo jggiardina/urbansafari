@@ -57,6 +57,18 @@ struct Globals {
 
 UI *ui;
 
+void* server_init_player(int *id, int *team, Tuple *pos)
+{
+  Player p;
+  bzero(&p, sizeof(Player));
+  player_init(ui, &p);
+  *id = p.id;
+  *team = p.team;
+  pos->x = p.pos.x;
+  pos->y = p.pos.y;
+  return (void *)&p;
+}
+
 int
 doUpdateClients(void)
 {
@@ -320,16 +332,5 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e)
     fprintf(stderr, "%s: key released: %d\n", __func__, sym);
   }
   return 1;
-}
-
-static void * server_init_player(int *id, int *team, Tuple *pos)
-{
-  Player *p;
-  player_init(ui, p);
-  *id = p->id;
-  *team = p->team;
-  pos->x = p->pos.x;
-  pos->y = p->pos.y;
-  return (void *)p;
 }
 
