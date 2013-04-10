@@ -25,6 +25,7 @@
 #include "net.h"
 #include "protocol.h"
 #include "protocol_session.h"
+#include "misc.h"
 
 extern int proto_server_init(void);
 
@@ -37,5 +38,4 @@ extern Proto_Session *proto_server_event_session(void);
 extern int    proto_server_start_rpc_loop(void);
 
 extern void proto_server_post_event(void);
-
 #endif

@@ -47,6 +47,8 @@ static void dummyPlayer_paint(UI *ui, SDL_Rect *t);
 #define UI_GREENFLAG_BMP "../ui/greenflag.bmp"
 #define UI_JACKHAMMER_BMP "../ui/shovel.bmp"
 
+int cur_id = 0; //This is used for player_init
+
 typedef enum {UI_SDLEVENT_UPDATE, UI_SDLEVENT_QUIT} UI_SDL_Event;
 
 static inline SDL_Surface *
@@ -521,135 +523,118 @@ ui_init(UI **ui)
 
 }
 
-int cur_id = 0;
-
-static Player player_init(UI *ui)
+static Player player_init(UI *ui, int *p)
 {
-  Player new_player;
-  pthread_mutex_init(&(new_player.lock), NULL);
-  new_player.id = cur_id;
+  Player new_player = (Player*) p;
+  pthread_mutex_init(&(new_player->lock), NULL);
 
-  if (new_player.id>=100){ //increase to 200? -RC
-       new_player.id = 0;
-    }else if(new_player.id % 2 == 1){
-      new_player.team_color = RED;
-      new_player.team = 0;
-    }else if(new_player.id % 2 == 0){
-      new_player.team_color = GREEN;
-      new_player.team = 1;
+  pthread_mutex_lock(&new_player->lock);
+  new_player->id = cur_id;
+
+  if (new_player->id>=100){ //increase to 200? -RC
+       new_player->id = 0;
+    }else if(new_player->id % 2 == 1){
+      new_player->team_color = RED;
+      new_player->team = 0;
+    }else if(new_player->id % 2 == 0){
+      new_player->team_color = GREEN;
+      new_player->team = 1;
     }
 
-  new_player.x = 0; new_player.y = 0; new_player.state = 0;
-  ui_uip_init(ui, &new_player.uip, new_player.id, new_player.team);
+  new_player->pos.x = 0; new_player->pos.y = 0; new_player->state = 0;
+  ui_uip_init(ui, &new_player->uip, new_player->id, new_player->team);
 
   cur_id++;
 
+  pthread_mutex_unlock(&new_player->lock);
+  
   return new_player;
 }
 
-// Kludgy dummy player for testing purposes
-struct DummyPlayerDesc {
-  pthread_mutex_t lock;
-  UI_Player *uip;
-  int id;
-  int x, y;
-  int team;
-  int state;
-} dummyPlayer;
-
 static void 
-dummyPlayer_init(UI *ui) 
+player_paint(UI *ui, SDL_Rect *t, Player p)
 {
-  pthread_mutex_init(&(dummyPlayer.lock), NULL);
-  dummyPlayer.id = 0;
-  dummyPlayer.x = 0; dummyPlayer.y = 0; dummyPlayer.team = 0; dummyPlayer.state = 0;
-  ui_uip_init(ui, &dummyPlayer.uip, dummyPlayer.id, dummyPlayer.team); 
-}
-
-static void 
-dummyPlayer_paint(UI *ui, SDL_Rect *t)
-{
-  pthread_mutex_lock(&dummyPlayer.lock);
-    t->y = dummyPlayer.y * t->h; t->x = dummyPlayer.x * t->w;
-    dummyPlayer.uip->clip.x = dummyPlayer.uip->base_clip_x +
-      pxSpriteOffSet(dummyPlayer.team, dummyPlayer.state);
-    SDL_BlitSurface(dummyPlayer.uip->img, &(dummyPlayer.uip->clip), ui->screen, t);
-  pthread_mutex_unlock(&dummyPlayer.lock);
+  pthread_mutex_lock(&p.lock);
+    t->y = p.pos.y * t->h; t->x = p.pos.x * t->w;
+    p.uip->clip.x = p.uip->base_clip_x +
+      pxSpriteOffSet(p.team, p.state);
+    SDL_BlitSurface(p.uip->img, &(p.uip->clip), ui->screen, t);
+  pthread_mutex_unlock(&p.lock);
 }
 
 int
-ui_dummy_left(UI *ui)
+ui_left(UI *ui, Player p)
 {
-  pthread_mutex_lock(&dummyPlayer.lock);
-    dummyPlayer.x--;
-  pthread_mutex_unlock(&dummyPlayer.lock);
+  pthread_mutex_lock(&p.lock);
+    p.pos.x--;
+  pthread_mutex_unlock(&p.lock);
   return 2;
 }
 
 int
-ui_dummy_right(UI *ui)
+ui_right(UI *ui, Player p)
 {
-  pthread_mutex_lock(&dummyPlayer.lock);
-    dummyPlayer.x++;
-  pthread_mutex_unlock(&dummyPlayer.lock);
+  pthread_mutex_lock(&p.lock);
+    p.pos.x++;
+  pthread_mutex_unlock(&p.lock);
   return 2;
 }
 
 int
-ui_dummy_down(UI *ui)
+ui_down(UI *ui, Player p)
 {
-  pthread_mutex_lock(&dummyPlayer.lock);
-    dummyPlayer.y++;
-  pthread_mutex_unlock(&dummyPlayer.lock);
+  pthread_mutex_lock(&p.lock);
+    p.pos.y++;
+  pthread_mutex_unlock(&p.lock);
   return 2;
 }
 
 int
-ui_dummy_up(UI *ui)
+ui_up(UI *ui, Player p)
 {
-  pthread_mutex_lock(&dummyPlayer.lock);
-    dummyPlayer.y--;
-  pthread_mutex_unlock(&dummyPlayer.lock);
+  pthread_mutex_lock(&p.lock);
+    p.pos.y--;
+  pthread_mutex_unlock(&p.lock);
   return 2;
 }
 
 int
-ui_dummy_normal(UI *ui)
+ui_normal(UI *ui, Player p)
 {
-  pthread_mutex_lock(&dummyPlayer.lock);
-    dummyPlayer.state = 0;
-  pthread_mutex_unlock(&dummyPlayer.lock);
+  pthread_mutex_lock(&p.lock);
+    p.state = 0;
+  pthread_mutex_unlock(&p.lock);
   return 2;
 }
 
 int
-ui_dummy_pickup_red(UI *ui)
+ui_pickup_red(UI *ui, Player p)
 {
-  pthread_mutex_lock(&dummyPlayer.lock);
-    dummyPlayer.state = 1;
-  pthread_mutex_unlock(&dummyPlayer.lock);
+  pthread_mutex_lock(&p.lock);
+    p.state = 1;
+  pthread_mutex_unlock(&p.lock);
   return 2;
 }
 
 int
-ui_dummy_pickup_green(UI *ui)
+ui_pickup_green(UI *ui, Player p)
 {
-  pthread_mutex_lock(&dummyPlayer.lock);
-    dummyPlayer.state = 2;
-  pthread_mutex_unlock(&dummyPlayer.lock);
+  pthread_mutex_lock(&p.lock);
+    p.state = 2;
+  pthread_mutex_unlock(&p.lock);
   return 2;
 }
 
 
 int
-ui_dummy_jail(UI *ui)
+ui_jail(UI *ui, Player p)
 {
-  pthread_mutex_lock(&dummyPlayer.lock);
-    dummyPlayer.state = 3;
-  pthread_mutex_unlock(&dummyPlayer.lock);
+  pthread_mutex_lock(&p.lock);
+    p.state = 3;
+  pthread_mutex_unlock(&p.lock);
   return 2;
 }
-
+/*
 int
 ui_dummy_toggle_team(UI *ui)
 {
@@ -672,4 +657,4 @@ ui_dummy_inc_id(UI *ui)
   pthread_mutex_unlock(&dummyPlayer.lock);
   return 2;
 }
-
+*/

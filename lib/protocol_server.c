@@ -35,8 +35,6 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_server.h"
-#include "maze.h"
-#include "misc.h"
 #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
 
 struct {
@@ -58,7 +56,7 @@ struct {
 				       PROTO_MT_REQ_BASE_RESERVED_FIRST-1];
 } Proto_Server;
 
-Map game_map;
+//Map game_map;
 
 extern PortType proto_server_rpcport(void) { return Proto_Server.RPCPort; }
 extern PortType proto_server_eventport(void) { return Proto_Server.EventPort; }
@@ -356,7 +354,7 @@ proto_server_mt_dump_handler(Proto_Session *s){
 }
 
 /* Handler for returning num_home and num_jail */
-static int
+/*static int
 proto_server_mt_map_info_team_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -388,10 +386,10 @@ proto_server_mt_map_info_team_handler(Proto_Session *s){
   rc=proto_session_send_msg(s,1);
 
   return rc;
-}
+}*/
 
 /* Handler for returning num_walls and num_floor */
-static int
+/*static int
 proto_server_mt_map_info_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -415,10 +413,10 @@ proto_server_mt_map_info_handler(Proto_Session *s){
   rc=proto_session_send_msg(s,1);
 
   return rc;
-}
+}*/
 
 /* Handler for returning dim */
-static int
+/*static int
 proto_server_mt_dim_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -441,10 +439,10 @@ proto_server_mt_dim_handler(Proto_Session *s){
   rc=proto_session_send_msg(s,1);
 
   return rc;
-}
+}*/
 
 /* Handler for returning cinfo */
-static int
+/*static int
 proto_server_mt_cinfo_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -499,7 +497,7 @@ proto_server_mt_cinfo_handler(Proto_Session *s){
     rc=proto_session_send_msg(s,1);
   }
   return rc;
-}
+}*/
 
 /* Handler for Connection */
 static int
@@ -518,11 +516,17 @@ proto_server_mt_hello_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
 
   /* Test code for adding player */
-  //ui_init(&(ui));
-  //Player new_player = player_init(ui);
-  //s->extra = &new_player;
-
+  int id, team = -1;
+  Tuple pos = {-1,-1};
+  void *p = server_init_player(&id, &team, &pos); 
+  s->extra = p;
+  
   proto_session_hdr_marshall(s, &h);  
+  proto_session_body_marshall_int(s, id);  
+  proto_session_body_marshall_int(s, pos.x);  
+  proto_session_body_marshall_int(s, pos.y);  
+  proto_session_body_marshall_int(s, team);  
+
   rc=proto_session_send_msg(s,1);
   
   //pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);

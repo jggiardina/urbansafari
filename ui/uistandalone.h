@@ -71,16 +71,16 @@ void ui_main_loop(UI *ui, void *map);
 void ui_init(UI **ui);
 
 
-// DUMMY TEST CALLS
-int ui_dummy_left(UI *ui);
-int ui_dummy_right(UI *ui); 
-int ui_dummy_down(UI *ui);
-int ui_dummy_up(UI *ui);
-int ui_dummy_normal(UI *ui);
-int ui_dummy_pickup_red(UI *ui);
-int ui_dummy_pickup_green(UI *ui);
-int ui_dummy_jail(UI *ui);
-int ui_dummy_toggle_team(UI *ui);
-int ui_dummy_inc_id(UI *ui);
+static Player player_init(UI *ui, int *p);
+int ui_left(UI *ui, Player p);
+int ui_right(UI *ui, Player p); 
+int ui_down(UI *ui, Player p);
+int ui_up(UI *ui, Player p);
+int ui_normal(UI *ui, Player p);
+int ui_pickup_red(UI *ui, Player p);
+int ui_pickup_green(UI *ui, Player p);
+int ui_jail(UI *ui, Player p);
+//int ui_dummy_toggle_team(UI *ui);
+//int ui_dummy_inc_id(UI *ui);
 
 #endif

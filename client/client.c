@@ -61,7 +61,6 @@ typedef struct ClientState  {
 
 UI *ui;
 
-
 int
 getInput()
 {
@@ -145,22 +144,22 @@ docmd(Client *C, char cmd)
     break;
   case 'a':
     printf("a ->do rpc: up\n");
-    ui_dummy_up(ui);
+    //ui_up(ui);
     rc=2;
     break;
   case 'z':
     printf("z ->do rpc: down\n");
-    ui_dummy_down(ui);
+    //ui_down(ui);
     rc=2;
     break;
   case ',':
     printf("u ->do rpc: left\n");
-    ui_dummy_left(ui);
+    //ui_left(ui);
     rc=2;
     break;
   case '.':
     printf(". ->do rpc: right\n");
-    ui_dummy_right(ui);
+    //ui_right(ui);
     rc=2;
     break;
   case '\n':
@@ -317,44 +316,44 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e)
   if (e->type == SDL_KEYDOWN) {
     if (sym == SDLK_LEFT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move left\n", __func__);
-      return ui_dummy_left(ui);
+      return 2;//ui_left(ui);
     }
     if (sym == SDLK_RIGHT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move right\n", __func__);
-      return ui_dummy_right(ui);
+      return 2;//ui_right(ui);
     }
     if (sym == SDLK_UP && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: move up\n", __func__);
-      return ui_dummy_up(ui);
+      return 2;//ui_up(ui);
     }
     if (sym == SDLK_DOWN && mod == KMOD_NONE)  {
       fprintf(stderr, "%s: move down\n", __func__);
-      return ui_dummy_down(ui);
+      return 2;//ui_down(ui);
     }
     if (sym == SDLK_r && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
-      return ui_dummy_pickup_red(ui);
+      return 2;//ui_pickup_red(ui);
     }
     if (sym == SDLK_g && mod == KMOD_NONE)  {   
       fprintf(stderr, "%s: dummy pickup green flag\n", __func__);
-      return ui_dummy_pickup_green(ui);
+      return 2;//ui_pickup_green(ui);
     }
     if (sym == SDLK_j && mod == KMOD_NONE)  {   
       fprintf(stderr, "%s: dummy jail\n", __func__);
-      return ui_dummy_jail(ui);
+      return 2;//ui_jail(ui);
     }
     if (sym == SDLK_n && mod == KMOD_NONE)  {   
       fprintf(stderr, "%s: dummy normal state\n", __func__);
-      return ui_dummy_normal(ui);
+      return 2;//ui_normal(ui);
     }
-    if (sym == SDLK_t && mod == KMOD_NONE)  {   
+    /*if (sym == SDLK_t && mod == KMOD_NONE)  {   
       fprintf(stderr, "%s: dummy toggle team\n", __func__);
       return ui_dummy_toggle_team(ui);
     }
     if (sym == SDLK_i && mod == KMOD_NONE)  {   
       fprintf(stderr, "%s: dummy inc player id \n", __func__);
       return ui_dummy_inc_id(ui);
-    }
+    }*/
     if (sym == SDLK_q) return -1;
     if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
     if (sym == SDLK_z && mod & KMOD_SHIFT ) return ui_zoom(ui,-1);
