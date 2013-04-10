@@ -1,7 +1,7 @@
 #define MAPHEIGHT 200
 #define MAPWIDTH 200
 
-typedef enum {JAIL, HOME, FLOOR, WALL} Cell_Type;
+typedef enum {JAIL, HOME, FLOOR, WALL, BWALL} Cell_Type;
 
 typedef enum {RED, GREEN} Color;
 
