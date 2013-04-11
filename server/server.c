@@ -168,15 +168,15 @@ prompt(int menu)
   c=getInput();
   return c;
 }
-char*
+void*
 marshall_map_data()
 {
 	marshall_map(&globals.tempmap, &globals.map);
-	return &globals.tempmap.cells;
+	return (void *) &globals.tempmap.cells;
 }
 int
 getCellsSize(){
-	return sizeof(globals.tempmap.cells);
+	return (int) sizeof(globals.tempmap.cells);
 }
 int
 getInput()

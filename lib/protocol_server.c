@@ -358,17 +358,16 @@ proto_server_mt_update_map_handler(Proto_Session *s){
   Proto_Msg_Hdr h;
   char *cells;  
 
-  fprintf(stderr, "proto_server_mt_hello_handler: invoked for session:\n");
-  proto_session_dump(s);
-  bzero(&h, sizeof(s));
-  h.type = proto_session_hdr_unmarshall_type(s);
-  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  
+  fprintf(stderr, "send map handler:\n");
+  h.type = PROTO_MT_EVENT_BASE_UPDATE;
+
   proto_session_hdr_marshall(s, &h);
-  cells = marshall_map_data();
+  cells = (char *) marshall_map_data();
+  fprintf(stderr, "map data marshalled:\n");
   proto_session_body_marshall_bytes(s, getCellsSize(), cells);
-  rc=proto_session_send_msg(s,1);
-  
+  fprintf(stderr, "about to send message:\n");
+  rc = proto_session_send_msg(s, 1);
+ 
   return rc;
 } 
 
@@ -548,7 +547,7 @@ proto_server_mt_hello_handler(Proto_Session *s){
   proto_session_body_marshall_int(s, team);  
 
   rc=proto_session_send_msg(s,1);
-  
+  proto_server_mt_update_map_handler(s);
   //pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
    
   return rc;

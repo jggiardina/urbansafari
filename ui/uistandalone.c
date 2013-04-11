@@ -308,7 +308,7 @@ draw_cell(UI *ui, SPRITE_INDEX si, SDL_Rect *t, SDL_Surface *s)
     SDL_BlitSurface(ts, NULL, s, t);
 }
 
-static sval
+extern sval
 ui_paintmap(UI *ui, Map *map) 
 {
   //Map m = *map;

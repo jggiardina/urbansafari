@@ -255,7 +255,16 @@ initGlobals(int argc, char **argv)
   }
 
 }
+void
+initMap(Map *m, int size){
+	if (size == sizeof(globals.map)){
+		memcpy(&globals.map, m, size);
+  		ui_paintmap(ui, &globals.map);
+	 }else{
+		fprintf(stderr, "ERROR: size of recieved map invalid\n");
+	}
 
+}
 int
 main(int argc, char **argv)
 {
@@ -505,6 +514,33 @@ doEnter(Client *C)
   //printf("pressed enter\n");
   return 1;
 }
+char*
+getMapPointer(){
+	return &globals.map;
+}
+int
+getMapSize(){
+	return sizeof(globals.map);
+}
+/*extern int
+proto_client_event_update_handler(Proto_Session *s)
+{
+  fprintf(stderr,
+          "proto_client_event_update_handler: invoked for session:\n");
+  proto_session_dump(s);
+  Proto_Msg_Types mt;
+        
+  mt = proto_session_hdr_unmarshall_type(s);
+  char board[9];
+      
+  if (mt == PROTO_MT_EVENT_BASE_UPDATE){
+    //update client code should go here -WA 
+    proto_session_body_unmarshall_bytes(s, 0, sizeof(globals.map), (char *)&globals.map);
+  }
+
+  return 1;
+}
+*/
 /*
 int
 doMapDump(Client *C)
