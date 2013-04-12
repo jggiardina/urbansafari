@@ -168,15 +168,23 @@ prompt(int menu)
   c=getInput();
   return c;
 }
-void*
+char*
 marshall_map_data()
 {
 	marshall_map(&globals.tempmap, &globals.map);
-	return (void *) &globals.tempmap.cells;
+	return (char *) &(globals.tempmap.cells);
 }
 int
 getCellsSize(){
+	fprintf(stderr, "size of tempmap %d \n", sizeof(globals.tempmap.cells));
 	return (int) sizeof(globals.tempmap.cells);
+}
+char* mapToASCII(){
+	dump_map(&globals.map);
+	return globals.map.data_ascii;
+}
+int getAsciiSize(){
+	return sizeof(globals.map.data_ascii);
 }
 int
 getInput()
@@ -229,7 +237,7 @@ main(int argc, char **argv)
   ui_init(&(ui));
 
   pthread_create(&tid, NULL, shell, NULL);
-
+  proto_debug_on();
   // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
   // SO JUMP THROW HOOPS :-(
 

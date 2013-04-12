@@ -148,6 +148,7 @@ int marshall_map(Map *tempmap, Map *map){
 	for (i = 0; i < MAPHEIGHT*MAPWIDTH; i++){
 		marshall_cell(&(tempmap->cells[i]), &(map->cells[i]));
 	}
+	fprintf(stderr, "marshalled %d cells", i);
 	return 1;
 }
 int unmarshall_cell(Cell *c){
@@ -163,6 +164,7 @@ int unmarshall_map(char *towritefrom, Map *map){
         for (i = 0; i < MAPHEIGHT*MAPWIDTH; i++){
                 unmarshall_cell(&(map->cells[i]));
         }
+	fprintf(stderr, "marshalled %d cells", i);
         return 1;
 }
 

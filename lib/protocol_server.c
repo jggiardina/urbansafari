@@ -362,10 +362,9 @@ proto_server_mt_update_map_handler(Proto_Session *s){
   h.type = PROTO_MT_EVENT_BASE_UPDATE;
 
   proto_session_hdr_marshall(s, &h);
-  cells = (char *) marshall_map_data();
-  fprintf(stderr, "map data marshalled:\n");
-  proto_session_body_marshall_bytes(s, getCellsSize(), cells);
-  fprintf(stderr, "about to send message:\n");
+  fprintf(stderr, "event type marshalled:\n");
+  proto_session_body_marshall_bytes(s, getAsciiSize(), mapToASCII());
+  fprintf(stderr, "bytes marshalled:\n");
   rc = proto_session_send_msg(s, 1);
  
   return rc;

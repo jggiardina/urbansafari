@@ -234,23 +234,6 @@ proto_client_event_dispatcher(void * arg)
   close(s->fd);
   return NULL;
 }
-int
-proto_client_event_update_handler(Proto_Session *s)
-{
-  fprintf(stderr,
-          "proto_client_event_update_handler: invoked for session:\n");
-  proto_session_dump(s);
-  Proto_Msg_Types mt;
-
-  mt = proto_session_hdr_unmarshall_type(s);
-
-  if (mt == PROTO_MT_EVENT_BASE_UPDATE){
-    //update client code should go here -WA 
-    proto_session_body_unmarshall_bytes(s, 0, getMapSize(), (char *)getMapPointer());
-  }
-
-  return 1;
-}
 
 extern int
 proto_client_init(Proto_Client_Handle *ch)
@@ -268,9 +251,6 @@ proto_client_init(Proto_Client_Handle *ch)
   for (mt=PROTO_MT_EVENT_BASE_RESERVED_FIRST+1;
        mt<PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
     //ADD CODE: probably looping through the base_event_handlers and initializing them to null here. -JG
-   if (mt==PROTO_MT_EVENT_BASE_UPDATE){
-      proto_client_set_event_handler(c, mt, proto_client_event_update_handler);
-    }
     proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
   *ch = c;
   return 1;
