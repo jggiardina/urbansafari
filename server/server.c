@@ -38,6 +38,7 @@
 #include "../lib/protocol_utils.h"
 #include "../ui/uistandalone.c"
 #define STRLEN 81
+#define MAXPLAYERS 400
 #define XSTR(s) STR(s)
 #define BUFLEN 16384
 #define STR(s) #s
@@ -52,6 +53,7 @@ struct Globals {
   int isLoaded;
   Map map;
   Map tempmap;
+  void* player_array[MAXPLAYERS];
   char mapbuf[MAPHEIGHT*MAPWIDTH];
 } globals;
 
@@ -67,6 +69,11 @@ void* server_init_player(int *id, int *team, Tuple *pos)
   pos->x = p.pos.x;
   pos->y = p.pos.y;
   return (void *)&p;
+}
+
+void add_player(void *p){
+  Player *pl = (Player*)p;
+  globals.player_array[pl->id] = pl; //Just to put it somewhere for now TODO
 }
 
 int

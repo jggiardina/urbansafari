@@ -540,6 +540,7 @@ proto_server_mt_hello_handler(Proto_Session *s){
   Tuple pos = {-1,-1};
   void *p = server_init_player(&id, &team, &pos); 
   s->extra = p;
+  add_player(p);
   
   proto_session_hdr_marshall(s, &h);  
   proto_session_body_marshall_int(s, id);  
