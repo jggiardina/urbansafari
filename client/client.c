@@ -107,7 +107,7 @@ docmd(Client *C, char cmd)
 {
   int rc = 1;
   // not yet connected so don't use the single char command prompt
-  if (!globals.connected) {
+  /*if (!globals.connected) {
     if (strlen(globals.in.data)==0) rc = doEnter(C);
     else if (strncmp(globals.in.data, "connect",
                    sizeof("connect")-1)==0) rc = doConnect(C);
@@ -135,7 +135,7 @@ docmd(Client *C, char cmd)
     }
     return rc;
   }
-
+  */
   // otherwise do the tty commands
   switch (cmd) {
   case 'q':
@@ -215,8 +215,10 @@ static int
 update_event_handler(Proto_Session *s)
 {
   Client *C = proto_session_get_data(s);
-   proto_session_body_unmarshall_bytes(s, 0, getMapSize(), getMapBufPointer());
-    convertMap();
+  proto_session_body_unmarshall_bytes(s, 0, getMapSize(), getMapBufPointer());
+  convertMap();
+  
+  //ui_paintmap(ui, &globals.map);
 
   fprintf(stderr, "%s: called", __func__);
   return 1;
@@ -294,8 +296,11 @@ main(int argc, char **argv)
     fprintf(stderr, "ERROR: clientInit failed\n");
     return -1;
   }
-  //shell(&c);
   // END ORIGINAL CLIENT
+  
+  // init ui code
+  tty_init(STDIN_FILENO);
+  ui_init(&(ui));
 
   // RUN AUTO-CONNECT FIRST
   if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) return -1;
@@ -305,42 +310,14 @@ main(int argc, char **argv)
   }
   // END CONNECT
 
-  // tty stuff
   pthread_t tid;
-
-  tty_init(STDIN_FILENO);
-
-  ui_init(&(ui));
-
   pthread_create(&tid, NULL, shell, &c);
 
   // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
   // SO JUMP THROW HOOPS :-(
   
-  // TESTING LOAD MAP
-  /*char linebuf[240];
-  FILE * myfile;
-  int i, n, len;  
-  myfile = fopen("../server/daGame.map", "r");
-  if ( myfile == NULL ){
-    fprintf( stderr, "Could not open file\n" );
-  }else{
-        n = 0;
-        while(fgets(linebuf, sizeof(linebuf), myfile) != NULL){
-                for (i = 0; i < MAPWIDTH; i++){
-                        globals.mapbuf[i+(n*MAPHEIGHT)] = linebuf[i];
-                }
-                bzero(linebuf, sizeof(linebuf));
-                n++;
-        }
-        fclose(myfile);
-        //fprintf( stderr, "Read %d lines\n", n);
-        load_map(globals.mapbuf, &globals.map);
-        globals.isLoaded = 1;
-  }*/
   proto_debug_on();
-  ui_client_main_loop(ui, (void *)&globals.map);
-  //ui_main_loop(ui, 320, 320);
+  ui_client_main_loop(ui, (void *)&globals.map); //TODO:FIX if the update_event_handler for hello is not hit before this, then the map will not be initialized and the main loop will just print all floor (JAIL) cells until the handler is hit.
   return 0;
 }
 

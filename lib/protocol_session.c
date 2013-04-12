@@ -335,7 +335,7 @@ proto_session_rcv_msg(Proto_Session *s)
         		return -1;
 		}
 	}
-	bzero(&s->rbuf, sizeof(s->rbuf));
+	//bzero(&s->rbuf, sizeof(s->rbuf)); can't do this because then we zero out the rbuf before we ever unmarshall it -JG
   //end added code
 
   if (proto_debug()) {

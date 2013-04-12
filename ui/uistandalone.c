@@ -308,10 +308,9 @@ draw_cell(UI *ui, SPRITE_INDEX si, SDL_Rect *t, SDL_Surface *s)
     SDL_BlitSurface(ts, NULL, s, t);
 }
 
-extern sval
+sval
 ui_paintmap(UI *ui, Map *map) 
 {
-  //Map m = *map;
   SDL_Rect t;
   int i, j = 0;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
@@ -526,7 +525,7 @@ ui_client_main_loop(UI *ui, void *m)
 
   //dummyPlayer_init(ui);
 
-  //ui_paintmap(ui, map);
+  ui_paintmap(ui, map);
 
 
   while (1) {
