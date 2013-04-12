@@ -33,7 +33,7 @@ include ../config.mk
 #  UILIBS = -lSDL
 #endif
 
-CFLAGS := $(UIINCDIR) -std=c99
+CFLAGS := -g $(UIINCDIR) -std=c99
 
 $(UILIBFILE): $(objs)
 	ar -c -r $(UILIBFILE) $(objs)

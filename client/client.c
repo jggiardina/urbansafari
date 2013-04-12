@@ -107,7 +107,7 @@ docmd(Client *C, char cmd)
 {
   int rc = 1;
   // not yet connected so don't use the single char command prompt
-  if (!globals.connected) {
+  /*if (!globals.connected) {
     if (strlen(globals.in.data)==0) rc = doEnter(C);
     else if (strncmp(globals.in.data, "connect",
                    sizeof("connect")-1)==0) rc = doConnect(C);
@@ -135,7 +135,7 @@ docmd(Client *C, char cmd)
     }
     return rc;
   }
-
+  */
   // otherwise do the tty commands
   switch (cmd) {
   case 'q':
@@ -193,12 +193,32 @@ shell(void *arg)
   ui_quit(ui);
   return NULL;
 }
+char*
+getMapPointer(){
+        return &globals.map;
+}
+char*
+getMapBufPointer(){
+        return globals.mapbuf;
+}
+int
+getMapSize(){
+        return sizeof(globals.mapbuf);
+}
+void
+convertMap(){
+        load_map(globals.mapbuf, &globals.map);
+}
 
 // old client event handlers:
 static int
 update_event_handler(Proto_Session *s)
 {
   Client *C = proto_session_get_data(s);
+  proto_session_body_unmarshall_bytes(s, 0, getMapSize(), getMapBufPointer());
+  convertMap();
+  
+  //ui_paintmap(ui, &globals.map);
 
   fprintf(stderr, "%s: called", __func__);
   return 1;
@@ -255,7 +275,16 @@ initGlobals(int argc, char **argv)
   }
 
 }
+void
+initMap(Map *m, int size){
+	if (size == sizeof(globals.map)){
+		memcpy(&globals.map, m, size);
+  		ui_paintmap(ui, &globals.map);
+	 }else{
+		fprintf(stderr, "ERROR: size of recieved map invalid\n");
+	}
 
+}
 int
 main(int argc, char **argv)
 {
@@ -267,8 +296,11 @@ main(int argc, char **argv)
     fprintf(stderr, "ERROR: clientInit failed\n");
     return -1;
   }
-  //shell(&c);
   // END ORIGINAL CLIENT
+  
+  // init ui code
+  tty_init(STDIN_FILENO);
+  ui_init(&(ui));
 
   // RUN AUTO-CONNECT FIRST
   if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) return -1;
@@ -278,41 +310,14 @@ main(int argc, char **argv)
   }
   // END CONNECT
 
-  // tty stuff
   pthread_t tid;
-
-  tty_init(STDIN_FILENO);
-
-  ui_init(&(ui));
-
   pthread_create(&tid, NULL, shell, &c);
 
   // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
   // SO JUMP THROW HOOPS :-(
   
-  // TESTING LOAD MAP
-  /*char linebuf[240];
-  FILE * myfile;
-  int i, n, len;  
-  myfile = fopen("../server/daGame.map", "r");
-  if ( myfile == NULL ){
-    fprintf( stderr, "Could not open file\n" );
-  }else{
-        n = 0;
-        while(fgets(linebuf, sizeof(linebuf), myfile) != NULL){
-                for (i = 0; i < MAPWIDTH; i++){
-                        globals.mapbuf[i+(n*MAPHEIGHT)] = linebuf[i];
-                }
-                bzero(linebuf, sizeof(linebuf));
-                n++;
-        }
-        fclose(myfile);
-        //fprintf( stderr, "Read %d lines\n", n);
-        load_map(globals.mapbuf, &globals.map);
-        globals.isLoaded = 1;
-  }*/
-  ui_client_main_loop(ui, (void *)&globals.map);
-  //ui_main_loop(ui, 320, 320);
+  proto_debug_on();
+  ui_client_main_loop(ui, (void *)&globals.map); //TODO:FIX if the update_event_handler for hello is not hit before this, then the map will not be initialized and the main loop will just print all floor (JAIL) cells until the handler is hit.
   return 0;
 }
 
@@ -416,7 +421,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 
     proto_session_set_data(proto_client_event_session(C->ph), C);
     if (h != NULL) {// THIS IS KEY - this is where we set event handlers
-      proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, h);
+      proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, update_event_handler);
       proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_HELLO, hello_event_handler);
       proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_GOODBYE, goodbye_event_handler);
     }
@@ -505,6 +510,25 @@ doEnter(Client *C)
   //printf("pressed enter\n");
   return 1;
 }
+/*extern int
+proto_client_event_update_handler(Proto_Session *s)
+{
+  fprintf(stderr,
+          "proto_client_event_update_handler: invoked for session:\n");
+  proto_session_dump(s);
+  Proto_Msg_Types mt;
+        
+  mt = proto_session_hdr_unmarshall_type(s);
+  char board[9];
+      
+  if (mt == PROTO_MT_EVENT_BASE_UPDATE){
+    //update client code should go here -WA 
+    proto_session_body_unmarshall_bytes(s, 0, sizeof(globals.map), (char *)&globals.map);
+  }
+
+  return 1;
+}
+*/
 /*
 int
 doMapDump(Client *C)
