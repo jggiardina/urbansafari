@@ -218,7 +218,7 @@ update_event_handler(Proto_Session *s)
   proto_session_body_unmarshall_bytes(s, 0, getMapSize(), getMapBufPointer());
   convertMap();
   
-  //ui_paintmap(ui, &globals.map);
+  //ui_paintmap(ui, &globals.map); TODO:FIX this is okay for now, but if we do actual event updates, we need to paint here, because the ui main loop will already be running. maybe we can check to see if the main has started, print, if not, dont print
 
   fprintf(stderr, "%s: called", __func__);
   return 1;
@@ -433,7 +433,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
     p->pos.y = pos_tuple.y;
     p->team = team_num;
     p->team_color = (Color)team_num;
-    //ui_uip_init(ui, &(p->uip), p->id, p->team); // init ui component
+    ui_uip_init(ui, &(p->uip), p->id, p->team); // init ui component
 
     return 1;
   }

@@ -32,6 +32,7 @@
 /* Forward declaration of some dummy player code */
 static void dummyPlayer_init(UI *ui);
 static void dummyPlayer_paint(UI *ui, SDL_Rect *t);
+static void player_paint(UI *ui, SDL_Rect *t, Player *p);
 
 
 #define SPRITE_H 32
@@ -69,7 +70,7 @@ pxSpriteOffSet(int team, int state)
   return 0;
 }
 
-static sval
+extern sval
 ui_uip_init(UI *ui, UI_Player **p, int id, int team)
 {
   UI_Player *ui_p;
@@ -312,19 +313,23 @@ sval
 ui_paintmap(UI *ui, Map *map) 
 {
   SDL_Rect t;
-  int i, j = 0;
+  int i = 0;
+  int j = 0;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
     for (t.x=0; t.x<ui->screen->w; t.x+=t.w) {
-      Cell_Type type = map->cells[i + (j*map->w)].t;
-      Color c = map->cells[i + (j*map->w)].c;
-      if (type == WALL && c == RED) {
+      Cell cell = map->cells[i + (j*map->w)];
+      if (cell.t == WALL && cell.c == RED) {
         draw_cell(ui, REDWALL_S, &t, ui->screen);
-      } else if (type == WALL && c == GREEN) {
+      } else if (cell.t == WALL && cell.c == GREEN) {
         draw_cell(ui, GREENWALL_S, &t, ui->screen);
       } else {
         draw_cell(ui, FLOOR_S, &t, ui->screen);
+      }
+      // should we also draw a player?
+      if (cell.player != NULL) {// for right now, separate for server
+        player_paint(ui, &t, cell.player);//TODO:FIX on the client, we can't use the player pointer so how do we know who to draw?
       }
       i++;
       //draw_cell(ui, FLOOR_S, &t, ui->screen);
@@ -336,6 +341,51 @@ ui_paintmap(UI *ui, Map *map)
 
   SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
   return 1;
+}
+
+sval
+ui_client_paintmap(UI *ui, Map *map)
+{
+  SDL_Rect t;
+  int i = 0;
+  int j = 0;
+  t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w;
+
+  for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
+    for (t.x=0; t.x<ui->screen->w; t.x+=t.w) {
+      Cell cell = map->cells[i + (j*map->w)];
+      if (cell.t == WALL && cell.c == RED) {
+        draw_cell(ui, REDWALL_S, &t, ui->screen);
+      } else if (cell.t == WALL && cell.c == GREEN) {
+        draw_cell(ui, GREENWALL_S, &t, ui->screen);
+      } else {
+        draw_cell(ui, FLOOR_S, &t, ui->screen);
+      }
+      // should we also draw a player?
+      if (cell.player != NULL) {// for right now, separate into server and client
+        //player_paint(ui, &t, cell.player);//TODO:FIX on the client, we can't use the player pointer so how do we know who to draw?
+      }
+      i++;
+      //draw_cell(ui, FLOOR_S, &t, ui->screen);
+    }
+    j++;i=0;
+  }
+
+  //dummyPlayer_paint(ui, &t);
+
+  SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
+  return 1;
+}
+
+static void
+player_paint(UI *ui, SDL_Rect *t, Player *p)
+{
+  pthread_mutex_lock(&(p->lock));
+    t->y = p->pos.y * t->h; t->x = p->pos.x * t->w;
+    p->uip->clip.x = p->uip->base_clip_x +
+      pxSpriteOffSet(p->team, p->state);
+    SDL_BlitSurface(p->uip->img, &(p->uip->clip), ui->screen, t);
+  pthread_mutex_unlock(&(p->lock));
 }
 
 static sval
@@ -525,7 +575,7 @@ ui_client_main_loop(UI *ui, void *m)
 
   //dummyPlayer_init(ui);
 
-  ui_paintmap(ui, map);
+  ui_client_paintmap(ui, map);
 
 
   while (1) {
@@ -555,35 +605,25 @@ static void player_init(UI *ui, Player *new_player)
   pthread_mutex_lock(&new_player->lock);
   new_player->id = cur_id;
 
+  // TODO: This needs to be more robust, essentially work like the EventSubscribers such that if a player disconnect, another player can come along and connect and take his id. -JG
   if (new_player->id>=100){ //increase to 200? -RC
-       new_player->id = 0;
-    }else if(new_player->id % 2 == 1){
+       new_player->id = 0; //TODO:What does this do/what is it for? -JG
+    }else if(new_player->id % 2 == 0){
       new_player->team_color = RED;
       new_player->team = 0;
-    }else if(new_player->id % 2 == 0){
+    }else if(new_player->id % 2 == 1){
       new_player->team_color = GREEN;
       new_player->team = 1;
     }
 
-  new_player->pos.x = 0; new_player->pos.y = 0; new_player->state = 0;
+  new_player->pos.x = new_player->id; new_player->pos.y = 0; new_player->state = 0;
   ui_uip_init(ui, &new_player->uip, new_player->id, new_player->team);
-
+  
   cur_id++;
 
   pthread_mutex_unlock(&new_player->lock);
   
   //return new_player;
-}
-
-static void 
-player_paint(UI *ui, SDL_Rect *t, Player p)
-{
-  pthread_mutex_lock(&p.lock);
-    t->y = p.pos.y * t->h; t->x = p.pos.x * t->w;
-    p.uip->clip.x = p.uip->base_clip_x +
-      pxSpriteOffSet(p.team, p.state);
-    SDL_BlitSurface(p.uip->img, &(p.uip->clip), ui->screen, t);
-  pthread_mutex_unlock(&p.lock);
 }
 
 int
