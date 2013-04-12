@@ -26,7 +26,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <pthread.h>
-
+#include <errno.h>
 
 #include <sys/types.h>
 #include <poll.h>
@@ -74,6 +74,23 @@ void* server_init_player(int *id, int *team, Tuple *pos)
 void add_player(void *p){
   Player *pl = (Player*)p;
   globals.player_array[pl->id] = pl; //Just to put it somewhere for now TODO
+}
+
+//TODO: test this code to see if it gets updated, if it doesnt work then change it to only pass s->extra instead.  then there will be warnings with the mutex's tho with &p...cant get to &p.lock its an error
+int move_left(Tuple *pos, Player p){
+  int rc = 0;
+  
+  pthread_mutex_lock(&p.lock);
+    p.pos.x--;
+    rc = 1;
+
+    //Return values of player if needing to update
+    pos->x = p.pos.x;
+    pos->y = p.pos.y;
+  
+  pthread_mutex_unlock(&p.lock);
+
+  return rc;
 }
 
 int

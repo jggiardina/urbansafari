@@ -47,6 +47,7 @@ static void dummyPlayer_paint(UI *ui, SDL_Rect *t);
 #define UI_GREENFLAG_BMP "../ui/greenflag.bmp"
 #define UI_JACKHAMMER_BMP "../ui/shovel.bmp"
 
+pthread_mutex_t cur_id_mutex;
 int cur_id = 0; //This is used for player_init
 
 typedef enum {UI_SDLEVENT_UPDATE, UI_SDLEVENT_QUIT} UI_SDL_Event;
@@ -552,8 +553,9 @@ static void player_init(UI *ui, Player *new_player)
 {
   pthread_mutex_init(&(new_player->lock), NULL);
 
-  pthread_mutex_lock(&new_player->lock);
+  pthread_mutex_lock(&cur_id_mutex);
   new_player->id = cur_id;
+ 
 
   if (new_player->id>=100){ //increase to 200? -RC
        new_player->id = 0;
@@ -570,7 +572,7 @@ static void player_init(UI *ui, Player *new_player)
 
   cur_id++;
 
-  pthread_mutex_unlock(&new_player->lock);
+  pthread_mutex_unlock(&cur_id_mutex);
   
   //return new_player;
 }
