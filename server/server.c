@@ -79,6 +79,17 @@ void* server_init_player(int *id, int *team, Tuple *pos)
   return (void *)&p;
 }
 
+void paint_players(){
+  int i;
+  SDL_Rect t = {0, 0, ui->tile_h, ui->tile_w};  
+  
+  for(i=0;i<MAXPLAYERS;i++){
+    if(globals.players[i]){
+      player_paint(ui, &t, globals.players[i]);
+    }
+  }
+}
+
 /*void add_player(void *p){
   Player *pl = (Player*)p;
   globals.player_array[pl->id] = pl; //Just to put it somewhere for now TODO
