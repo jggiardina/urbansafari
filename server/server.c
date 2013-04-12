@@ -42,6 +42,9 @@
 #define XSTR(s) STR(s)
 #define BUFLEN 16384
 #define STR(s) #s
+
+#define MAXPLAYERS 200
+
 struct LineBuffer {
   char data[BUFLEN];
   int  len;
@@ -55,6 +58,7 @@ struct Globals {
   Map tempmap;
   void* player_array[MAXPLAYERS];
   char mapbuf[MAPHEIGHT*MAPWIDTH];
+  Player *players[MAXPLAYERS]; //TODO:FIX maybe we should move this?
 } globals;
 
 UI *ui;
@@ -64,6 +68,11 @@ void* server_init_player(int *id, int *team, Tuple *pos)
   Player p;
   bzero(&p, sizeof(Player));
   player_init(ui, &p);
+  // stuff player into array and cell TODO:FIX: how to make sure the player pointers are always alive... and do not get corrupted through the lifetime of the server
+  globals.players[p.id] = &p;
+  globals.map.cells[p.pos.x + (p.pos.y*globals.map.w)].player = &p;
+  ui_paintmap(ui, &globals.map);
+
   *id = p.id;
   *team = p.team;
   pos->x = p.pos.x;

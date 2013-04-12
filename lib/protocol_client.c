@@ -387,7 +387,7 @@ do_init_player_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *id, int *tea
     proto_session_body_unmarshall_int(s, 0, id);
     proto_session_body_unmarshall_int(s, sizeof(int), &(pos->x));
     proto_session_body_unmarshall_int(s, 2*sizeof(int), &(pos->y));
-    proto_session_body_unmarshall_int(s, 4*sizeof(int), team);
+    proto_session_body_unmarshall_int(s, 3*sizeof(int), team);
     //bzero(s->rbuf, sizeof(s->rbuf)); // clear out the rbuf
   } else {
     //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
