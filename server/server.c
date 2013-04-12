@@ -38,7 +38,6 @@
 #include "../lib/protocol_utils.h"
 #include "../ui/uistandalone.c"
 #define STRLEN 81
-#define MAXPLAYERS 400
 #define XSTR(s) STR(s)
 #define BUFLEN 16384
 #define STR(s) #s
@@ -56,7 +55,7 @@ struct Globals {
   int isLoaded;
   Map map;
   Map tempmap;
-  void* player_array[MAXPLAYERS];
+  //void* player_array[MAXPLAYERS];
   char mapbuf[MAPHEIGHT*MAPWIDTH];
   Player *players[MAXPLAYERS]; //TODO:FIX maybe we should move this?
 } globals;
@@ -80,10 +79,10 @@ void* server_init_player(int *id, int *team, Tuple *pos)
   return (void *)&p;
 }
 
-void add_player(void *p){
+/*void add_player(void *p){
   Player *pl = (Player*)p;
   globals.player_array[pl->id] = pl; //Just to put it somewhere for now TODO
-}
+}*/
 
 //TODO: test this code to see if it gets updated, if it doesnt work then change it to only pass s->extra instead.  then there will be warnings with the mutex's tho with &p...cant get to &p.lock its an error
 int move_left(Tuple *pos, Player p){
