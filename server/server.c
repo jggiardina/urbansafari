@@ -72,7 +72,7 @@ void find_free(Color team_color, Cell_Type cell_type, Tuple *t){
       c = globals.map.cells[i+(j*MAPHEIGHT)];
 
       if(c.t == cell_type && c.c == team_color){ //Red team
-        if(!c.player && !c.hammer){
+        if(!c.player && !c.hammer && !c.flag){
           t->x = c.p.x;
           t->y = c.p.y;
           i = MAPWIDTH;
@@ -88,23 +88,23 @@ void* server_init_player(int *id, int *team, Tuple *pos)
   Player *p = (Player *)malloc(sizeof(Player));
   bzero(p, sizeof(Player));
   player_init(ui, p);
-  // stuff player into array and cell TODO:FIX: how to make sure the player pointers are always alive... and do not get corrupted through the lifetime of the server
-  globals.players[p->id] = p;
-  globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p;
-  ui_paintmap(ui, &globals.map);
 
   *id = p->id;
   *team = p->team;
   
   //Find a Home spot to initialize player
-  Tuple t = {-1, -1};
-  find_free(p->team_color, HOME, &t);
+  //Tuple t = {1, 1};
+  //find_free(p->team_color, HOME, &t);
   
-  p->pos.x = t.x;
-  p->pos.y = t.y;
-
+  //p->pos.x = t.x;
+  //p->pos.y = t.y;
+  
   pos->x = p->pos.x;
   pos->y = p->pos.y;
+  globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p;
+  globals.players[p->id] = p;
+  ui_paintmap(ui, &globals.map);
+  
   return (void *)&p;
 }
 

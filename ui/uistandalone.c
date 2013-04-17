@@ -318,7 +318,7 @@ ui_paintmap(UI *ui, Map *map)
 {
   SDL_Rect t;
   int i = 0;
-  int j = 85;
+  int j = 0;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
