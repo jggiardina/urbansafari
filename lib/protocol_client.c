@@ -313,9 +313,9 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   
   return rc;
 }
-/*
+
 static int
-do_unmarshall_two_ints_from_body_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *dim)
+do_move_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Tuple *tuple)
 {
   int rc;
   Proto_Session *s;
@@ -325,10 +325,13 @@ do_unmarshall_two_ints_from_body_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt,
 
   // marshall
   marshall_mtonly(s, mt);
+  proto_session_body_marshall_int(s, tuple->x);
+  proto_session_body_marshall_int(s, tuple->y);
+
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
-    proto_session_body_unmarshall_int(s, 0, &(dim->x));
-    proto_session_body_unmarshall_int(s, sizeof(int), &(dim->y));
+    proto_session_body_unmarshall_int(s, 0, &(tuple->x));
+    proto_session_body_unmarshall_int(s, sizeof(int), &(tuple->y));
   } else {
     //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
     c->session_lost_handler(s);
@@ -337,7 +340,7 @@ do_unmarshall_two_ints_from_body_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt,
 
   return rc;
 }
-*/
+
 /*
 static int
 do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type *cell_type, int *team, int *occupied)
@@ -446,13 +449,13 @@ extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType 
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_DISCONNECT);  
 }
 */
-/*
+
 extern int 
-proto_client_move(Proto_Client_Handle ch, char data)
+proto_client_move(Proto_Client_Handle ch, Tuple *tuple)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MOVE);  
+  return do_move_rpc(ch,PROTO_MT_REQ_BASE_MOVE, tuple);  
 }
-*/
+
 extern int 
 proto_client_goodbye(Proto_Client_Handle ch)
 {

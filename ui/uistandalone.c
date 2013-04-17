@@ -38,6 +38,9 @@ static void player_paint(UI *ui, SDL_Rect *t, Player *p);
 #define SPRITE_H 32
 #define SPRITE_W 32
 
+int CELL_H;
+int CELL_W;
+
 #define UI_FLOOR_BMP "../ui/floor.bmp"
 #define UI_REDWALL_BMP "../ui/redwall.bmp"
 #define UI_GREENWALL_BMP "../ui/greenwall.bmp"
@@ -389,7 +392,7 @@ player_paint(UI *ui, SDL_Rect *t, Player *p)
   pthread_mutex_unlock(&(p->lock));
 }
 
-static sval
+extern sval
 ui_init_sdl(UI *ui, int32_t h, int32_t w, int32_t d)
 {
 
@@ -473,7 +476,7 @@ ui_process(UI *ui, Map *map)
       return -1;
     case SDL_KEYDOWN:
     case SDL_KEYUP:
-      rc = ui_keypress(ui, &(e.key));
+      rc = ui_keypress(ui, &(e.key), NULL);
       break;
     case SDL_ACTIVEEVENT:
       break;
@@ -483,7 +486,35 @@ ui_process(UI *ui, Map *map)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { ui_paintmap(ui, map); }
+    if (rc==2) { ui_paintmap(ui, map); } 
+    if (rc<0) break;
+  }
+  return rc;
+}
+
+static sval
+ui_client_process(UI *ui, Map *map, void *C)
+{
+  SDL_Event e;
+  sval rc = 1;
+
+  while(SDL_WaitEvent(&e)) {
+    switch (e.type) {
+    case SDL_QUIT:
+      return -1;
+    case SDL_KEYDOWN:
+    case SDL_KEYUP:
+      rc = ui_keypress(ui, &(e.key), C);
+      break;
+    case SDL_ACTIVEEVENT:
+      break;
+    case SDL_USEREVENT:
+      rc = ui_userevent(ui, &(e.user));
+      break;
+    default:
+      fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
+    }
+    if (rc==2) { /*ui_paintmap(ui, map);*/ } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
     if (rc<0) break;
   }
   return rc;
@@ -492,6 +523,22 @@ ui_process(UI *ui, Map *map)
 extern sval
 ui_zoom(UI *ui, sval fac)
 {
+  if (fac == 0) {
+    return 1;
+  }
+  else if (fac > 0) {
+    // zoom in
+    CELL_H = CELL_H/2;
+    CELL_W = CELL_W/2;
+    ui->tile_h = CELL_H;
+    ui->tile_w = CELL_W;
+  } else if (fac < 0) {
+    // zoom out
+    CELL_H = CELL_H*2;
+    CELL_W = CELL_W*2;
+    ui->tile_h = CELL_H;
+    ui->tile_w = CELL_W;
+  }
   fprintf(stderr, "%s:\n", __func__);
   return 2;
 }
@@ -503,13 +550,14 @@ ui_pan(UI *ui, sval xdir, sval ydir)
   return 2;
 }
 
+/* re-wrote this as an RPC
 extern sval
 ui_move(UI *ui, sval xdir, sval ydir)
 {
   fprintf(stderr, "%s:\n", __func__);
   return 1;
 }
-
+*/
 
 extern void
 ui_update(UI *ui)
@@ -561,26 +609,26 @@ ui_main_loop(UI *ui, void *m)
 
 
 extern void
-ui_client_main_loop(UI *ui, void *m)
+ui_client_main_loop(UI *ui, void *m, void *C)
 {
   Map *map = (Map *)(m);
-
+  /* moved to client main
   uval h = 320;
   uval w = 320;
 
-  sval rc;
+  sval rc; // dont need
 
   assert(ui);
 
   ui_init_sdl(ui, h, w, 32);
-
+  */
   //dummyPlayer_init(ui);
 
-  ui_client_paintmap(ui, map);
+  //ui_paintmap(ui, map);
 
 
   while (1) {
-    if (ui_process(ui, map)<0) break;
+    if (ui_client_process(ui, map, C)<0) break;
   }
 
   ui_shutdown_sdl();
@@ -594,8 +642,11 @@ ui_init(UI **ui)
 
   bzero(*ui, sizeof(UI));
   
-  (*ui)->tile_h = SPRITE_H;
-  (*ui)->tile_w = SPRITE_W;
+  CELL_H = SPRITE_H;
+  CELL_W = SPRITE_W;
+
+  (*ui)->tile_h = CELL_H;
+  (*ui)->tile_w = CELL_W;
 
 }
 

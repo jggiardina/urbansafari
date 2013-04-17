@@ -85,26 +85,26 @@ void find_free(Color team_color, Cell_Type cell_type, Tuple *t){
 
 void* server_init_player(int *id, int *team, Tuple *pos)
 {
-  Player p;
-  bzero(&p, sizeof(Player));
-  player_init(ui, &p);
+  Player *p = (Player *)malloc(sizeof(Player));
+  bzero(p, sizeof(Player));
+  player_init(ui, p);
   // stuff player into array and cell TODO:FIX: how to make sure the player pointers are always alive... and do not get corrupted through the lifetime of the server
-  globals.players[p.id] = &p;
-  globals.map.cells[p.pos.x + (p.pos.y*globals.map.w)].player = &p;
+  globals.players[p->id] = p;
+  globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p;
   ui_paintmap(ui, &globals.map);
 
-  *id = p.id;
-  *team = p.team;
+  *id = p->id;
+  *team = p->team;
   
   //Find a Home spot to initialize player
   Tuple t = {-1, -1};
-  find_free(p.team_color, HOME, &t);
+  find_free(p->team_color, HOME, &t);
   
-  p.pos.x = t.x;
-  p.pos.y = t.y;
+  p->pos.x = t.x;
+  p->pos.y = t.y;
 
-  pos->x = p.pos.x;
-  pos->y = p.pos.y;
+  pos->x = p->pos.x;
+  pos->y = p->pos.y;
   return (void *)&p;
 }
 
@@ -125,19 +125,25 @@ void paint_players(){
 }*/
 
 //TODO: test this code to see if it gets updated, if it doesnt work then change it to only pass s->extra instead.  then there will be warnings with the mutex's tho with &p...cant get to &p.lock its an error
-int move_left(Tuple *pos, Player p){
+int move(Tuple *pos, void *player){
   int rc = 0;
+  Player *p = (Player *)player;
   
-  pthread_mutex_lock(&p.lock);
-    p.pos.x--;
+  pthread_mutex_lock(&p->lock);
+    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = NULL; // delete player from his old cell
+    // TODO: Check if he can make this move:
+    p->pos.x += pos->x;
+    p->pos.y += pos->y;
+    
+    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p; // add player to his new cell
+    
     rc = 1;
-
     //Return values of player if needing to update
-    pos->x = p.pos.x;
-    pos->y = p.pos.y;
+    pos->x = p->pos.x;
+    pos->y = p->pos.y;
   
-  pthread_mutex_unlock(&p.lock);
-
+  pthread_mutex_unlock(&p->lock);
+  ui_paintmap(ui, &globals.map); 
   return rc;
 }
 
@@ -352,12 +358,13 @@ main(int argc, char **argv)
   return 0;
 }
 extern sval
-ui_keypress(UI *ui, SDL_KeyboardEvent *e)
+ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *nothing)
 {
   SDLKey sym = e->keysym.sym;
   SDLMod mod = e->keysym.mod;
-
+  
   if (e->type == SDL_KEYDOWN) {
+    /*
     if (sym == SDLK_LEFT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move left\n", __func__);
       return 2;//ui_left(ui);
@@ -390,7 +397,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e)
       fprintf(stderr, "%s: dummy normal state\n", __func__);
       return 2;//ui_normal(ui);
     }
-    /*if (sym == SDLK_t && mod == KMOD_NONE)  {
+    if (sym == SDLK_t && mod == KMOD_NONE)  {
       fprintf(stderr, "%s: dummy toggle team\n", __func__);
       return ui_dummy_toggle_team(ui);
     }
