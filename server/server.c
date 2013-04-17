@@ -62,6 +62,27 @@ struct Globals {
 
 UI *ui;
 
+/* Find a free spot on a team cell type for a client */
+void find_free(Color team_color, Cell_Type cell_type, Tuple *t){
+  int j, i;
+  Cell c;
+
+  for (j = 0; j < MAPHEIGHT; j++){
+    for (i = 0; i < MAPWIDTH; i++){
+      c = globals.map.cells[i+(j*MAPHEIGHT)];
+
+      if(c.t == cell_type && c.c == team_color){ //Red team
+        if(!c.player && !c.hammer){
+          t->x = c.p.x;
+          t->y = c.p.y;
+          i = MAPWIDTH;
+          j = MAPHEIGHT;
+        }
+      }
+    }
+  }
+}
+
 void* server_init_player(int *id, int *team, Tuple *pos)
 {
   Player p;
@@ -74,6 +95,14 @@ void* server_init_player(int *id, int *team, Tuple *pos)
 
   *id = p.id;
   *team = p.team;
+  
+  //Find a Home spot to initialize player
+  Tuple t = {-1, -1};
+  find_free(p.team_color, HOME, &t);
+  
+  p.pos.x = t.x;
+  p.pos.y = t.y;
+
   pos->x = p.pos.x;
   pos->y = p.pos.y;
   return (void *)&p;

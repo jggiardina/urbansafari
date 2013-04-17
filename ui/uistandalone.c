@@ -315,7 +315,7 @@ ui_paintmap(UI *ui, Map *map)
 {
   SDL_Rect t;
   int i = 0;
-  int j = 0;
+  int j = 85;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
@@ -617,8 +617,8 @@ static void player_init(UI *ui, Player *new_player)
       new_player->team_color = GREEN;
       new_player->team = 1;
     }
-
-  new_player->pos.x = new_player->id; new_player->pos.y = 0; new_player->state = 0;
+  
+  new_player->pos.x = 0; new_player->pos.y = 0; new_player->state = 0;
   ui_uip_init(ui, &new_player->uip, new_player->id, new_player->team);
   
   cur_id++;
