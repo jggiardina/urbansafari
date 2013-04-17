@@ -389,7 +389,7 @@ player_paint(UI *ui, SDL_Rect *t, Player *p)
   pthread_mutex_unlock(&(p->lock));
 }
 
-static sval
+extern sval
 ui_init_sdl(UI *ui, int32_t h, int32_t w, int32_t d)
 {
 
@@ -473,7 +473,7 @@ ui_process(UI *ui, Map *map)
       return -1;
     case SDL_KEYDOWN:
     case SDL_KEYUP:
-      rc = ui_keypress(ui, &(e.key));
+      rc = ui_keypress(ui, &(e.key), NULL);
       break;
     case SDL_ACTIVEEVENT:
       break;
@@ -483,7 +483,35 @@ ui_process(UI *ui, Map *map)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { ui_paintmap(ui, map); }
+    if (rc==2) { /*ui_paintmap(ui, map);*/ } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data // SERVER NEVER NEEDS THIS
+    if (rc<0) break;
+  }
+  return rc;
+}
+
+static sval
+ui_client_process(UI *ui, Map *map, void *C)
+{
+  SDL_Event e;
+  sval rc = 1;
+
+  while(SDL_WaitEvent(&e)) {
+    switch (e.type) {
+    case SDL_QUIT:
+      return -1;
+    case SDL_KEYDOWN:
+    case SDL_KEYUP:
+      rc = ui_keypress(ui, &(e.key), C);
+      break;
+    case SDL_ACTIVEEVENT:
+      break;
+    case SDL_USEREVENT:
+      rc = ui_userevent(ui, &(e.user));
+      break;
+    default:
+      fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
+    }
+    if (rc==2) { /*ui_paintmap(ui, map);*/ } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
     if (rc<0) break;
   }
   return rc;
@@ -503,13 +531,14 @@ ui_pan(UI *ui, sval xdir, sval ydir)
   return 2;
 }
 
+/* re-wrote this as an RPC
 extern sval
 ui_move(UI *ui, sval xdir, sval ydir)
 {
   fprintf(stderr, "%s:\n", __func__);
   return 1;
 }
-
+*/
 
 extern void
 ui_update(UI *ui)
@@ -561,26 +590,26 @@ ui_main_loop(UI *ui, void *m)
 
 
 extern void
-ui_client_main_loop(UI *ui, void *m)
+ui_client_main_loop(UI *ui, void *m, void *C)
 {
   Map *map = (Map *)(m);
-
+  /* moved to client main
   uval h = 320;
   uval w = 320;
 
-  sval rc;
+  sval rc; // dont need
 
   assert(ui);
 
   ui_init_sdl(ui, h, w, 32);
-
+  */
   //dummyPlayer_init(ui);
 
-  ui_client_paintmap(ui, map);
+  //ui_paintmap(ui, map);
 
 
   while (1) {
-    if (ui_process(ui, map)<0) break;
+    if (ui_client_process(ui, map, C)<0) break;
   }
 
   ui_shutdown_sdl();

@@ -63,13 +63,13 @@ typedef struct UI_Struct UI;
 sval ui_zoom(UI *ui, sval fac);
 sval ui_pan(UI *ui, sval xdir, sval ydir);
 sval ui_move(UI *ui, sval xdir, sval ydir);
-sval ui_keypress(UI *ui, SDL_KeyboardEvent *e);
+sval ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *C);
 void ui_update(UI *ui);
 void ui_quit(UI *ui);
 //void ui_main_loop(UI *ui, uval h, uval w);
 void ui_main_loop(UI *ui, void *map);
-void ui_init(UI **ui);
-
+extern void ui_init(UI **ui);
+extern sval ui_init_sdl(UI *ui, int32_t h, int32_t w, int32_t d);
 
 static void player_init(UI *ui, Player *p);
 int ui_left(UI *ui, Player p);

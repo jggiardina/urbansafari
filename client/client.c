@@ -218,7 +218,7 @@ update_event_handler(Proto_Session *s)
   proto_session_body_unmarshall_bytes(s, 0, getMapSize(), getMapBufPointer());
   convertMap();
   
-  //ui_paintmap(ui, &globals.map); TODO:FIX this is okay for now, but if we do actual event updates, we need to paint here, because the ui main loop will already be running. maybe we can check to see if the main has started, print, if not, dont print
+  ui_paintmap(ui, &globals.map); //TODO:FIX this is okay for now, but if we do actual event updates, we need to paint here, because the ui main loop will already be running. maybe we can check to see if the main has started, print, if not, dont print
 
   fprintf(stderr, "%s: called", __func__);
   return 1;
@@ -301,6 +301,11 @@ main(int argc, char **argv)
   // init ui code
   tty_init(STDIN_FILENO);
   ui_init(&(ui));
+  uval h = 320;
+  uval w = 320;
+  assert(ui);
+  ui_init_sdl(ui, h, w, 32);
+  // end init ui code
 
   // RUN AUTO-CONNECT FIRST
   if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) return -1;
@@ -317,12 +322,12 @@ main(int argc, char **argv)
   // SO JUMP THROW HOOPS :-(
   
   proto_debug_on();
-  ui_client_main_loop(ui, (void *)&globals.map); //TODO:FIX if the update_event_handler for hello is not hit before this, then the map will not be initialized and the main loop will just print all floor (JAIL) cells until the handler is hit.
+  ui_client_main_loop(ui, (void *)&globals.map, &c); //TODO:FIX if the update_event_handler for hello is not hit before this, then the map will not be initialized and the main loop will just print all floor (JAIL) cells until the handler is hit.
   return 0;
 }
 
 extern sval
-ui_keypress(UI *ui, SDL_KeyboardEvent *e)
+ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *C)
 {
   SDLKey sym = e->keysym.sym;
   SDLMod mod = e->keysym.mod;
@@ -330,19 +335,23 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e)
   if (e->type == SDL_KEYDOWN) {
     if (sym == SDLK_LEFT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move left\n", __func__);
-      return 2;//ui_left(ui);
+      proto_client_move(((Client *)C)->ph, -1, 0); // left
+      return 2;
     }
     if (sym == SDLK_RIGHT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move right\n", __func__);
-      return 2;//ui_right(ui);
+      //ui_move(ui, 1, 0); // right
+      return 2;
     }
     if (sym == SDLK_UP && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: move up\n", __func__);
-      return 2;//ui_up(ui);
+      //ui_move(ui, 0, 1); // up
+      return 2;
     }
     if (sym == SDLK_DOWN && mod == KMOD_NONE)  {
       fprintf(stderr, "%s: move down\n", __func__);
-      return 2;//ui_down(ui);
+      //ui_move(ui, 0, -1); // down
+      return 2;
     }
     if (sym == SDLK_r && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: dummy pickup red flag\n", __func__);

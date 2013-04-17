@@ -64,19 +64,19 @@ UI *ui;
 
 void* server_init_player(int *id, int *team, Tuple *pos)
 {
-  Player p;
-  bzero(&p, sizeof(Player));
-  player_init(ui, &p);
+  Player *p = (Player *)malloc(sizeof(Player));
+  bzero(p, sizeof(Player));
+  player_init(ui, p);
   // stuff player into array and cell TODO:FIX: how to make sure the player pointers are always alive... and do not get corrupted through the lifetime of the server
-  globals.players[p.id] = &p;
-  globals.map.cells[p.pos.x + (p.pos.y*globals.map.w)].player = &p;
+  globals.players[p->id] = p;
+  globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p;
   ui_paintmap(ui, &globals.map);
 
-  *id = p.id;
-  *team = p.team;
-  pos->x = p.pos.x;
-  pos->y = p.pos.y;
-  return (void *)&p;
+  *id = p->id;
+  *team = p->team;
+  pos->x = p->pos.x;
+  pos->y = p->pos.y;
+  return (void *)p;
 }
 
 void paint_players(){
@@ -312,12 +312,13 @@ main(int argc, char **argv)
   return 0;
 }
 extern sval
-ui_keypress(UI *ui, SDL_KeyboardEvent *e)
+ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *nothing)
 {
   SDLKey sym = e->keysym.sym;
   SDLMod mod = e->keysym.mod;
-
+  
   if (e->type == SDL_KEYDOWN) {
+    /*
     if (sym == SDLK_LEFT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move left\n", __func__);
       return 2;//ui_left(ui);
@@ -350,7 +351,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e)
       fprintf(stderr, "%s: dummy normal state\n", __func__);
       return 2;//ui_normal(ui);
     }
-    /*if (sym == SDLK_t && mod == KMOD_NONE)  {
+    if (sym == SDLK_t && mod == KMOD_NONE)  {
       fprintf(stderr, "%s: dummy toggle team\n", __func__);
       return ui_dummy_toggle_team(ui);
     }
