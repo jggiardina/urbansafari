@@ -366,6 +366,7 @@ proto_server_mt_update_map_handler(Proto_Session *s){
   proto_session_hdr_marshall(se, &hdr);
   fprintf(stderr, "event type marshalled:\n");
   proto_session_body_marshall_bytes(se, getAsciiSize(), mapToASCII());
+  
   fprintf(stderr, "bytes marshalled:\n");
   //rc = proto_session_send_msg(s, 1); want to post event instead -JG
   proto_server_post_event();
