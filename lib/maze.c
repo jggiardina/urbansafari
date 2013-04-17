@@ -194,7 +194,44 @@ int num_jail(Color c, Map *map){
 
   return cells;
 }
+int marshall_players(Player *players, int numplayers, Proto_Session *s){
+  int i;
+  proto_session_body_marshall_int(s, numplayers);
+  for (i = 0; i < numplayers; i++){
+  	proto_session_body_marshall_int(s, player[i]->id);
+  	proto_session_body_marshall_int(s, player[i]->pos.x);
+  	proto_session_body_marshall_int(s, player[i]->pos.y);
+  	proto_session_body_marshall_int(s, player[i]->team);
+        if (player[i]->hammer != NULL){
+		proto_session_body_marshall_int(s, 1);
+	}else{
+		proto_session_body_marshall_int(s, 0);
+	}
+	if (player[i]->flag == NULL){
+                proto_session_body_marshall_int(s, 0);
+        }else if (player[i]->flag.color == RED){
+                proto_session_body_marshall_int(s, 1);
+        }else{
+		proto_session_body_marshall_int(s, 2);
+	}
+  }
 
+}
+int unmarshall_players(Player *players, Proto_Session *s, int off){
+	int offset = off;
+	int numplayers, i;
+	proto_session_body_unmarshall_int(s, off, &numplayers)
+	for (i = 0; i < numplayers; i++){
+		proto_session_body_unmarshall_int(s, offset, &players[i]->id);
+    		proto_session_body_unmarshall_int(s, offset+sizeof(int), &players[i]->pos.x);
+    		proto_session_body_unmarshall_int(s, offset + 2*sizeof(int), &players[i]->pos.y);
+    		proto_session_body_unmarshall_int(s, offset + 3*sizeof(int), &players[i]->team);
+		proto_session_body_unmarshall_int(s, offset + 4*sizeof(int), &players[i]->hammer);
+		proto_session_body_unmarshall_int(s, offset + 5*sizeof(int), &players[i]->flag);
+		offset+= 6*sizeof(int);
+	}
+
+}
 int num_floor(Map *map){
   return map->num_floor_cells;
 }
