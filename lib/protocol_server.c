@@ -41,7 +41,10 @@ struct {
   FDType   RPCListenFD;
   PortType RPCPort;
 
-
+  int lastPlayerId;
+  int lastTeamAssigned;
+  int numRedPlayers;
+  int numGreenPlayers;
   FDType             EventListenFD;
   PortType           EventPort;
   pthread_t          EventListenTid;
@@ -314,7 +317,6 @@ proto_server_mt_null_handler(Proto_Session *s)
 {
   int rc=1;
   Proto_Msg_Hdr h;
-  
   fprintf(stderr, "proto_server_mt_null_handler: invoked for session:\n");
   proto_session_dump(s);
 
@@ -364,11 +366,9 @@ proto_server_mt_update_map_handler(Proto_Session *s){
   se = proto_server_event_session();
   hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
   proto_session_hdr_marshall(se, &hdr);
-  fprintf(stderr, "event type marshalled:\n");
-  proto_session_body_marshall_bytes(se, getAsciiSize(), mapToASCII());
-  
-  fprintf(stderr, "bytes marshalled:\n");
+  proto_session_body_marshall_bytes(se, getAsciiSize(), mapToASCII()); 
   //rc = proto_session_send_msg(s, 1); want to post event instead -JG
+  marshall_players(Proto_Server.numRedPlayers+Proto_Server.numGreenPlayers, se);
   proto_server_post_event();
 
   return rc;
@@ -565,8 +565,22 @@ proto_server_mt_hello_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
 
   /* Test code for adding player */
-  int id, team = -1;
-  Tuple pos = {-1,-1};
+  int id;
+  int team;
+  int numPlayers;
+  id = Proto_Server.lastPlayerId;
+	Proto_Server.lastPlayerId++;
+  if (Proto_Server.numRedPlayers > Proto_Server.numGreenPlayers){
+	team = 1;
+	Proto_Server.numGreenPlayers++;
+  }else{
+	team = 0;
+	Proto_Server.numRedPlayers++;
+  }
+  numPlayers = Proto_Server.numRedPlayers + Proto_Server.numGreenPlayers;
+  fprintf(stderr, "numplayers = %d\n", numPlayers);
+  //add in later search for empty spots
+  Tuple pos = {numPlayers, 0};
   void *p = server_init_player(&id, &team, &pos); 
   s->extra = p;
   //add_player(p);
@@ -677,6 +691,10 @@ proto_server_init(void)
     Proto_Server.EventSubscribers[i]=-1;
   }
   Proto_Server.EventNumSubscribers=0;
+  Proto_Server.numRedPlayers = 0;
+  Proto_Server.numGreenPlayers = 0;
+  Proto_Server.lastTeamAssigned = 0;
+  Proto_Server.lastPlayerId = 0;
   Proto_Server.EventLastSubscriber=0;
   pthread_mutex_init(&Proto_Server.EventSubscribersLock, 0);
 
