@@ -96,19 +96,25 @@ void paint_players(){
 }*/
 
 //TODO: test this code to see if it gets updated, if it doesnt work then change it to only pass s->extra instead.  then there will be warnings with the mutex's tho with &p...cant get to &p.lock its an error
-int move_left(Tuple *pos, Player p){
+int move(Tuple *pos, void *player){
   int rc = 0;
+  Player *p = (Player *)player;
   
-  pthread_mutex_lock(&p.lock);
-    p.pos.x--;
+  pthread_mutex_lock(&p->lock);
+    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = NULL; // delete player from his old cell
+    // TODO: Check if he can make this move:
+    p->pos.x += pos->x;
+    p->pos.y += pos->y;
+    
+    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p; // add player to his new cell
+    
     rc = 1;
-
     //Return values of player if needing to update
-    pos->x = p.pos.x;
-    pos->y = p.pos.y;
+    pos->x = p->pos.x;
+    pos->y = p->pos.y;
   
-  pthread_mutex_unlock(&p.lock);
-
+  pthread_mutex_unlock(&p->lock);
+  ui_paintmap(ui, &globals.map); 
   return rc;
 }
 

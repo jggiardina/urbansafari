@@ -38,6 +38,9 @@ static void player_paint(UI *ui, SDL_Rect *t, Player *p);
 #define SPRITE_H 32
 #define SPRITE_W 32
 
+int CELL_H;
+int CELL_W;
+
 #define UI_FLOOR_BMP "../ui/floor.bmp"
 #define UI_REDWALL_BMP "../ui/redwall.bmp"
 #define UI_GREENWALL_BMP "../ui/greenwall.bmp"
@@ -483,7 +486,7 @@ ui_process(UI *ui, Map *map)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { /*ui_paintmap(ui, map);*/ } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data // SERVER NEVER NEEDS THIS
+    if (rc==2) { ui_paintmap(ui, map); } 
     if (rc<0) break;
   }
   return rc;
@@ -520,6 +523,22 @@ ui_client_process(UI *ui, Map *map, void *C)
 extern sval
 ui_zoom(UI *ui, sval fac)
 {
+  if (fac == 0) {
+    return 1;
+  }
+  else if (fac > 0) {
+    // zoom in
+    CELL_H = CELL_H/2;
+    CELL_W = CELL_W/2;
+    ui->tile_h = CELL_H;
+    ui->tile_w = CELL_W;
+  } else if (fac < 0) {
+    // zoom out
+    CELL_H = CELL_H*2;
+    CELL_W = CELL_W*2;
+    ui->tile_h = CELL_H;
+    ui->tile_w = CELL_W;
+  }
   fprintf(stderr, "%s:\n", __func__);
   return 2;
 }
@@ -623,8 +642,11 @@ ui_init(UI **ui)
 
   bzero(*ui, sizeof(UI));
   
-  (*ui)->tile_h = SPRITE_H;
-  (*ui)->tile_w = SPRITE_W;
+  CELL_H = SPRITE_H;
+  CELL_W = SPRITE_W;
+
+  (*ui)->tile_h = CELL_H;
+  (*ui)->tile_w = CELL_W;
 
 }
 

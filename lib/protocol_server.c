@@ -521,20 +521,22 @@ proto_server_mt_cinfo_handler(Proto_Session *s){
   return rc;
 }*/
 
-//TODO to decide if we want a handler for each movement direction, because wihtout that we will need to shove something into gamestate before sending rpc.  otherwise we can do that and have an if here to decide.
-static int proto_server_mt_move_left_handler(Proto_Session *s){
- int rc = 1;
+static int proto_server_mt_move_handler(Proto_Session *s){
+  int rc = 1;
   Proto_Msg_Hdr h;
 
-  fprintf(stderr, "proto_server_mt_hello_handler: invoked for session:\n");
+  fprintf(stderr, "proto_server_mt_move_handler: invoked for session:\n");
   proto_session_dump(s);
 
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
 
-  Tuple pos = {-1,-1};
-  int ret = move_left(&pos, &s->extra);  
+  Tuple pos = {0, 0};
+  proto_session_body_unmarshall_int(s, 0, &pos.x);
+  proto_session_body_unmarshall_int(s, sizeof(int), &pos.y);
+
+  int ret = move(&pos, (void *)s->extra);  
 
   if(ret==1){
     proto_session_hdr_marshall(s, &h);
@@ -543,7 +545,7 @@ static int proto_server_mt_move_left_handler(Proto_Session *s){
 
     rc=proto_session_send_msg(s,1);
   }
-  //proto_server_mt_update_map_handler(s);
+  proto_server_mt_update_map_handler(s);
 
   return rc;
 }
@@ -674,7 +676,10 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_hello_handler);
     }else if(i == PROTO_MT_REQ_BASE_GOODBYE){
       proto_server_set_req_handler(i, proto_server_mt_goodbye_handler);
-    }/*else if(i == PROTO_MT_REQ_BASE_MAP_DUMP){
+    }else if(i == PROTO_MT_REQ_BASE_MOVE){
+      proto_server_set_req_handler(i, proto_server_mt_move_handler);
+    }
+    /*else if(i == PROTO_MT_REQ_BASE_MAP_DUMP){
       proto_server_set_req_handler(i, proto_server_mt_dump_handler);
     }else if(i == PROTO_MT_REQ_BASE_MAP_INFO_1 || i == PROTO_MT_REQ_BASE_MAP_INFO_2){
       proto_server_set_req_handler(i, proto_server_mt_map_info_team_handler);
