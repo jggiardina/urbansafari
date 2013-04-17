@@ -69,13 +69,13 @@ void* server_init_player(int *id, int *team, Tuple *pos)
   player_init(ui, p);
   // stuff player into array and cell TODO:FIX: how to make sure the player pointers are always alive... and do not get corrupted through the lifetime of the server
   globals.players[p->id] = p;
-  globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p;
+  globals.map.cells[pos->x + (pos->y*globals.map.w)].player = p;
   ui_paintmap(ui, &globals.map);
 
   *id = p->id;
   *team = p->team;
-  pos->x = p->pos.x;
-  pos->y = p->pos.y;
+  p->pos.x = pos->x;
+  p->pos.y = pos->y;
   return (void *)p;
 }
 
@@ -217,23 +217,44 @@ prompt(int menu)
   c=getInput();
   return c;
 }
-char*
-marshall_map_data()
-{
-	marshall_map(&globals.tempmap, &globals.map);
-	return (char *) &(globals.tempmap.cells);
-}
-int
-getCellsSize(){
-	fprintf(stderr, "size of tempmap %d \n", sizeof(globals.tempmap.cells));
-	return (int) sizeof(globals.tempmap.cells);
-}
 char* mapToASCII(){
 	dump_map(&globals.map);
 	return globals.map.data_ascii;
 }
 int getAsciiSize(){
 	return sizeof(globals.map.data_ascii);
+}
+char* getPlayers(){
+	return globals.players;
+}
+int marshall_players(int numplayers, Proto_Session *s){
+  int i;
+  Player p;
+  proto_session_body_marshall_int(s, numplayers);
+  for (i = 0; i < numplayers; i++){
+	p = *(globals.players[i]);
+        //fprintf(stderr, "id = %d\n", p.id);
+	//fprintf(stderr, "x = %d\n", p.pos.x);
+	//fprintf(stderr, "y = %d\n", p.pos.y);
+        //fprintf(stderr, "team = %d\n", p.team);
+        proto_session_body_marshall_int(s, p.id);
+        proto_session_body_marshall_int(s, p.pos.x);
+        proto_session_body_marshall_int(s, p.pos.y);
+        proto_session_body_marshall_int(s, p.team);
+        if (p.hammer != NULL){
+                proto_session_body_marshall_int(s, 1);
+        }else{
+                proto_session_body_marshall_int(s, 0);
+        }
+        if (p.flag == NULL){
+                proto_session_body_marshall_int(s, 0);
+        }else if (p.flag->c == RED){
+                proto_session_body_marshall_int(s, 1);
+        }else{
+                proto_session_body_marshall_int(s, 2);
+        }
+  }
+
 }
 int
 getInput()
