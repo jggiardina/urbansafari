@@ -17,7 +17,7 @@ int load_map(char* map_file, Map *map){
   for (j = 0; j < MAPHEIGHT; j++){
   	for (i = 0; i < MAPWIDTH; i++){
              Cell c;
-	     c.hammer = NULL; c.flag = NULL;
+	     c.hammer = NULL; c.flag = NULL; c.player = NULL;
              if (i > 99) {
                                 c.c = GREEN;
                         }else{
