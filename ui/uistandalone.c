@@ -311,6 +311,17 @@ draw_cell(UI *ui, SPRITE_INDEX si, SDL_Rect *t, SDL_Surface *s)
 
   if ( ts && t->h == SPRITE_H && t->w == SPRITE_W) 
     SDL_BlitSurface(ts, NULL, s, t);
+  else {// draw just pixels
+    int i=0;
+    int j=0;
+    for (i = t->x; i < t->x+t->w; i++) {
+      for (j = t->y; j < t->y+t->h; j++) {
+        SDL_LockSurface(ts);
+        ui_putpixel(ts, t->x, t->y, ui->green_c); 
+        SDL_UnlockSurface(ts);
+      }
+    }
+  }
 }
 
 sval
@@ -514,7 +525,7 @@ ui_client_process(UI *ui, Map *map, void *C)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { /*ui_paintmap(ui, map);*/ } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
+    if (rc==2) { ui_paintmap(ui, map); } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
     if (rc<0) break;
   }
   return rc;
@@ -526,13 +537,13 @@ ui_zoom(UI *ui, sval fac)
   if (fac == 0) {
     return 1;
   }
-  else if (fac > 0) {
+  else if (fac > 0 && CELL_H > 1) {
     // zoom in
     CELL_H = CELL_H/2;
     CELL_W = CELL_W/2;
     ui->tile_h = CELL_H;
     ui->tile_w = CELL_W;
-  } else if (fac < 0) {
+  } else if (fac < 0 && CELL_H < 32) {
     // zoom out
     CELL_H = CELL_H*2;
     CELL_W = CELL_W*2;
