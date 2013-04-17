@@ -327,30 +327,56 @@ main(int argc, char **argv)
 }
 
 extern sval
-ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *C)
+ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
 {
   SDLKey sym = e->keysym.sym;
   SDLMod mod = e->keysym.mod;
 
+  Client *C = (Client *)client;
+
   if (e->type == SDL_KEYDOWN) {
     if (sym == SDLK_LEFT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move left\n", __func__);
-      proto_client_move(((Client *)C)->ph, -1, 0); // left
+      Tuple tuple = {-1, 0};
+      proto_client_move(C->ph, &tuple); // left
+      Player *p = (Player *)C->data; 
+      pthread_mutex_lock(&p->lock); 
+        p->pos.x = tuple.x;
+        p->pos.y = tuple.y;
+      pthread_mutex_unlock(&p->lock);
       return 2;
     }
     if (sym == SDLK_RIGHT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move right\n", __func__);
-      //ui_move(ui, 1, 0); // right
+      Tuple tuple = {1, 0};
+      proto_client_move(C->ph, &tuple); // right
+      Player *p = (Player *)C->data;
+      pthread_mutex_lock(&p->lock);
+        p->pos.x = tuple.x;
+        p->pos.y = tuple.y;
+      pthread_mutex_unlock(&p->lock);
       return 2;
     }
     if (sym == SDLK_UP && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: move up\n", __func__);
-      //ui_move(ui, 0, 1); // up
+      Tuple tuple = {0, -1}; //going up means going to a lower number cell
+      proto_client_move(C->ph, &tuple); // up
+      Player *p = (Player *)C->data;
+      pthread_mutex_lock(&p->lock);
+        p->pos.x = tuple.x;
+        p->pos.y = tuple.y;
+      pthread_mutex_unlock(&p->lock);
       return 2;
     }
     if (sym == SDLK_DOWN && mod == KMOD_NONE)  {
       fprintf(stderr, "%s: move down\n", __func__);
-      //ui_move(ui, 0, -1); // down
+      Tuple tuple = {0, 1};
+      proto_client_move(C->ph, &tuple); // down
+      Player *p = (Player *)C->data;
+      pthread_mutex_lock(&p->lock);
+        p->pos.x = tuple.x;
+        p->pos.y = tuple.y;
+      pthread_mutex_unlock(&p->lock);
       return 2;
     }
     if (sym == SDLK_r && mod == KMOD_NONE)  {  
@@ -437,13 +463,14 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 
     // initialize the player before we return
     Player *p = (Player *)(C->data);
-    p->id = player_id;
-    p->pos.x = pos_tuple.x;
-    p->pos.y = pos_tuple.y;
-    p->team = team_num;
-    p->team_color = (Color)team_num;
-    ui_uip_init(ui, &(p->uip), p->id, p->team); // init ui component
-
+    pthread_mutex_lock(&p->lock);
+      p->id = player_id;
+      p->pos.x = pos_tuple.x;
+      p->pos.y = pos_tuple.y;
+      p->team = team_num;
+      p->team_color = (Color)team_num;
+      ui_uip_init(ui, &(p->uip), p->id, p->team); // init ui component
+    pthread_mutex_unlock(&p->lock);
     return 1;
   }
   return 0;
