@@ -668,8 +668,8 @@ static void player_init(UI *ui, Player *new_player)
       new_player->team_color = GREEN;
       new_player->team = 1;
     }
-  
-  new_player->pos.x = 0; new_player->pos.y = 0; new_player->state = 0;
+
+  new_player->pos.x = new_player->id; new_player->pos.y = 0; new_player->state = 0;
   ui_uip_init(ui, &new_player->uip, new_player->id, new_player->team);
   
   cur_id++;
