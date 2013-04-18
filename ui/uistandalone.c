@@ -51,9 +51,6 @@ int CELL_W;
 #define UI_GREENFLAG_BMP "../ui/greenflag.bmp"
 #define UI_JACKHAMMER_BMP "../ui/shovel.bmp"
 
-pthread_mutex_t cur_id_mutex;
-int cur_id = 0; //This is used for player_init
-
 typedef enum {UI_SDLEVENT_UPDATE, UI_SDLEVENT_QUIT} UI_SDL_Event;
 
 static inline SDL_Surface *
@@ -525,7 +522,7 @@ ui_client_process(UI *ui, Map *map, void *C)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { ui_paintmap(ui, map); } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
+    if (rc==2) { /*ui_paintmap(ui, map);*/ } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
     if (rc<0) break;
   }
   return rc;
@@ -659,49 +656,6 @@ ui_init(UI **ui)
   (*ui)->tile_h = CELL_H;
   (*ui)->tile_w = CELL_W;
 
-}
-
-static void player_init(UI *ui, Player *new_player)
-{
-  pthread_mutex_init(&(new_player->lock), NULL);
-
-  pthread_mutex_lock(&cur_id_mutex);
-  new_player->id = cur_id;
- //TODO: Move to server
- /*int numPlayers;
-  id = Proto_Server.lastPlayerId;
-        Proto_Server.lastPlayerId++;
-  if (Proto_Server.numRedPlayers > Proto_Server.numGreenPlayers){
-        team = 1;
-        Proto_Server.numGreenPlayers++;
-  }else{
-        team = 0;
-        Proto_Server.numRedPlayers++;
-  }
-  numPlayers = Proto_Server.numRedPlayers + Proto_Server.numGreenPlayers;
-  fprintf(stderr, "numplayers = %d\n", numPlayers);
-*/
-  //add in later search for empty spots
-
-  // TODO: This needs to be more robust, essentially work like the EventSubscribers such that if a player disconnect, another player can come along and connect and take his id. -JG
-  if (new_player->id>=100){ //increase to 200? -RC
-       new_player->id = 0; //TODO:What does this do/what is it for? -JG
-    }else if(new_player->id % 2 == 0){
-      new_player->team_color = RED;
-      new_player->team = 0;
-    }else if(new_player->id % 2 == 1){
-      new_player->team_color = GREEN;
-      new_player->team = 1;
-    }
-
-  new_player->pos.x = new_player->id; new_player->pos.y = 0; new_player->state = 0;
-  ui_uip_init(ui, &new_player->uip, new_player->id, new_player->team);
-  
-  cur_id++;
-
-  pthread_mutex_unlock(&cur_id_mutex);
-  
-  //return new_player;
 }
 
 int
