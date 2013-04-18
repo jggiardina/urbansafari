@@ -567,8 +567,8 @@ proto_server_mt_hello_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
 
   /* Test code for adding player */
-  int id;
-  int team;
+  int id = -1;
+  int team = -1;
   Tuple pos = {-1, -1};
   void *p = server_init_player(&id, &team, &pos); 
   s->extra = p;
@@ -580,7 +580,8 @@ proto_server_mt_hello_handler(Proto_Session *s){
   proto_session_body_marshall_int(s, team);  
 
   rc=proto_session_send_msg(s,1);
-  proto_server_mt_update_map_handler(s);
+  if (id != -1)
+    proto_server_mt_update_map_handler(s);
   //pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
    
   return rc;

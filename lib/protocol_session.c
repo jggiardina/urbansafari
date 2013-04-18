@@ -292,7 +292,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
   	//Start of added code
 	int header_length = (sizeof(int) * 10) + sizeof (long long);//length of header; refer to protocol.h for format.-WA
 	n = net_writen(s->fd, &s->shdr, header_length);//write header to body-WA
-	if (n < 0 && proto_debug()) {
+	if (n <= 0 && proto_debug()) {
 		fprintf(stderr, "%p: proto_session_send_msg: write error:\n", pthread_self());
 		return -1;
 	}
@@ -323,7 +323,7 @@ proto_session_rcv_msg(Proto_Session *s)
   	int n;
 	int header_length = (sizeof(int) * 10) + sizeof(long long);//define header length; it is always a given. -WA
 	n = net_readn(s->fd, &s->rhdr, header_length);//read the header into rhdr -WA
-	if (n < 0 && proto_debug()){
+	if (n <= 0 && proto_debug()){
 		fprintf(stderr, "%p: proto_session_rcv_msg: read error\n", pthread_self());
 		return -1;
 	}
