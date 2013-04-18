@@ -78,31 +78,29 @@ int load_map(char* map_file, Map *map){
   fprintf(stderr, "Read in %d rows and %d columns\n", j, i);
   return rc;
 }
-/*
-int withinRange(int dx, int dy, int x, int y){
-	for (int j = y-1;
-		for (int i = x-1; i <= x+1; i++){
-}
 
-int valid_move(Map *map, Player *player, Player *players, int numplayers, int x, int y, Flag *redflag, Flag *greenflag){
+
+int valid_move(Map *map, Player *player, int x, int y){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
 	Player p;
-	previousc = map->cells[player->x +(player->y*MAPHEIGHT)];
-	c = map->cells[x +(y*MAPHEIGHT)];
+	//previousc = map->cells[player->x +(player->y*MAPHEIGHT)];
+	c = map->cells[(x + player->pos.x)+((player->pos.y + y)*MAPHEIGHT)];
 	if (c.t == WALL){
-		if (player->hammer){
+
+		/*if (player->hammer){
 			map->cells[x+(Y*MAPHEIGHT)].t = FLOOR;//convert the destination to floor
-			player->x = x;
-			player->y = y;
+			player->pos.x = x;
+			player->pos.y = y;
 			//need to decrease hammer count, not sure how to do so yet
 			//trigger break wall event
 			return 1;
-	}else{
+		
+		return -1;
+		}else{*/
 		//INVALID MOVE
 		return 0;
-	}
-}else{
+	}/*else{
 	//check if collides with player
 	for (int i = 0; i < numplayers; i++){
 		p = players[i];
@@ -138,15 +136,14 @@ int valid_move(Map *map, Player *player, Player *players, int numplayers, int x,
 		
 	}
 	//else check if jail, if foreign jail then free all players
-}
-	
+	}*/
+	return 1;
 }	
-
 //wall collision
 //whether 5 away from flag
 //player collision
 //jail collision
-*/
+
 
 /*TO ADD:
 UPDATE ALL PLAYERS EVENT

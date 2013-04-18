@@ -164,20 +164,18 @@ void paint_players(){
 int move(Tuple *pos, void *player){
   int rc = 0;
   Player *p = (Player *)player;
-  
+ 
   pthread_mutex_lock(&p->lock);
-    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = NULL; // delete player from his old cell
+    globals.map.cells[p->pos.x + ((p->pos.y)*MAPHEIGHT)].player = NULL; // delete player from his old cell
     // TODO: Check if he can make this move:
-    p->pos.x += pos->x;
-    p->pos.y += pos->y;
-    
-    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p; // add player to his new cell
-    
-    rc = 1;
-    //Return values of player if needing to update
+   if (valid_move(&globals.map, p, pos->x, pos->y)){
+    	p->pos.x += pos->x;
+    	p->pos.y += pos->y;
+   }
     pos->x = p->pos.x;
     pos->y = p->pos.y;
-  
+    rc = 1;
+    globals.map.cells[p->pos.x + (p->pos.y*MAPHEIGHT)].player = p; // add player to his new cell
   pthread_mutex_unlock(&p->lock);
   ui_paintmap(ui, &globals.map); 
   return rc;
