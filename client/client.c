@@ -413,6 +413,10 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
       return 2;//ui_pickup_red(ui);
     }
+    if (sym == SDLK_h && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: pick up hammer\n", __func__);
+      return 2;
+    }
     if (sym == SDLK_g && mod == KMOD_NONE)  {   
       fprintf(stderr, "%s: dummy pickup green flag\n", __func__);
       return 2;//ui_pickup_green(ui);
@@ -435,7 +439,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
     }*/
     if (sym == SDLK_q) return -1;
     if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
-    if (sym == SDLK_z && mod & KMOD_SHIFT ) return ui_zoom(ui,-1);
+    if (sym == SDLK_z && mod & KMOD_SHIFT) return ui_zoom(ui,-1);
     if (sym == SDLK_LEFT && mod & KMOD_SHIFT) return ui_pan(ui,-1,0);
     if (sym == SDLK_RIGHT && mod & KMOD_SHIFT) return ui_pan(ui,1,0);
     if (sym == SDLK_UP && mod & KMOD_SHIFT) return ui_pan(ui, 0,-1);
