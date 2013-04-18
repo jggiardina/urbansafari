@@ -62,8 +62,6 @@ struct Globals {
 } globals;
 
 UI *ui;
-pthread_mutex_t cur_id_mutex;
-int cur_id = 0; //This is used for server_player_init
 
 /* Find a free spot on a team cell type for a client */
 void find_free(Color team_color, Cell_Type cell_type, Pos *p){
@@ -90,12 +88,22 @@ void* server_init_player(int *id, int *team, Tuple *pos)
 {
   Player *p = (Player *)malloc(sizeof(Player));
   bzero(p, sizeof(Player));
-  //player_init(ui, p);
-  
-  //Initialize ID and starting conditions
-  p->id = cur_id;
-  p->state = 0;
 
+  pthread_mutex_lock(&p->lock);  
+
+  //Initialize ID and starting conditions
+  p->id = (int)id;
+  p->state = 0;
+  
+  //Loop through array to find an id
+  int i;
+  for(i=0;i<=globals.numplayers;i++){
+    if(!globals.players[i] && globals.numplayers <= 200){
+      p->id = i;
+      i = globals.numplayers+1; //break out
+    }
+  }
+  
   if(p->id % 2 == 0){
     p->team_color = RED;
     p->team = 0;
@@ -104,11 +112,8 @@ void* server_init_player(int *id, int *team, Tuple *pos)
     p->team = 1;
   }
   
-  //Increase the counter for current id's and num players  
-  pthread_mutex_lock(&cur_id_mutex);
-    cur_id++;
-    globals.numplayers++; //Hopefully the mutex on cur_id will suffice
-  pthread_mutex_unlock(&cur_id_mutex);
+  //Increase the counter for num players  
+  globals.numplayers++; 
 
   *id = p->id;
   *team = p->team;
@@ -121,6 +126,9 @@ void* server_init_player(int *id, int *team, Tuple *pos)
   pos->y = p->pos.y;
   globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p;
   globals.players[p->id] = p;
+
+  pthread_mutex_unlock(&p->lock);  
+
   ui_paintmap(ui, &globals.map);
   
   return (void *)p;
