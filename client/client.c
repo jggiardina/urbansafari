@@ -222,12 +222,13 @@ update_event_handler(Proto_Session *s)
   proto_session_body_unmarshall_int(s, offset, &numplayers);
   //fprintf(stderr, "num players = %d\n", numplayers);
   Player players[numplayers];
+  bzero(players, numplayers*sizeof(Player));
   offset+= sizeof(int);
-	for (i = 0; i < numplayers; i++){
-		//pthread_mutex_init(&(players[i].lock), NULL);
+  for (i = 0; i < numplayers; i++){
+		pthread_mutex_init(&(players[i].lock), NULL);
   //pthread_mutex_lock(&cur_id_mutex);
                 proto_session_body_unmarshall_int(s, offset, &(players[i].id));
-                 //fprintf(stderr, "player id = %d\n", players[i].id);
+                 fprintf(stderr, "player id = %d\n", players[i].id);
                 proto_session_body_unmarshall_int(s, offset+sizeof(int), &(players[i].pos.x));
 //fprintf(stderr, "x = %d\n", players[i].pos.x);
                 proto_session_body_unmarshall_int(s, offset + 2*sizeof(int), &(players[i].pos.y));
@@ -241,7 +242,9 @@ update_event_handler(Proto_Session *s)
                 offset+= 6*sizeof(int);
 		globals.map.cells[players[i].pos.x + (players[i].pos.y*MAPHEIGHT)].player = &(players[i]);
 //pthread_mutex_unlock(&cur_id_mutex);
-        }
+		//STATE
+  		ui_uip_init(ui, &players[i].uip, players[i].id, players[i].team);      
+  }
 
   
   

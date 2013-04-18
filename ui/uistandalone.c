@@ -656,7 +656,21 @@ static void player_init(UI *ui, Player *new_player)
 
   pthread_mutex_lock(&cur_id_mutex);
   new_player->id = cur_id;
- 
+ //TODO: Move to server
+ /*int numPlayers;
+  id = Proto_Server.lastPlayerId;
+        Proto_Server.lastPlayerId++;
+  if (Proto_Server.numRedPlayers > Proto_Server.numGreenPlayers){
+        team = 1;
+        Proto_Server.numGreenPlayers++;
+  }else{
+        team = 0;
+        Proto_Server.numRedPlayers++;
+  }
+  numPlayers = Proto_Server.numRedPlayers + Proto_Server.numGreenPlayers;
+  fprintf(stderr, "numplayers = %d\n", numPlayers);
+*/
+  //add in later search for empty spots
 
   // TODO: This needs to be more robust, essentially work like the EventSubscribers such that if a player disconnect, another player can come along and connect and take his id. -JG
   if (new_player->id>=100){ //increase to 200? -RC

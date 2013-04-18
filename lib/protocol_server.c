@@ -569,23 +569,9 @@ proto_server_mt_hello_handler(Proto_Session *s){
   /* Test code for adding player */
   int id;
   int team;
-  int numPlayers;
-  id = Proto_Server.lastPlayerId;
-	Proto_Server.lastPlayerId++;
-  if (Proto_Server.numRedPlayers > Proto_Server.numGreenPlayers){
-	team = 1;
-	Proto_Server.numGreenPlayers++;
-  }else{
-	team = 0;
-	Proto_Server.numRedPlayers++;
-  }
-  numPlayers = Proto_Server.numRedPlayers + Proto_Server.numGreenPlayers;
-  fprintf(stderr, "numplayers = %d\n", numPlayers);
-  //add in later search for empty spots
-  Tuple pos = {numPlayers, 0};
+  Tuple pos = {-1, -1};
   void *p = server_init_player(&id, &team, &pos); 
   s->extra = p;
-  //add_player(p);
   
   proto_session_hdr_marshall(s, &h);  
   proto_session_body_marshall_int(s, id);  
