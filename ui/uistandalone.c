@@ -525,7 +525,7 @@ ui_client_process(UI *ui, Map *map, void *C)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { ui_paintmap(ui, map); } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
+    if (rc==2) { /*ui_paintmap(ui, map);*/ } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
     if (rc<0) break;
   }
   return rc;
