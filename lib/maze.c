@@ -66,13 +66,14 @@ int load_map(char* map_file, Map *map){
 }
 
 
-int valid_move(Map *map, Player *player, /*Player *players, int numplayers,*/ int x, int y /*Flag *redflag, Flag *greenflag*/){
+int valid_move(Map *map, Player *player, int x, int y){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
 	Player p;
 	//previousc = map->cells[player->x +(player->y*MAPHEIGHT)];
 	c = map->cells[(x + player->pos.x)+((player->pos.y + y)*MAPHEIGHT)];
 	if (c.t == WALL){
+
 		/*if (player->hammer){
 			map->cells[x+(Y*MAPHEIGHT)].t = FLOOR;//convert the destination to floor
 			player->pos.x = x;
@@ -84,7 +85,7 @@ int valid_move(Map *map, Player *player, /*Player *players, int numplayers,*/ in
 		return -1;
 		}else{*/
 		//INVALID MOVE
-		return -1;
+		return 0;
 	}/*else{
 	//check if collides with player
 	for (int i = 0; i < numplayers; i++){
@@ -122,7 +123,7 @@ int valid_move(Map *map, Player *player, /*Player *players, int numplayers,*/ in
 	}
 	//else check if jail, if foreign jail then free all players
 	}*/
-	return 0;
+	return 1;
 }	
 //wall collision
 //whether 5 away from flag
