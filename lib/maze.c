@@ -9,7 +9,7 @@
 //#include "misc.h"
 #include "maze.h"
 
-int load_map(char* map_file, Map *map){
+int load_map(char* map_file, Map *map, Hammer *hammer_1, Hammer *hammer_2){
   int rc=1;
   int i, j;
   map->num_floor_cells = 0;
@@ -48,6 +48,22 @@ int load_map(char* map_file, Map *map){
                                         c.t = JAIL;
                                         c.c = GREEN;
                                         break;
+                                case 's':
+                                        c.t = FLOOR;
+                                        c.c = RED;
+					hammer_1->p.x = i;
+					hammer_1->p.y = j;
+ 					c.hammer = hammer_1;
+ 					map->hammer_1 = hammer_1;
+					break;
+                                case 'S':
+                                        c.t = FLOOR;
+                                        c.c = GREEN;
+					//hammer_2->p.x = i;
+                                        //hammer_2->p.y = j;
+                                        //c.hammer = hammer_2;
+					//map->hammer_2 = hammer_2;
+					break;
                                 default:
                                         return -1;
                         }

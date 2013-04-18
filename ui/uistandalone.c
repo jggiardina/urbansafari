@@ -336,6 +336,8 @@ ui_paintmap(UI *ui, Map *map)
         draw_cell(ui, REDWALL_S, &t, ui->screen);
       } else if (cell.t == WALL && cell.c == GREEN) {
         draw_cell(ui, GREENWALL_S, &t, ui->screen);
+      } else if(cell.t == FLOOR && cell.hammer){
+        draw_cell(ui, JACKHAMMER_S, &t, ui->screen);
       } else {
         draw_cell(ui, FLOOR_S, &t, ui->screen);
       }

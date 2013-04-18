@@ -62,6 +62,8 @@ struct Globals {
 } globals;
 
 UI *ui;
+Hammer hammer_1 = {{0,0}, 1};
+Hammer hammer_2 = {{0,0}, 1};
 
 /* Find a free spot on a team cell type for a client */
 void find_free(Color team_color, Cell_Type cell_type, Pos *p){
@@ -228,7 +230,7 @@ doLoad(){
 	}
 	fclose(myfile);
 	//fprintf( stderr, "Read %d lines\n", n);
-	load_map(globals.mapbuf, &globals.map);
+	load_map(globals.mapbuf, &globals.map, &hammer_1, &hammer_2);
 	globals.isLoaded = 1;
 	}
   return 1;

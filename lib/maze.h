@@ -61,5 +61,9 @@ typedef struct
   int h;
   int num_wall_cells;
   int num_floor_cells;
+  Hammer *hammer_1;
+  Hammer *hammer_2;
+  Flag *flag_red;
+  Flag *flag_green;  
   Cell cells[sizeof(Cell)*MAPHEIGHT*MAPWIDTH];
 } __attribute__((__packed__)) Map;
