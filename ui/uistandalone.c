@@ -38,10 +38,14 @@ static void player_paint(UI *ui, SDL_Rect *t, Player *p);
 #define SPRITE_H 32
 #define SPRITE_W 32
 
-int CELL_H;
-int CELL_W;
-int CAMERA_X;
-int CAMERA_Y;
+struct UI_Globals {
+  int SCREEN_H;
+  int SCREEN_W;
+  int CELL_H;
+  int CELL_W;
+  int CAMERA_X;
+  int CAMERA_Y;
+} ui_globals;
 
 #define UI_FLOOR_BMP "../ui/floor.bmp"
 #define UI_REDWALL_BMP "../ui/redwall.bmp"
@@ -327,8 +331,8 @@ sval
 ui_paintmap(UI *ui, Map *map) 
 {
   SDL_Rect t;
-  int i = CAMERA_X;
-  int j = CAMERA_Y;
+  int i = ui_globals.CAMERA_X;
+  int j = ui_globals.CAMERA_Y;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
@@ -348,7 +352,7 @@ ui_paintmap(UI *ui, Map *map)
       i++;
       //draw_cell(ui, FLOOR_S, &t, ui->screen);
     }
-    j++;i=CAMERA_X;
+    j++;i=ui_globals.CAMERA_X;
   }
 
   //dummyPlayer_paint(ui, &t);
@@ -524,7 +528,7 @@ ui_client_process(UI *ui, Map *map, void *C)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { /*ui_paintmap(ui, map);*/ } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
+    if (rc==2) { ui_paintmap(ui, map); } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
     if (rc<0) break;
   }
   return rc;
@@ -536,18 +540,18 @@ ui_zoom(UI *ui, sval fac)
   if (fac == 0) {
     return 1;
   }
-  else if (fac > 0 && CELL_H > 1) {
+  else if (fac > 0 && ui_globals.CELL_H > 1) {
     // zoom in
-    CELL_H = CELL_H/2;
-    CELL_W = CELL_W/2;
-    ui->tile_h = CELL_H;
-    ui->tile_w = CELL_W;
-  } else if (fac < 0 && CELL_H < 32) {
+    ui_globals.CELL_H = ui_globals.CELL_H/2;
+    ui_globals.CELL_W = ui_globals.CELL_W/2;
+    ui->tile_h = ui_globals.CELL_H;
+    ui->tile_w = ui_globals.CELL_W;
+  } else if (fac < 0 && ui_globals.CELL_H < 32) {
     // zoom out
-    CELL_H = CELL_H*2;
-    CELL_W = CELL_W*2;
-    ui->tile_h = CELL_H;
-    ui->tile_w = CELL_W;
+    ui_globals.CELL_H = ui_globals.CELL_H*2;
+    ui_globals.CELL_W = ui_globals.CELL_W*2;
+    ui->tile_h = ui_globals.CELL_H;
+    ui->tile_w = ui_globals.CELL_W;
   }
   fprintf(stderr, "%s:\n", __func__);
   return 2;
@@ -557,13 +561,13 @@ extern sval
 ui_pan(UI *ui, sval xdir, sval ydir)
 {
   // TODO:FIX magic number 10s because they are 320/CELL_(H/W) but 320 is also a magic number... BE CAREFUL ABOUT THIS CAUSE IT ONLY WORKS WHEN ZOOMED AT SPRITE LEVEL
-  if (CAMERA_X + xdir < 0 || CAMERA_X + xdir + (10) > MAPWIDTH)
+  if (ui_globals.CAMERA_X + xdir < 0 || ui_globals.CAMERA_X + xdir + (ui_globals.SCREEN_W/ui_globals.CELL_W) > MAPWIDTH)
     return 1;
-  if (CAMERA_Y + ydir < 0 || CAMERA_Y + ydir + (10) > MAPHEIGHT)
+  if (ui_globals.CAMERA_Y + ydir < 0 || ui_globals.CAMERA_Y + ydir + (ui_globals.SCREEN_H/ui_globals.CELL_H) > MAPHEIGHT)
     return 1;
   
-  CAMERA_X += xdir;
-  CAMERA_Y += ydir;
+  ui_globals.CAMERA_X += xdir;
+  ui_globals.CAMERA_Y += ydir;
   fprintf(stderr, "%s:\n", __func__);
   return 2;
 }
@@ -604,8 +608,8 @@ ui_main_loop(UI *ui, void *m)
 {
   Map *map = (Map *)(m);
 
-  uval h = 320;
-  uval w = 320;
+  uval h = ui_globals.SCREEN_H;
+  uval w = ui_globals.SCREEN_W;
 
   sval rc;
   
@@ -660,13 +664,17 @@ ui_init(UI **ui)
 
   bzero(*ui, sizeof(UI));
   
-  CELL_H = SPRITE_H;
-  CELL_W = SPRITE_W;
-  CAMERA_X = 0;
-  CAMERA_Y = 0;
+  bzero(&ui_globals, sizeof(ui_globals));
 
-  (*ui)->tile_h = CELL_H;
-  (*ui)->tile_w = CELL_W;
+  ui_globals.SCREEN_H = 320;
+  ui_globals.SCREEN_W = 320;
+  ui_globals.CELL_H = SPRITE_H;
+  ui_globals.CELL_W = SPRITE_W;
+  ui_globals.CAMERA_X = 0;
+  ui_globals.CAMERA_Y = 0;
+
+  (*ui)->tile_h = ui_globals.CELL_H;
+  (*ui)->tile_w = ui_globals.CELL_W;
 
 }
 
