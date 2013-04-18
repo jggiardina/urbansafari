@@ -338,14 +338,15 @@ ui_paintmap(UI *ui, Map *map)
         draw_cell(ui, REDWALL_S, &t, ui->screen);
       } else if (cell.t == WALL && cell.c == GREEN) {
         draw_cell(ui, GREENWALL_S, &t, ui->screen);
-      } else if(cell.t == FLOOR && cell.hammer){
-        draw_cell(ui, JACKHAMMER_S, &t, ui->screen);
       } else {
         draw_cell(ui, FLOOR_S, &t, ui->screen);
       }
       // should we also draw a player?
       if (cell.player != NULL) {// for right now, separate for server
         player_paint(ui, &t, cell.player);//TODO:FIX on the client, we can't use the player pointer so how do we know who to draw?
+      }
+      if(cell.t == FLOOR && cell.hammer){
+        draw_cell(ui, JACKHAMMER_S, &t, ui->screen);
       }
       i++;
       //draw_cell(ui, FLOOR_S, &t, ui->screen);

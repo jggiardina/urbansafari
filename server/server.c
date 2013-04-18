@@ -62,8 +62,6 @@ struct Globals {
 } globals;
 
 UI *ui;
-Hammer hammer_1 = {{0,0}, 1};
-Hammer hammer_2 = {{0,0}, 1};
 
 /* Find a free spot on a team cell type for a client */
 void find_free(Color team_color, Cell_Type cell_type, Pos *p){
@@ -84,6 +82,16 @@ void find_free(Color team_color, Cell_Type cell_type, Pos *p){
       }
     }
   }
+}
+
+Hammer* server_init_hammer(){
+  Hammer *hammer = (Hammer *)malloc(sizeof(Hammer));
+  bzero(hammer, sizeof(Hammer));
+  hammer->p.x = 0;
+  hammer->p.y = 0;
+  hammer->charges = 1; 
+  
+  return hammer;
 }
 
 void* server_init_player(int *id, int *team, Tuple *pos)
@@ -230,7 +238,7 @@ doLoad(){
 	}
 	fclose(myfile);
 	//fprintf( stderr, "Read %d lines\n", n);
-	load_map(globals.mapbuf, &globals.map, &hammer_1, &hammer_2);
+	load_map(globals.mapbuf, &globals.map);
 	globals.isLoaded = 1;
 	}
   return 1;
@@ -386,6 +394,8 @@ main(int argc, char **argv)
         }
         fclose(myfile);
         //fprintf( stderr, "Read %d lines\n", n);
+	globals.map.hammer_1 = server_init_hammer();
+        globals.map.hammer_2 = server_init_hammer();
         load_map(globals.mapbuf, &globals.map);
         globals.isLoaded = 1;
   }
