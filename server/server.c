@@ -57,7 +57,8 @@ struct Globals {
   Map tempmap;
   //void* player_array[MAXPLAYERS];
   char mapbuf[MAPHEIGHT*MAPWIDTH];
-  Player *players[MAXPLAYERS]; //TODO:FIX maybe we should move this?
+  Player *players[MAXPLAYERS];
+  int numplayers;
 } globals;
 
 UI *ui;
@@ -88,6 +89,7 @@ void* server_init_player(int *id, int *team, Tuple *pos)
   Player *p = (Player *)malloc(sizeof(Player));
   bzero(p, sizeof(Player));
   player_init(ui, p);
+  globals.numplayers++;
 
   *id = p->id;
   *team = p->team;
@@ -242,23 +244,44 @@ prompt(int menu)
   c=getInput();
   return c;
 }
-char*
-marshall_map_data()
-{
-	marshall_map(&globals.tempmap, &globals.map);
-	return (char *) &(globals.tempmap.cells);
-}
-int
-getCellsSize(){
-	fprintf(stderr, "size of tempmap %d \n", sizeof(globals.tempmap.cells));
-	return (int) sizeof(globals.tempmap.cells);
-}
 char* mapToASCII(){
 	dump_map(&globals.map);
 	return globals.map.data_ascii;
 }
 int getAsciiSize(){
 	return sizeof(globals.map.data_ascii);
+}
+char* getPlayers(){
+	return globals.players;
+}
+int marshall_players(Proto_Session *s){
+  int i;
+  Player p;
+  proto_session_body_marshall_int(s, globals.numplayers);
+  for (i = 0; i < globals.numplayers; i++){
+	p = *(globals.players[i]);
+        //fprintf(stderr, "id = %d\n", p.id);
+	//fprintf(stderr, "x = %d\n", p.pos.x);
+	//fprintf(stderr, "y = %d\n", p.pos.y);
+        //fprintf(stderr, "team = %d\n", p.team);
+        proto_session_body_marshall_int(s, p.id);
+        proto_session_body_marshall_int(s, p.pos.x);
+        proto_session_body_marshall_int(s, p.pos.y);
+        proto_session_body_marshall_int(s, p.team);
+        if (p.hammer != NULL){
+                proto_session_body_marshall_int(s, 1);
+        }else{
+                proto_session_body_marshall_int(s, 0);
+        }
+        if (p.flag == NULL){
+                proto_session_body_marshall_int(s, 0);
+        }else if (p.flag->c == RED){
+                proto_session_body_marshall_int(s, 1);
+        }else{
+                proto_session_body_marshall_int(s, 2);
+        }
+  }
+
 }
 int
 getInput()
@@ -269,7 +292,6 @@ getInput()
   // to make debugging easier we zero the data of the buffer
   bzero(globals.in.data, sizeof(globals.in.data));
   globals.in.newline = 0;
-
   ret = fgets(globals.in.data, sizeof(globals.in.data), stdin);//reads input in from stdin into globals.in.data
   // remove newline if it exists
   len = (ret != NULL) ? strlen(globals.in.data) : 0;//if ret != null, there is a string and thus we set the len to the length of the string, else we set it to 0.
@@ -316,6 +338,7 @@ main(int argc, char **argv)
   // SO JUMP THROW HOOPS :-(
 
   /* TESTING LOAD MAP */
+  globals.numplayers = 0;
   char linebuf[240];
   FILE * myfile;
   int i, n, len;
