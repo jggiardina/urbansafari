@@ -40,6 +40,8 @@ static void player_paint(UI *ui, SDL_Rect *t, Player *p);
 
 int CELL_H;
 int CELL_W;
+int CAMERA_X;
+int CAMERA_Y;
 
 #define UI_FLOOR_BMP "../ui/floor.bmp"
 #define UI_REDWALL_BMP "../ui/redwall.bmp"
@@ -325,8 +327,8 @@ sval
 ui_paintmap(UI *ui, Map *map) 
 {
   SDL_Rect t;
-  int i = 0;
-  int j = 0;
+  int i = CAMERA_X;
+  int j = CAMERA_Y;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
@@ -348,7 +350,7 @@ ui_paintmap(UI *ui, Map *map)
       i++;
       //draw_cell(ui, FLOOR_S, &t, ui->screen);
     }
-    j++;i=0;
+    j++;i=CAMERA_X;
   }
 
   //dummyPlayer_paint(ui, &t);
@@ -395,7 +397,7 @@ static void
 player_paint(UI *ui, SDL_Rect *t, Player *p)
 {
   pthread_mutex_lock(&(p->lock));
-    t->y = p->pos.y * t->h; t->x = p->pos.x * t->w;
+    //t->y = p->pos.y * t->h; t->x = p->pos.x * t->w;//NOTE:We assume all players are drawn in the cell that they come from, so t->x,t->y is already correct
     p->uip->clip.x = p->uip->base_clip_x +
       pxSpriteOffSet(p->team, p->state);
     SDL_BlitSurface(p->uip->img, &(p->uip->clip), ui->screen, t);
@@ -556,6 +558,14 @@ ui_zoom(UI *ui, sval fac)
 extern sval
 ui_pan(UI *ui, sval xdir, sval ydir)
 {
+  // TODO:FIX magic number 10s because they are 320/CELL_(H/W) but 320 is also a magic number... BE CAREFUL ABOUT THIS CAUSE IT ONLY WORKS WHEN ZOOMED AT SPRITE LEVEL
+  if (CAMERA_X + xdir < 0 || CAMERA_X + xdir + (10) > MAPWIDTH)
+    return 1;
+  if (CAMERA_Y + ydir < 0 || CAMERA_Y + ydir + (10) > MAPHEIGHT)
+    return 1;
+  
+  CAMERA_X += xdir;
+  CAMERA_Y += ydir;
   fprintf(stderr, "%s:\n", __func__);
   return 2;
 }
@@ -654,6 +664,8 @@ ui_init(UI **ui)
   
   CELL_H = SPRITE_H;
   CELL_W = SPRITE_W;
+  CAMERA_X = 0;
+  CAMERA_Y = 0;
 
   (*ui)->tile_h = CELL_H;
   (*ui)->tile_w = CELL_W;
