@@ -57,7 +57,8 @@ struct Globals {
   Map tempmap;
   //void* player_array[MAXPLAYERS];
   char mapbuf[MAPHEIGHT*MAPWIDTH];
-  Player *players[MAXPLAYERS]; //TODO:FIX maybe we should move this?
+  Player *players[MAXPLAYERS];
+  int numplayers;
 } globals;
 
 UI *ui;
@@ -69,13 +70,14 @@ void* server_init_player(int *id, int *team, Tuple *pos)
   player_init(ui, p);
   // stuff player into array and cell TODO:FIX: how to make sure the player pointers are always alive... and do not get corrupted through the lifetime of the server
   globals.players[p->id] = p;
+  globals.numplayers++;
   globals.map.cells[pos->x + (pos->y*globals.map.w)].player = p;
   ui_paintmap(ui, &globals.map);
 
   *id = p->id;
   *team = p->team;
-  p->pos.x = pos->x;
-  p->pos.y = pos->y;
+  pos->x = p->pos.x;
+  pos->y = p->pos.y;
   return (void *)p;
 }
 
@@ -227,11 +229,11 @@ int getAsciiSize(){
 char* getPlayers(){
 	return globals.players;
 }
-int marshall_players(int numplayers, Proto_Session *s){
+int marshall_players(Proto_Session *s){
   int i;
   Player p;
-  proto_session_body_marshall_int(s, numplayers);
-  for (i = 0; i < numplayers; i++){
+  proto_session_body_marshall_int(s, globals.numplayers);
+  for (i = 0; i < globals.numplayers; i++){
 	p = *(globals.players[i]);
         //fprintf(stderr, "id = %d\n", p.id);
 	//fprintf(stderr, "x = %d\n", p.pos.x);
@@ -265,7 +267,6 @@ getInput()
   // to make debugging easier we zero the data of the buffer
   bzero(globals.in.data, sizeof(globals.in.data));
   globals.in.newline = 0;
-
   ret = fgets(globals.in.data, sizeof(globals.in.data), stdin);//reads input in from stdin into globals.in.data
   // remove newline if it exists
   len = (ret != NULL) ? strlen(globals.in.data) : 0;//if ret != null, there is a string and thus we set the len to the length of the string, else we set it to 0.
@@ -312,6 +313,7 @@ main(int argc, char **argv)
   // SO JUMP THROW HOOPS :-(
 
   /* TESTING LOAD MAP */
+  globals.numplayers = 0;
   char linebuf[240];
   FILE * myfile;
   int i, n, len;
