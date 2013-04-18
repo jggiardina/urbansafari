@@ -388,6 +388,7 @@ do_init_player_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *id, int *tea
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
     proto_session_body_unmarshall_int(s, 0, id);
+    if (*id == -1) return -1; 
     proto_session_body_unmarshall_int(s, sizeof(int), &(pos->x));
     proto_session_body_unmarshall_int(s, 2*sizeof(int), &(pos->y));
     proto_session_body_unmarshall_int(s, 3*sizeof(int), team);
