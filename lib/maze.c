@@ -66,15 +66,14 @@ int load_map(char* map_file, Map *map){
 }
 
 
-/*int valid_move(Map *map, Player *player, Player *players, int numplayers, int x, int y, Flag *redflag, Flag *greenflag){
+int valid_move(Map *map, Player *player, /*Player *players, int numplayers,*/ int x, int y /*Flag *redflag, Flag *greenflag*/){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
 	Player p;
 	//previousc = map->cells[player->x +(player->y*MAPHEIGHT)];
-	Tuple pos = {player->pos.x + x, player->pos.y + y};
-	c = map->cells[pos.x+(pos.y*MAPHEIGHT)];
+	c = map->cells[(x + player->pos.x)+((player->pos.y + y)*MAPHEIGHT)];
 	if (c.t == WALL){
-		if (player->hammer){
+		/*if (player->hammer){
 			map->cells[x+(Y*MAPHEIGHT)].t = FLOOR;//convert the destination to floor
 			player->pos.x = x;
 			player->pos.y = y;
@@ -83,10 +82,10 @@ int load_map(char* map_file, Map *map){
 			return 1;
 		
 		return -1;
-		}else{
+		}else{*/
 		//INVALID MOVE
 		return -1;
-	}else{
+	}/*else{
 	//check if collides with player
 	for (int i = 0; i < numplayers; i++){
 		p = players[i];
@@ -123,8 +122,8 @@ int load_map(char* map_file, Map *map){
 	}
 	//else check if jail, if foreign jail then free all players
 	}*/
-	
-//}	
+	return 0;
+}	
 //wall collision
 //whether 5 away from flag
 //player collision
