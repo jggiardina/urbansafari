@@ -482,7 +482,7 @@ proto_client_move(Proto_Client_Handle ch, Tuple *tuple)
 extern int
 proto_client_pick_up_hammer(Proto_Client_Handle ch, int *hammer)
 {
-  return do_pick_up_hammer_rpc(ch,PROTO_MT_REQ_BASE_TAKE_HAMMER, hammer);
+  return do_pick_up_hammer_rpc(ch, PROTO_MT_REQ_BASE_TAKE_HAMMER, hammer);
 }
 
 
