@@ -727,8 +727,8 @@ ui_init(UI **ui)
 extern int
 ui_center_cam(UI *ui, Pos *p)
 {
-  ui_globals.CAMERA_X = p->x;
-  ui_globals.CAMERA_Y = p->y;
+  ui_globals.CAMERA_X = p->x - ((ui_globals.SCREEN_W/ui_globals.CELL_W)/2) <= 0 ? 0 : p->x - ((ui_globals.SCREEN_W/ui_globals.CELL_W)/2);
+  ui_globals.CAMERA_Y = p->y - ((ui_globals.SCREEN_H/ui_globals.CELL_H)/2) <= 0 ? 0 : p->y - ((ui_globals.SCREEN_H/ui_globals.CELL_H)/2);
   return 2;
 }
 

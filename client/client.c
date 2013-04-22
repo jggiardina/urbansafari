@@ -255,12 +255,12 @@ update_event_handler(Proto_Session *s)
         me->team = globals.players[i].team;
         me->flag = globals.players[i].flag;
         me->hammer = globals.players[i].hammer;
-        ui_center_cam(ui, &me->pos);
+        //ui_center_cam(ui, &me->pos);
       pthread_mutex_unlock(&me->lock);
     }
   }
   
-  ui_paintmap(ui, &globals.map); 
+  ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
 
   fprintf(stderr, "%s: called", __func__);
   return 1;
@@ -388,6 +388,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       pthread_mutex_lock(&p->lock); 
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
+        ui_center_cam(ui, &p->pos);
       pthread_mutex_unlock(&p->lock);
       return 2;
     }
@@ -399,6 +400,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       pthread_mutex_lock(&p->lock);
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
+        ui_center_cam(ui, &p->pos);
       pthread_mutex_unlock(&p->lock);
       return 2;
     }
@@ -410,6 +412,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       pthread_mutex_lock(&p->lock);
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
+        ui_center_cam(ui, &p->pos);
       pthread_mutex_unlock(&p->lock);
       return 2;
     }
@@ -421,6 +424,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       pthread_mutex_lock(&p->lock);
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
+        ui_center_cam(ui, &p->pos);
       pthread_mutex_unlock(&p->lock);
       return 2;
     }
