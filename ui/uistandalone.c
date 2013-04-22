@@ -727,8 +727,22 @@ ui_init(UI **ui)
 extern int
 ui_center_cam(UI *ui, Pos *p)
 {
-  ui_globals.CAMERA_X = p->x - ((ui_globals.SCREEN_W/ui_globals.CELL_W)/2) <= 0 ? 0 : p->x - ((ui_globals.SCREEN_W/ui_globals.CELL_W)/2);
-  ui_globals.CAMERA_Y = p->y - ((ui_globals.SCREEN_H/ui_globals.CELL_H)/2) <= 0 ? 0 : p->y - ((ui_globals.SCREEN_H/ui_globals.CELL_H)/2);
+  int new_cam_x = p->x - ((ui_globals.SCREEN_W/ui_globals.CELL_W)/2);
+  if (new_cam_x <= 0) {
+    ui_globals.CAMERA_X = 0;
+  } else if (new_cam_x + (ui_globals.SCREEN_W/ui_globals.CELL_W) > MAPWIDTH && ui_globals.CAMERA_X < new_cam_x) {
+    ui_globals.CAMERA_X = ui_globals.CAMERA_X; // do nothing
+  } else {
+    ui_globals.CAMERA_X = new_cam_x;
+  }
+  int new_cam_y = p->y - ((ui_globals.SCREEN_H/ui_globals.CELL_H)/2);
+  if (new_cam_y <= 0) {
+    ui_globals.CAMERA_Y = 0;
+  } else if (new_cam_y + (ui_globals.SCREEN_H/ui_globals.CELL_H) > MAPHEIGHT && ui_globals.CAMERA_Y < new_cam_y) {
+    ui_globals.CAMERA_Y = ui_globals.CAMERA_Y; // do nothing
+  } else {
+    ui_globals.CAMERA_Y = new_cam_y;
+  }
   return 2;
 }
 
