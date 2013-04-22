@@ -387,12 +387,12 @@ ui_paintmap(UI *ui, Map *map)
         if(cell.t == FLOOR && cell.hammer){
           draw_cell(ui, JACKHAMMER_S, &t, ui->screen);
         }
-      }
-      if(cell.flag){
-        if(cell.flag->c == RED){
-          draw_cell(ui, REDFLAG_S, &t, ui->screen);
-	}else{
-          draw_cell(ui, GREENFLAG_S, &t, ui->screen);
+        if(cell.flag){
+          if(cell.flag->c == RED){
+            draw_cell(ui, REDFLAG_S, &t, ui->screen);
+          }else{
+            draw_cell(ui, GREENFLAG_S, &t, ui->screen);
+          }
         }
       }
       i++;
@@ -722,6 +722,14 @@ ui_init(UI **ui)
   (*ui)->tile_h = ui_globals.CELL_H;
   (*ui)->tile_w = ui_globals.CELL_W;
 
+}
+
+extern int
+ui_center_cam(UI *ui, Pos *p)
+{
+  ui_globals.CAMERA_X = p->x;
+  ui_globals.CAMERA_Y = p->y;
+  return 2;
 }
 
 int
