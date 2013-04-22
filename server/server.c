@@ -158,7 +158,7 @@ pthread_mutex_init(&(p->lock), NULL);
   *team = p->team;
   
   //Find a Home spot to initialize player
-  find_free(p->team_color, FLOOR/*HOME*/, &(p->pos));
+  find_free(p->team_color, HOME, &(p->pos));
   ui_uip_init(ui, &p->uip, p->id, p->team);
 
   pos->x = p->pos.x;
