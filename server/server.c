@@ -195,12 +195,12 @@ int move(Tuple *pos, void *player){
   Player *p = (Player *)player;
   
   pthread_mutex_lock(&p->lock);
-    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = NULL; // delete player from his old cell
-    // TODO: Check if he can make this move:
-    p->pos.x += pos->x;
-    p->pos.y += pos->y;
-    
-    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p; // add player to his new cell
+    globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = NULL; // delete player from his old cell
+    if (valid_move(&globals.map, p, pos->x, pos->y)){
+    	p->pos.x += pos->x;
+    	p->pos.y += pos->y;
+    }
+    globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = p; // add player to his new cell
     
     rc = 1;
     //Return values of player if needing to update
