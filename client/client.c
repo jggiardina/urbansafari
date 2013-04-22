@@ -248,13 +248,15 @@ update_event_handler(Proto_Session *s)
     ui_uip_init(ui, &globals.players[i].uip, globals.players[i].id, globals.players[i].team);      
     
     // update me
-    if (globals.players[i].id = me->id) {
-      me->pos.x = globals.players[i].pos.x;
-      me->pos.y = globals.players[i].pos.y;
-      me->team = globals.players[i].team;
-      me->flag = globals.players[i].flag;
-      me->hammer = globals.players[i].hammer;
-      ui_center_cam(ui, me->pos);
+    if (globals.players[i].id == me->id) {
+      pthread_mutex_lock(&me->lock);
+        me->pos.x = globals.players[i].pos.x;
+        me->pos.y = globals.players[i].pos.y;
+        me->team = globals.players[i].team;
+        me->flag = globals.players[i].flag;
+        me->hammer = globals.players[i].hammer;
+        ui_center_cam(ui, &me->pos);
+      pthread_mutex_unlock(&me->lock);
     }
   }
   
@@ -432,7 +434,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       proto_client_pick_up_hammer(C->ph, &hammer);
       Player *p = (Player *)C->data;
       pthread_mutex_lock(&p->lock);
-      p->hammer = hammer;
+        p->hammer = hammer;
       pthread_mutex_unlock(&p->lock);
       return 2;
     }
