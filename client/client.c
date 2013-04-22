@@ -415,6 +415,12 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
     }
     if (sym == SDLK_h && mod == KMOD_NONE)  {
       fprintf(stderr, "%s: pick up hammer\n", __func__);
+      int hammer = 0;
+      proto_client_pick_up_hammer(C->ph, &hammer);
+      Player *p = (Player *)C->data;
+      pthread_mutex_lock(&p->lock);
+      p->hammer = hammer;
+      pthread_mutex_unlock(&p->lock);
       return 2;
     }
     if (sym == SDLK_g && mod == KMOD_NONE)  {   
