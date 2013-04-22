@@ -19,10 +19,10 @@ int load_map(char* map_file, Map *map){
              Cell c;
 	     c.hammer = NULL; c.flag = NULL; c.player = NULL;
              if (i > 99) {
-                                c.c = GREEN;
-                        }else{
-                                c.c = RED;
-                        }
+               c.c = GREEN;
+             }else{
+               c.c = RED;
+             }
                         switch(map_file[i+(j*MAPHEIGHT)]){
                                 case ' ':
 					map->num_floor_cells++;

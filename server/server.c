@@ -94,6 +94,35 @@ Hammer* server_init_hammer(){
   return hammer;
 }
 
+Pos* get_random_team_flag_position(Color team_color){
+  int x = rand() % 200;
+  int y = rand() % 200;
+
+  Cell c = globals.map.cells[x+(y*MAPHEIGHT)];
+
+  if(c.t == FLOOR && c.player == NULL && c.hammer == NULL && c.c == team_color){
+    Pos *p =(Pos *)malloc(sizeof(Pos));
+    bzero(p, sizeof(Pos));
+    p->x = x;
+    p->y = y;
+    return p;
+  }else{
+    return (Pos *)get_random_team_flag_position(team_color);
+  }
+}
+
+Flag* server_init_flag(Color team_color){
+  Flag *flag = (Flag *)malloc(sizeof(Flag));
+  bzero(flag, sizeof(Flag));
+  Pos *p = get_random_team_flag_position(team_color);
+  flag->p.x = p->x;
+  flag->p.y = p->y;
+  flag->c = team_color;
+  globals.map.cells[p->x+(p->y*MAPHEIGHT)].flag = flag;
+
+  return flag;
+}
+
 void* server_init_player(int *id, int *team, Tuple *pos)
 {
   Player *p = (Player *)malloc(sizeof(Player));
@@ -164,18 +193,20 @@ void paint_players(){
 int move(Tuple *pos, void *player){
   int rc = 0;
   Player *p = (Player *)player;
- 
+  
   pthread_mutex_lock(&p->lock);
-    globals.map.cells[p->pos.x + ((p->pos.y)*MAPHEIGHT)].player = NULL; // delete player from his old cell
+    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = NULL; // delete player from his old cell
     // TODO: Check if he can make this move:
-   if (valid_move(&globals.map, p, pos->x, pos->y)){
-    	p->pos.x += pos->x;
-    	p->pos.y += pos->y;
-   }
+    p->pos.x += pos->x;
+    p->pos.y += pos->y;
+    
+    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p; // add player to his new cell
+    
+    rc = 1;
+    //Return values of player if needing to update
     pos->x = p->pos.x;
     pos->y = p->pos.y;
-    rc = 1;
-    globals.map.cells[p->pos.x + (p->pos.y*MAPHEIGHT)].player = p; // add player to his new cell
+  
   pthread_mutex_unlock(&p->lock);
   ui_paintmap(ui, &globals.map); 
   return rc;
@@ -392,9 +423,12 @@ main(int argc, char **argv)
         }
         fclose(myfile);
         //fprintf( stderr, "Read %d lines\n", n);
+        //Initialize the flags and hammers
 	globals.map.hammer_1 = server_init_hammer();
         globals.map.hammer_2 = server_init_hammer();
         load_map(globals.mapbuf, &globals.map);
+        globals.map.flag_red = server_init_flag(RED);
+        globals.map.flag_green = server_init_flag(GREEN);
         globals.isLoaded = 1;
   }
   if (proto_server_init()<0) {

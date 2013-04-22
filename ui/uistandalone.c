@@ -388,6 +388,13 @@ ui_paintmap(UI *ui, Map *map)
           draw_cell(ui, JACKHAMMER_S, &t, ui->screen);
         }
       }
+      if(cell.flag){
+        if(cell.flag->c == RED){
+          draw_cell(ui, REDFLAG_S, &t, ui->screen);
+	}else{
+          draw_cell(ui, GREENFLAG_S, &t, ui->screen);
+        }
+      }
       i++;
       //draw_cell(ui, FLOOR_S, &t, ui->screen);
     }
