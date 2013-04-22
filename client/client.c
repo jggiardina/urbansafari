@@ -248,13 +248,13 @@ update_event_handler(Proto_Session *s)
     ui_uip_init(ui, &globals.players[i].uip, globals.players[i].id, globals.players[i].team);      
     
     // update me
-    if (players[i].id == me->id) {
+    if (globals.players[i].id == me->id) {
       pthread_mutex_lock(&me->lock);
-        me->pos.x = players[i].pos.x;
-        me->pos.y = players[i].pos.y;
-        me->team = players[i].team;
-        me->flag = players[i].flag;
-        me->hammer = players[i].hammer;
+        me->pos.x = globals.players[i].pos.x;
+        me->pos.y = globals.players[i].pos.y;
+        me->team = globals.players[i].team;
+        me->flag = globals.players[i].flag;
+        me->hammer = globals.players[i].hammer;
         ui_center_cam(ui, &me->pos);
       pthread_mutex_unlock(&me->lock);
     }
