@@ -127,7 +127,7 @@ void* server_init_player(int *id, int *team, Tuple *pos)
 {
   Player *p = (Player *)malloc(sizeof(Player));
   bzero(p, sizeof(Player));
-
+pthread_mutex_init(&(p->lock), NULL);
   pthread_mutex_lock(&p->lock);  
 
   //Initialize ID and starting conditions
@@ -195,12 +195,12 @@ int move(Tuple *pos, void *player){
   Player *p = (Player *)player;
   
   pthread_mutex_lock(&p->lock);
-    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = NULL; // delete player from his old cell
-    // TODO: Check if he can make this move:
-    p->pos.x += pos->x;
-    p->pos.y += pos->y;
-    
-    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p; // add player to his new cell
+    globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = NULL; // delete player from his old cell
+    if (valid_move(&globals.map, p, pos->x, pos->y)){
+    	p->pos.x += pos->x;
+    	p->pos.y += pos->y;
+    }
+    globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = p; // add player to his new cell
     
     rc = 1;
     //Return values of player if needing to update
@@ -211,6 +211,21 @@ int move(Tuple *pos, void *player){
   ui_paintmap(ui, &globals.map); 
   return rc;
 }
+int takeHammer(void *player){
+  int rc = 0;
+  Player *p = (Player *)player;
+
+  pthread_mutex_lock(&p->lock);
+   if(take_hammer(&globals.map, p)){
+    rc = 1;
+   }else{
+	rc = 0;
+   }
+  pthread_mutex_unlock(&p->lock);
+  ui_paintmap(ui, &globals.map);
+  return rc;
+}
+
 
 int
 doUpdateClients(void)
@@ -335,18 +350,8 @@ int marshall_players(Proto_Session *s){
         proto_session_body_marshall_int(s, p.pos.x);
         proto_session_body_marshall_int(s, p.pos.y);
         proto_session_body_marshall_int(s, p.team);
-        if (p.hammer != NULL){
-                proto_session_body_marshall_int(s, 1);
-        }else{
-                proto_session_body_marshall_int(s, 0);
-        }
-        if (p.flag == NULL){
-                proto_session_body_marshall_int(s, 0);
-        }else if (p.flag->c == RED){
-                proto_session_body_marshall_int(s, 1);
-        }else{
-                proto_session_body_marshall_int(s, 2);
-        }
+        proto_session_body_marshall_int(s, p.hammer);
+        proto_session_body_marshall_int(s, p.flag);
   }
 
 }

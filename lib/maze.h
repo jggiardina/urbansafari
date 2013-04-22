@@ -39,8 +39,8 @@ typedef struct {
   Pos pos;
   Color team_color;
   int team;
-  Hammer *hammer;
-  Flag *flag;
+  int hammer;
+  int flag;
   int state;
 } __attribute__((__packed__)) Player;
 
@@ -56,6 +56,7 @@ typedef struct
 
 typedef struct
 {
+  pthread_mutex_t lock;
   char data_ascii[MAPHEIGHT*MAPWIDTH];
   int w;
   int h;
