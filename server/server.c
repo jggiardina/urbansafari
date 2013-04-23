@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
-
+#include <time.h>
 #include <sys/types.h>
 #include <poll.h>
 #include "../ui/types.h"
@@ -84,14 +84,24 @@ void find_free(Color team_color, Cell_Type cell_type, Pos *p){
   }
 }
 
-Hammer* server_init_hammer(){
-  Hammer *hammer = (Hammer *)malloc(sizeof(Hammer));
-  bzero(hammer, sizeof(Hammer));
-  hammer->p.x = 0;
-  hammer->p.y = 0;
-  hammer->charges = 1; 
-  
-  return hammer;
+void reset_hammer(int team){
+  int x,y;
+
+  if(team == 0){
+    globals.map.hammer_1->p.x = 2;
+    globals.map.hammer_1->p.y = 90;
+    x = globals.map.hammer_1->p.x;
+    y = globals.map.hammer_1->p.y;
+    globals.map.cells[x+(y*MAPHEIGHT)].hammer = globals.map.hammer_1;
+  }else if(team == 1){
+    globals.map.hammer_2->p.x = 197;
+    globals.map.hammer_2->p.y = 90;
+    x = globals.map.hammer_2->p.x;
+    y = globals.map.hammer_2->p.y;
+    globals.map.cells[x+(y*MAPHEIGHT)].hammer = globals.map.hammer_2;
+  }
+
+  //TODO: After reset we must paint the server map, and also send an event to the clients!!! -RC
 }
 
 Pos* get_random_team_flag_position(Color team_color){
@@ -281,6 +291,7 @@ doLoad(){
 		n++;
 	}
 	fclose(myfile);
+        srand(time(NULL)); //seed random
 	//fprintf( stderr, "Read %d lines\n", n);
 	load_map(globals.mapbuf, &globals.map);
 	globals.isLoaded = 1;
@@ -429,8 +440,8 @@ main(int argc, char **argv)
         fclose(myfile);
         //fprintf( stderr, "Read %d lines\n", n);
         //Initialize the flags and hammers
-	globals.map.hammer_1 = server_init_hammer();
-        globals.map.hammer_2 = server_init_hammer();
+	globals.map.hammer_1 = (Hammer*)init_hammer();
+        globals.map.hammer_2 = (Hammer*)init_hammer();
         load_map(globals.mapbuf, &globals.map);
         globals.map.flag_red = server_init_flag(RED);
         globals.map.flag_green = server_init_flag(GREEN);

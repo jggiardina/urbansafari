@@ -360,6 +360,10 @@ main(int argc, char **argv)
   ui_center_cam(ui, &p->pos);
   // END CONNECT
 
+  // Initalize the hammers
+  globals.map.hammer_1 = (Hammer*)init_hammer();
+  globals.map.hammer_2 = (Hammer*)init_hammer();
+
   pthread_t tid;
   pthread_create(&tid, NULL, shell, &c);
 
@@ -378,13 +382,13 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
   SDLMod mod = e->keysym.mod;
 
   Client *C = (Client *)client;
-
+  Player *p = (Player *)C->data;
   if (e->type == SDL_KEYDOWN) {
     if (sym == SDLK_LEFT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move left\n", __func__);
       Tuple tuple = {-1, 0};
       proto_client_move(C->ph, &tuple); // left
-      Player *p = (Player *)C->data; 
+      //Player *p = (Player *)C->data; 
       pthread_mutex_lock(&p->lock); 
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
@@ -396,7 +400,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       fprintf(stderr, "%s: move right\n", __func__);
       Tuple tuple = {1, 0};
       proto_client_move(C->ph, &tuple); // right
-      Player *p = (Player *)C->data;
+      //Player *p = (Player *)C->data;
       pthread_mutex_lock(&p->lock);
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
@@ -408,7 +412,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       fprintf(stderr, "%s: move up\n", __func__);
       Tuple tuple = {0, -1}; //going up means going to a lower number cell
       proto_client_move(C->ph, &tuple); // up
-      Player *p = (Player *)C->data;
+      //Player *p = (Player *)C->data;
       pthread_mutex_lock(&p->lock);
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
@@ -420,7 +424,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       fprintf(stderr, "%s: move down\n", __func__);
       Tuple tuple = {0, 1};
       proto_client_move(C->ph, &tuple); // down
-      Player *p = (Player *)C->data;
+      //Player *p = (Player *)C->data;
       pthread_mutex_lock(&p->lock);
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
@@ -436,7 +440,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       fprintf(stderr, "%s: pick up hammer\n", __func__);
       int hammer = 0;
       proto_client_pick_up_hammer(C->ph, &hammer);
-      Player *p = (Player *)C->data;
+      //Player *p = (Player *)C->data;
       pthread_mutex_lock(&p->lock);
         p->hammer = hammer;
       pthread_mutex_unlock(&p->lock);
@@ -463,8 +467,18 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       return ui_dummy_inc_id(ui);
     }*/
     if (sym == SDLK_q) return -1;
-    if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
-    if (sym == SDLK_z && mod & KMOD_SHIFT) return ui_zoom(ui,-1);
+    if (sym == SDLK_z && mod == KMOD_NONE) {
+      if (ui_zoom(ui, 1)==2) {
+        ui_center_cam(ui, &p->pos);
+        return 2;
+      }
+    }
+    if (sym == SDLK_z && mod & KMOD_SHIFT) {
+      if (ui_zoom(ui, -1)==2) {
+        ui_center_cam(ui, &p->pos);
+        return 2;
+      }
+    }
     if (sym == SDLK_LEFT && mod & KMOD_SHIFT) return ui_pan(ui,-1,0);
     if (sym == SDLK_RIGHT && mod & KMOD_SHIFT) return ui_pan(ui,1,0);
     if (sym == SDLK_UP && mod & KMOD_SHIFT) return ui_pan(ui, 0,-1);
