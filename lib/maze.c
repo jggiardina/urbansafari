@@ -132,6 +132,26 @@ fprintf( stderr, "Cell set\n" );
 		return 0;
 	}
 }
+
+int take_flag(Map *map, Player *player){
+  int x,y;
+  x = player->pos.x;
+  y = player->pos.y;
+  Flag *f = map->cells[x+(y*MAPHEIGHT)].flag; 
+  if (f != NULL && player->flag < 1){
+    fprintf( stderr, "Cell set\n" );
+    if(f->c == RED){
+      player->flag = 1;
+    }else if(f->c == GREEN){
+      player->flag = 2;
+    }
+    f = NULL;
+    return 1;
+  }else{
+    return 0;
+  }
+}
+
 int valid_move(Map *map, Player *player, int x, int y){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
