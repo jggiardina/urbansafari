@@ -155,7 +155,13 @@ char* dump_map(Map *map){
   for (j = 0; j < MAPHEIGHT; j++){
         for (i = 0; i < MAPWIDTH; i++){
                 c = map->cells[i+(j*MAPHEIGHT)];
-			if (c.t == FLOOR){
+			/*if(c.hammer != NULL){
+                          if(c.hammer->p.x < 100 && c.hammer->p.y < 200){
+                            map->data_ascii[i+(j*MAPHEIGHT)] = 's';
+                          }else{
+                            map->data_ascii[i+(j*MAPHEIGHT)] = 'S';
+                          }
+                        }else*/ if (c.t == FLOOR){
 				map->data_ascii[i+(j*MAPHEIGHT)] = ' ';
 			}else if (c.t == WALL){
 				map->data_ascii[i+(j*MAPHEIGHT)] = '#';

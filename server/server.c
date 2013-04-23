@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
-
+#include <time.h>
 #include <sys/types.h>
 #include <poll.h>
 #include "../ui/types.h"
@@ -82,6 +82,26 @@ void find_free(Color team_color, Cell_Type cell_type, Pos *p){
       }
     }
   }
+}
+
+void reset_hammer(int team){
+  int x,y;
+
+  if(team == 0){
+    globals.map.hammer_1->p.x = 2;
+    globals.map.hammer_1->p.y = 90;
+    x = globals.map.hammer_1->p.x;
+    y = globals.map.hammer_1->p.y;
+    globals.map.cells[x+(y*MAPHEIGHT)].hammer = globals.map.hammer_1;
+  }else if(team == 1){
+    globals.map.hammer_2->p.x = 197;
+    globals.map.hammer_2->p.y = 90;
+    x = globals.map.hammer_2->p.x;
+    y = globals.map.hammer_2->p.y;
+    globals.map.cells[x+(y*MAPHEIGHT)].hammer = globals.map.hammer_2;
+  }
+
+  //TODO: After reset we must paint the server map, and also send an event to the clients!!! -RC
 }
 
 Hammer* server_init_hammer(){
@@ -266,6 +286,7 @@ doLoad(){
 		n++;
 	}
 	fclose(myfile);
+         srand(time(NULL)); //seed random
 	//fprintf( stderr, "Read %d lines\n", n);
 	load_map(globals.mapbuf, &globals.map);
 	globals.isLoaded = 1;
