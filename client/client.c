@@ -384,22 +384,6 @@ update_event_handler(Proto_Session *s)
     //STATE
     ui_uip_init(ui, &globals.players[i].uip, globals.players[i].id, globals.players[i].team);      
     
-    //Unmarshall Flags
-    proto_session_body_unmarshall_int(s, offset, &(globals.map.flag_red->p.x));
-    proto_session_body_unmarshall_int(s, offset+sizeof(int), &(globals.map.flag_red->p.y));
-    proto_session_body_unmarshall_int(s, offset+2*sizeof(int), &(globals.map.flag_green->p.x));
-    proto_session_body_unmarshall_int(s, offset+3*sizeof(int), &(globals.map.flag_green->p.y));
-
-    int x,y;
-    //Red Flag
-    x = globals.map.flag_red->p.x;
-    y = globals.map.flag_red->p.y;
-    globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_red;
-    //Green Flag
-    x = globals.map.flag_green->p.x;
-    y = globals.map.flag_green->p.y;
-    globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_green;
-  
     // update me
     if (globals.players[i].id == me->id) {
       pthread_mutex_lock(&me->lock);
@@ -412,7 +396,23 @@ update_event_handler(Proto_Session *s)
       pthread_mutex_unlock(&me->lock);
     }
   }
-  
+
+  //Unmarshall Flags
+  proto_session_body_unmarshall_int(s, offset, &(globals.map.flag_red->p.x));
+  proto_session_body_unmarshall_int(s, offset+sizeof(int), &(globals.map.flag_red->p.y));
+  proto_session_body_unmarshall_int(s, offset+2*sizeof(int), &(globals.map.flag_green->p.x));
+  proto_session_body_unmarshall_int(s, offset+3*sizeof(int), &(globals.map.flag_green->p.y));
+
+  int x,y;
+  //Red Flag
+  x = globals.map.flag_red->p.x;
+  y = globals.map.flag_red->p.y;
+  globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_red;
+  //Green Flag
+  x = globals.map.flag_green->p.x;
+  y = globals.map.flag_green->p.y;
+  globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_green;
+ 
   ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
 
   fprintf(stderr, "%s: called", __func__);
