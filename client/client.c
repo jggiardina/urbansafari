@@ -52,6 +52,7 @@ struct Globals {
   int isLoaded;
   Map map;
   char mapbuf[MAPHEIGHT*MAPWIDTH];
+  Player players[200];
 } globals;
 
 typedef struct ClientState  {
@@ -214,41 +215,52 @@ convertMap(){
 static int
 update_event_handler(Proto_Session *s)
 {
+
   int numplayers, i, offset;
   Client *C = proto_session_get_data(s);
+  Player *me = (Player *)C->data;
+
   proto_session_body_unmarshall_bytes(s, 0, getMapSize(), getMapBufPointer());
   convertMap();
   offset = getMapSize();
   proto_session_body_unmarshall_int(s, offset, &numplayers);
   //fprintf(stderr, "num players = %d\n", numplayers);
-  Player players[numplayers];
-  bzero(players, numplayers*sizeof(Player));
+  bzero(globals.players, numplayers*sizeof(Player));
   offset+= sizeof(int);
   for (i = 0; i < numplayers; i++){
-		pthread_mutex_init(&(players[i].lock), NULL);
-  //pthread_mutex_lock(&cur_id_mutex);
-                proto_session_body_unmarshall_int(s, offset, &(players[i].id));
-                 fprintf(stderr, "player id = %d\n", players[i].id);
-                proto_session_body_unmarshall_int(s, offset+sizeof(int), &(players[i].pos.x));
-//fprintf(stderr, "x = %d\n", players[i].pos.x);
-                proto_session_body_unmarshall_int(s, offset + 2*sizeof(int), &(players[i].pos.y));
-//fprintf(stderr, "x = %d\n", players[i].pos.y);
-                proto_session_body_unmarshall_int(s, offset + 3*sizeof(int), &(players[i].team));
-//fprintf(stderr, "team = %d\n", players[i].team);
-                proto_session_body_unmarshall_int(s, offset + 4*sizeof(int), &(players[i].hammer));
-	//fprintf(stderr, "hammer = %d\n", players[i].hammer);
-                proto_session_body_unmarshall_int(s, offset + 5*sizeof(int), &(players[i].flag));
-	//fprintf(stderr, "flag = %d\n", players[i].flag);
-                offset+= 6*sizeof(int);
-		globals.map.cells[players[i].pos.x + (players[i].pos.y*MAPHEIGHT)].player = &(players[i]);
-//pthread_mutex_unlock(&cur_id_mutex);
-		//STATE
-  		ui_uip_init(ui, &players[i].uip, players[i].id, players[i].team);      
+    pthread_mutex_init(&(globals.players[i].lock), NULL);
+    //pthread_mutex_lock(&cur_id_mutex);
+    proto_session_body_unmarshall_int(s, offset, &(globals.players[i].id));
+    proto_session_body_unmarshall_int(s, offset+sizeof(int), &(globals.players[i].pos.x));
+    //fprintf(stderr, "x = %d\n", players[i].pos.x);
+    proto_session_body_unmarshall_int(s, offset + 2*sizeof(int), &(globals.players[i].pos.y));
+    //fprintf(stderr, "x = %d\n", players[i].pos.y);
+    proto_session_body_unmarshall_int(s, offset + 3*sizeof(int), &(globals.players[i].team));
+    //fprintf(stderr, "team = %d\n", players[i].team);
+    proto_session_body_unmarshall_int(s, offset + 4*sizeof(int), &(globals.players[i].hammer));
+    //fprintf(stderr, "hammer = %d\n", players[i].hammer);
+    proto_session_body_unmarshall_int(s, offset + 5*sizeof(int), &(globals.players[i].flag));
+    //fprintf(stderr, "flag = %d\n", players[i].flag);
+    offset+= 6*sizeof(int);
+    globals.map.cells[globals.players[i].pos.x + (globals.players[i].pos.y*MAPHEIGHT)].player = &(globals.players[i]);
+    //pthread_mutex_unlock(&cur_id_mutex);
+    //STATE
+    ui_uip_init(ui, &globals.players[i].uip, globals.players[i].id, globals.players[i].team);      
+    
+    // update me
+    if (globals.players[i].id == me->id) {
+      pthread_mutex_lock(&me->lock);
+        me->pos.x = globals.players[i].pos.x;
+        me->pos.y = globals.players[i].pos.y;
+        me->team = globals.players[i].team;
+        me->flag = globals.players[i].flag;
+        me->hammer = globals.players[i].hammer;
+        //ui_center_cam(ui, &me->pos);
+      pthread_mutex_unlock(&me->lock);
+    }
   }
-
   
-  
-  ui_paintmap(ui, &globals.map); //TODO:FIX this is okay for now, but if we do actual event updates, we need to paint here, because the ui main loop will already be running. maybe we can check to see if the main has started, print, if not, dont print
+  ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
 
   fprintf(stderr, "%s: called", __func__);
   return 1;
@@ -343,6 +355,9 @@ main(int argc, char **argv)
     globals.connected = 1;
     fprintf(stdout, "Connected to <%s:%d>\n", globals.host, globals.port); 
   }
+  // center the camera
+  Player *p = (Player *)c.data;
+  ui_center_cam(ui, &p->pos);
   // END CONNECT
 
   pthread_t tid;
@@ -363,16 +378,17 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
   SDLMod mod = e->keysym.mod;
 
   Client *C = (Client *)client;
-
+  Player *p = (Player *)C->data;
   if (e->type == SDL_KEYDOWN) {
     if (sym == SDLK_LEFT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move left\n", __func__);
       Tuple tuple = {-1, 0};
       proto_client_move(C->ph, &tuple); // left
-      Player *p = (Player *)C->data; 
+      //Player *p = (Player *)C->data; 
       pthread_mutex_lock(&p->lock); 
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
+        ui_center_cam(ui, &p->pos);
       pthread_mutex_unlock(&p->lock);
       return 2;
     }
@@ -380,10 +396,11 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       fprintf(stderr, "%s: move right\n", __func__);
       Tuple tuple = {1, 0};
       proto_client_move(C->ph, &tuple); // right
-      Player *p = (Player *)C->data;
+      //Player *p = (Player *)C->data;
       pthread_mutex_lock(&p->lock);
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
+        ui_center_cam(ui, &p->pos);
       pthread_mutex_unlock(&p->lock);
       return 2;
     }
@@ -391,10 +408,11 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       fprintf(stderr, "%s: move up\n", __func__);
       Tuple tuple = {0, -1}; //going up means going to a lower number cell
       proto_client_move(C->ph, &tuple); // up
-      Player *p = (Player *)C->data;
+      //Player *p = (Player *)C->data;
       pthread_mutex_lock(&p->lock);
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
+        ui_center_cam(ui, &p->pos);
       pthread_mutex_unlock(&p->lock);
       return 2;
     }
@@ -402,16 +420,27 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       fprintf(stderr, "%s: move down\n", __func__);
       Tuple tuple = {0, 1};
       proto_client_move(C->ph, &tuple); // down
-      Player *p = (Player *)C->data;
+      //Player *p = (Player *)C->data;
       pthread_mutex_lock(&p->lock);
         p->pos.x = tuple.x;
         p->pos.y = tuple.y;
+        ui_center_cam(ui, &p->pos);
       pthread_mutex_unlock(&p->lock);
       return 2;
     }
     if (sym == SDLK_r && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
       return 2;//ui_pickup_red(ui);
+    }
+    if (sym == SDLK_h && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: pick up hammer\n", __func__);
+      int hammer = 0;
+      proto_client_pick_up_hammer(C->ph, &hammer);
+      //Player *p = (Player *)C->data;
+      pthread_mutex_lock(&p->lock);
+        p->hammer = hammer;
+      pthread_mutex_unlock(&p->lock);
+      return 2;
     }
     if (sym == SDLK_g && mod == KMOD_NONE)  {   
       fprintf(stderr, "%s: dummy pickup green flag\n", __func__);
@@ -434,8 +463,18 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       return ui_dummy_inc_id(ui);
     }*/
     if (sym == SDLK_q) return -1;
-    if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
-    if (sym == SDLK_z && mod & KMOD_SHIFT ) return ui_zoom(ui,-1);
+    if (sym == SDLK_z && mod == KMOD_NONE) {
+      if (ui_zoom(ui, 1)==2) {
+        ui_center_cam(ui, &p->pos);
+        return 2;
+      }
+    }
+    if (sym == SDLK_z && mod & KMOD_SHIFT) {
+      if (ui_zoom(ui, -1)==2) {
+        ui_center_cam(ui, &p->pos);
+        return 2;
+      }
+    }
     if (sym == SDLK_LEFT && mod & KMOD_SHIFT) return ui_pan(ui,-1,0);
     if (sym == SDLK_RIGHT && mod & KMOD_SHIFT) return ui_pan(ui,1,0);
     if (sym == SDLK_UP && mod & KMOD_SHIFT) return ui_pan(ui, 0,-1);

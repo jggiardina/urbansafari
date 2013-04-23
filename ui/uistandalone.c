@@ -38,10 +38,14 @@ static void player_paint(UI *ui, SDL_Rect *t, Player *p);
 #define SPRITE_H 32
 #define SPRITE_W 32
 
-int CELL_H;
-int CELL_W;
-int CAMERA_X;
-int CAMERA_Y;
+struct UI_Globals {
+  int SCREEN_H;
+  int SCREEN_W;
+  int CELL_H;
+  int CELL_W;
+  int CAMERA_X;
+  int CAMERA_Y;
+} ui_globals;
 
 #define UI_FLOOR_BMP "../ui/floor.bmp"
 #define UI_REDWALL_BMP "../ui/redwall.bmp"
@@ -299,6 +303,32 @@ load_sprites(UI *ui)
   return 1;
 }
 
+uint32_t si_to_pix_color_dictionary(UI *ui, SPRITE_INDEX si)
+{
+  switch (si)
+  {
+    case 0: // TEAMA_S
+      return ui->player_teama_c;
+    case 1: // TEAMB_S
+      return ui->player_teamb_c;
+    case 2: // FLOOR_S
+      return ui->isle_c;
+    case 3: // REDWALL_S
+      return ui->wall_teama_c;
+    case 4: // GREENWALL_S
+      return ui->wall_teamb_c;
+    case 5: // LOGO_S
+      return 0; // shouldn't happen
+    case 6: // JACKHAMMER_S
+      return ui->jackhammer_c;
+    case 7: // REDFLAG_S
+      return ui->flag_teama_c;
+    case 8: // GREENFLAG_S
+      return ui->flag_teamb_c;
+    default:
+      return 0; // shouldn't happen
+  }
+}
 
 inline static void
 draw_cell(UI *ui, SPRITE_INDEX si, SDL_Rect *t, SDL_Surface *s)
@@ -313,13 +343,14 @@ draw_cell(UI *ui, SPRITE_INDEX si, SDL_Rect *t, SDL_Surface *s)
   else {// draw just pixels
     int i=0;
     int j=0;
+    uint32_t pix = si_to_pix_color_dictionary(ui, si);
+    SDL_LockSurface(s);
     for (i = t->x; i < t->x+t->w; i++) {
       for (j = t->y; j < t->y+t->h; j++) {
-        SDL_LockSurface(ts);
-        ui_putpixel(ts, t->x, t->y, ui->green_c); 
-        SDL_UnlockSurface(ts);
+        ui_putpixel(s, i, j, pix); 
       }
     }
+    SDL_UnlockSurface(s);
   }
 }
 
@@ -327,38 +358,47 @@ sval
 ui_paintmap(UI *ui, Map *map) 
 {
   SDL_Rect t;
-  int i = CAMERA_X;
-  int j = CAMERA_Y;
+  int i = ui_globals.CAMERA_X;
+  int j = ui_globals.CAMERA_Y;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
     for (t.x=0; t.x<ui->screen->w; t.x+=t.w) {
-      Cell cell = map->cells[i + (j*map->w)];
-      if (cell.t == WALL && cell.c == RED) {
-        draw_cell(ui, REDWALL_S, &t, ui->screen);
-      } else if (cell.t == WALL && cell.c == GREEN) {
-        draw_cell(ui, GREENWALL_S, &t, ui->screen);
+      if (i >= MAPWIDTH || j >= MAPHEIGHT) {
+        draw_cell(ui, FLOOR_S, &t, ui->screen); // paint floor cells outside of the map on the screen
       } else {
-        draw_cell(ui, FLOOR_S, &t, ui->screen);
-      }
-      // should we also draw a player?
-      if (cell.player != NULL) {// for right now, separate for server
-        player_paint(ui, &t, cell.player);//TODO:FIX on the client, we can't use the player pointer so how do we know who to draw?
-      }
-      if(cell.t == FLOOR && cell.hammer){
-        draw_cell(ui, JACKHAMMER_S, &t, ui->screen);
-      }
-      if(cell.flag){
-        if(cell.flag->c == RED){
-          draw_cell(ui, REDFLAG_S, &t, ui->screen);
-	}else{
-          draw_cell(ui, GREENFLAG_S, &t, ui->screen);
+        Cell cell = map->cells[i + (j*map->w)];
+        if (cell.t == WALL && cell.c == RED) {
+          draw_cell(ui, REDWALL_S, &t, ui->screen);
+        } else if (cell.t == WALL && cell.c == GREEN) {
+          draw_cell(ui, GREENWALL_S, &t, ui->screen);
+        } else {
+          draw_cell(ui, FLOOR_S, &t, ui->screen);
+        }
+        // should we also draw a player? - yes
+        if (cell.player != NULL) {// for right now, separate for server
+          if (t.h == SPRITE_H && t.w == SPRITE_W)
+            player_paint(ui, &t, cell.player);//TODO:FIX on the client, we can't use the player pointer so how do we know who to draw?
+          else {
+            SPRITE_INDEX si = cell.player->team == 0 ? TEAMA_S : TEAMB_S;
+            draw_cell(ui, si, &t, ui->screen);
+          }
+        }
+        if(cell.t == FLOOR && cell.hammer){
+          draw_cell(ui, JACKHAMMER_S, &t, ui->screen);
+        }
+        if(cell.flag){
+          if(cell.flag->c == RED){
+            draw_cell(ui, REDFLAG_S, &t, ui->screen);
+          }else{
+            draw_cell(ui, GREENFLAG_S, &t, ui->screen);
+          }
         }
       }
       i++;
       //draw_cell(ui, FLOOR_S, &t, ui->screen);
     }
-    j++;i=CAMERA_X;
+    j++;i=ui_globals.CAMERA_X;
   }
 
   //dummyPlayer_paint(ui, &t);
@@ -534,7 +574,7 @@ ui_client_process(UI *ui, Map *map, void *C)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { /*ui_paintmap(ui, map);*/ } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
+    if (rc==2) { ui_paintmap(ui, map); } // TODO:FIX Client should only maybe paint player here, not the whole map since it won't have player data
     if (rc<0) break;
   }
   return rc;
@@ -546,19 +586,20 @@ ui_zoom(UI *ui, sval fac)
   if (fac == 0) {
     return 1;
   }
-  else if (fac > 0 && CELL_H > 1) {
+  else if (fac > 0 && ui_globals.CELL_H < 32) {
     // zoom in
-    CELL_H = CELL_H/2;
-    CELL_W = CELL_W/2;
-    ui->tile_h = CELL_H;
-    ui->tile_w = CELL_W;
-  } else if (fac < 0 && CELL_H < 32) {
+    ui_globals.CELL_H = ui_globals.CELL_H*2;
+    ui_globals.CELL_W = ui_globals.CELL_W*2;
+    ui->tile_h = ui_globals.CELL_H;
+    ui->tile_w = ui_globals.CELL_W;
+  } else if (fac < 0 && ui_globals.CELL_H > 1) {
     // zoom out
-    CELL_H = CELL_H*2;
-    CELL_W = CELL_W*2;
-    ui->tile_h = CELL_H;
-    ui->tile_w = CELL_W;
-  }
+    ui_globals.CELL_H = ui_globals.CELL_H/2;
+    ui_globals.CELL_W = ui_globals.CELL_W/2;
+    ui->tile_h = ui_globals.CELL_H;
+    ui->tile_w = ui_globals.CELL_W;
+  } else // do nothing
+    return 1;
   fprintf(stderr, "%s:\n", __func__);
   return 2;
 }
@@ -566,14 +607,13 @@ ui_zoom(UI *ui, sval fac)
 extern sval
 ui_pan(UI *ui, sval xdir, sval ydir)
 {
-  // TODO:FIX magic number 10s because they are 320/CELL_(H/W) but 320 is also a magic number... BE CAREFUL ABOUT THIS CAUSE IT ONLY WORKS WHEN ZOOMED AT SPRITE LEVEL
-  if (CAMERA_X + xdir < 0 || CAMERA_X + xdir + (10) > MAPWIDTH)
+  if (ui_globals.CAMERA_X + xdir < 0 || (ui_globals.CAMERA_X + xdir + (ui_globals.SCREEN_W/ui_globals.CELL_W) > MAPWIDTH && xdir == 1))
     return 1;
-  if (CAMERA_Y + ydir < 0 || CAMERA_Y + ydir + (10) > MAPHEIGHT)
+  if (ui_globals.CAMERA_Y + ydir < 0 || (ui_globals.CAMERA_Y + ydir + (ui_globals.SCREEN_H/ui_globals.CELL_H) > MAPHEIGHT && ydir == 1))
     return 1;
   
-  CAMERA_X += xdir;
-  CAMERA_Y += ydir;
+  ui_globals.CAMERA_X += xdir;
+  ui_globals.CAMERA_Y += ydir;
   fprintf(stderr, "%s:\n", __func__);
   return 2;
 }
@@ -614,8 +654,8 @@ ui_main_loop(UI *ui, void *m)
 {
   Map *map = (Map *)(m);
 
-  uval h = 320;
-  uval w = 320;
+  uval h = ui_globals.SCREEN_H;
+  uval w = ui_globals.SCREEN_W;
 
   sval rc;
   
@@ -670,14 +710,40 @@ ui_init(UI **ui)
 
   bzero(*ui, sizeof(UI));
   
-  CELL_H = SPRITE_H;
-  CELL_W = SPRITE_W;
-  CAMERA_X = 0;
-  CAMERA_Y = 0;
+  bzero(&ui_globals, sizeof(ui_globals));
 
-  (*ui)->tile_h = CELL_H;
-  (*ui)->tile_w = CELL_W;
+  ui_globals.SCREEN_H = 320;
+  ui_globals.SCREEN_W = 320;
+  ui_globals.CELL_H = SPRITE_H;
+  ui_globals.CELL_W = SPRITE_W;
+  ui_globals.CAMERA_X = 0;
+  ui_globals.CAMERA_Y = 0;
 
+  (*ui)->tile_h = ui_globals.CELL_H;
+  (*ui)->tile_w = ui_globals.CELL_W;
+
+}
+
+extern int
+ui_center_cam(UI *ui, Pos *p)
+{
+  int new_cam_x = p->x - ((ui_globals.SCREEN_W/ui_globals.CELL_W)/2);
+  if (new_cam_x <= 0) {
+    ui_globals.CAMERA_X = 0;
+  } else if (new_cam_x + (ui_globals.SCREEN_W/ui_globals.CELL_W) > MAPWIDTH && ui_globals.CAMERA_X < new_cam_x) {
+    ui_globals.CAMERA_X = ui_globals.CAMERA_X; // do nothing
+  } else {
+    ui_globals.CAMERA_X = new_cam_x;
+  }
+  int new_cam_y = p->y - ((ui_globals.SCREEN_H/ui_globals.CELL_H)/2);
+  if (new_cam_y <= 0) {
+    ui_globals.CAMERA_Y = 0;
+  } else if (new_cam_y + (ui_globals.SCREEN_H/ui_globals.CELL_H) > MAPHEIGHT && ui_globals.CAMERA_Y < new_cam_y) {
+    ui_globals.CAMERA_Y = ui_globals.CAMERA_Y; // do nothing
+  } else {
+    ui_globals.CAMERA_Y = new_cam_y;
+  }
+  return 2;
 }
 
 int

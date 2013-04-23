@@ -79,7 +79,16 @@ int load_map(char* map_file, Map *map){
   return rc;
 }
 
-
+int take_hammer(Map *map, Player *player){
+	if (map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer != NULL && player->hammer == 0){
+fprintf( stderr, "Cell set\n" );	
+		map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer == NULL;
+		player->hammer = 1;
+		return 1;
+	}else{
+		return 0;
+	}
+}
 int valid_move(Map *map, Player *player, int x, int y){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
