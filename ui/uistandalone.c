@@ -37,6 +37,8 @@ static void player_paint(UI *ui, SDL_Rect *t, Player *p);
 
 #define SPRITE_H 32
 #define SPRITE_W 32
+#define SCREENHEIGHT 320
+#define SCREENWIDTH 320
 
 struct UI_Globals {
   int SCREEN_H;
@@ -712,8 +714,8 @@ ui_init(UI **ui)
   
   bzero(&ui_globals, sizeof(ui_globals));
 
-  ui_globals.SCREEN_H = 320;
-  ui_globals.SCREEN_W = 320;
+  ui_globals.SCREEN_H = SCREENHEIGHT;
+  ui_globals.SCREEN_W = SCREENWIDTH;
   ui_globals.CELL_H = SPRITE_H;
   ui_globals.CELL_W = SPRITE_W;
   ui_globals.CAMERA_X = 0;

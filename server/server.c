@@ -422,6 +422,12 @@ main(int argc, char **argv)
   tty_init(STDIN_FILENO);
 
   ui_init(&(ui));
+  ui_globals.CELL_W=2;
+  ui_globals.CELL_H=2;
+  ui->tile_h = ui_globals.CELL_H;
+  ui->tile_w = ui_globals.CELL_W;
+  Pos center = {MAPWIDTH/2,MAPHEIGHT/2};
+  ui_center_cam(ui, &center);
 
   pthread_create(&tid, NULL, shell, NULL);
   proto_debug_on();
@@ -521,8 +527,18 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *nothing)
       return ui_dummy_inc_id(ui);
     }*/
     if (sym == SDLK_q) return -1;
-    if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
-    if (sym == SDLK_z && mod & KMOD_SHIFT ) return ui_zoom(ui,-1);
+    if (sym == SDLK_z && mod == KMOD_NONE) {
+      int rc = ui_zoom(ui, 1);
+      Pos center = {MAPWIDTH/2, MAPHEIGHT/2};
+      ui_center_cam(ui, &center);
+      return rc;
+    }
+    if (sym == SDLK_z && mod & KMOD_SHIFT) {
+      int rc = ui_zoom(ui, -1);
+      Pos center = {MAPWIDTH/2, MAPHEIGHT/2};
+      ui_center_cam(ui, &center);
+      return rc;
+    }
     if (sym == SDLK_LEFT && mod == KMOD_NONE) return ui_pan(ui,-1,0);
     if (sym == SDLK_RIGHT && mod == KMOD_NONE) return ui_pan(ui,1,0);
     if (sym == SDLK_UP && mod == KMOD_NONE) return ui_pan(ui, 0,-1);
