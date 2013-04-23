@@ -9,9 +9,19 @@
 //#include "misc.h"
 #include "maze.h"
 
+Hammer* init_hammer(){
+  Hammer *hammer = (Hammer *)malloc(sizeof(Hammer));
+  bzero(hammer, sizeof(Hammer));
+  hammer->p.x = 0;
+  hammer->p.y = 0;
+  hammer->charges = 1;
+
+  return hammer;
+}
+
 int load_map(char* map_file, Map *map){
-  int rc=1;
-  int i, j;
+	int rc=1;
+int i, j;
   map->num_floor_cells = 0;
   map->num_wall_cells = 0;
   for (j = 0; j < MAPHEIGHT; j++){
@@ -73,16 +83,49 @@ int load_map(char* map_file, Map *map){
 			}*/
                 }
   }
+  check_breakable(map);
   map->w = MAPWIDTH;
   map->h = MAPHEIGHT;
   fprintf(stderr, "Read in %d rows and %d columns\n", j, i);
   return rc;
 }
+int check_breakable(Map *map){
+  int i, j;
+  for (j = 0; j < MAPHEIGHT; j++){
+	map->cells[j*MAPHEIGHT].breakable = 1;
+ 	map->cells[(MAPWIDTH-1)+j*MAPHEIGHT].breakable = 1;
+  }
+  j = 0;
+  for (i = 1; i < MAPWIDTH-1; i++){
+	map->cells[i].breakable = 1;
+        map->cells[i+(MAPHEIGHT*(MAPHEIGHT-1))].breakable = 1;
+  }
+  i = 0;
+  
+  int m, n;
+  for (j = 1; j < MAPHEIGHT-1; j++){
+        for (i = 1; i < MAPWIDTH-1; i++){
+		if (map->cells[i+(j*MAPHEIGHT)].t == WALL){
+			map->cells[i+(j*MAPHEIGHT)].breakable = 0;
+        	     for(m = j-1; m <= j+1; m++){
+			for (n = i-1; n <= i+1; n++){
+			  if (map->cells[n+(m*MAPHEIGHT)].t == HOME || map->cells[n+(m*MAPHEIGHT)].t == JAIL){
+				map->cells[i+(j*MAPHEIGHT)].breakable = 1;
+				m = j+2;
+				n = i+2;
+			  }
+			}
+		     }
+		}
+	}
+  }
+  return 0;
+}
 
 int take_hammer(Map *map, Player *player){
 	if (map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer != NULL && player->hammer == 0){
 fprintf( stderr, "Cell set\n" );	
-		map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer == NULL;
+		map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer = NULL;
 		player->hammer = 1;
 		return 1;
 	}else{
@@ -97,16 +140,13 @@ int valid_move(Map *map, Player *player, int x, int y){
 	c = map->cells[(x + player->pos.x)+((player->pos.y + y)*MAPHEIGHT)];
 	if (c.t == WALL){
 
-		/*if (player->hammer){
-			map->cells[x+(Y*MAPHEIGHT)].t = FLOOR;//convert the destination to floor
-			player->pos.x = x;
-			player->pos.y = y;
+		if (player->hammer && c.breakable == 0){
+			map->cells[(x + player->pos.x)+((player->pos.y + y)*MAPHEIGHT)].t = FLOOR;//convert the destination to floor
 			//need to decrease hammer count, not sure how to do so yet
 			//trigger break wall event
 			return 1;
 		
-		return -1;
-		}else{*/
+		}
 		//INVALID MOVE
 		return 0;
 	}/*else{
@@ -164,7 +204,13 @@ char* dump_map(Map *map){
   for (j = 0; j < MAPHEIGHT; j++){
         for (i = 0; i < MAPWIDTH; i++){
                 c = map->cells[i+(j*MAPHEIGHT)];
-			if (c.t == FLOOR){
+			if(c.hammer != NULL){
+                          if(i < 100 && j < 200){
+                            map->data_ascii[i+(j*MAPHEIGHT)] = 's';
+                          }else{
+                            map->data_ascii[i+(j*MAPHEIGHT)] = 'S';
+                          }
+                        }else if (c.t == FLOOR){
 				map->data_ascii[i+(j*MAPHEIGHT)] = ' ';
 			}else if (c.t == WALL){
 				map->data_ascii[i+(j*MAPHEIGHT)] = '#';

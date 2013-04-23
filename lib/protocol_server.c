@@ -565,6 +565,8 @@ static int proto_server_mt_take_hammer_handler(Proto_Session *s){
   if(ret >= 0){
     proto_session_hdr_marshall(s, &h);
     proto_session_body_marshall_int(s, ret);
+     fprintf(stderr, "Sending %d as hammer status", ret);
+	
     rc=proto_session_send_msg(s,1);
   }
   proto_server_mt_update_map_handler(s);

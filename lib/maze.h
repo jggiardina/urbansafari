@@ -51,6 +51,7 @@ typedef struct
   Hammer *hammer; //Dont know if we want these
   Flag *flag;  //Dont know if we want these 
   Cell_Type t;
+  int breakable;
   Player *player; // Pointer to single player that may occupy this cell
 } __attribute__((__packed__)) Cell;
 
