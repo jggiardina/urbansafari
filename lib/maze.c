@@ -81,7 +81,7 @@ int load_map(char* map_file, Map *map){
 
 int take_hammer(Map *map, Player *player){
 	if (map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer != NULL && player->hammer == 0){
-fprintf( stderr, "Cell set\n" );	
+fprintf( stderr, "Hammer taken\n");	
 		map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer == NULL;
 		player->hammer = 1;
 		return 1;
