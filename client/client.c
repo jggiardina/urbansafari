@@ -360,6 +360,10 @@ main(int argc, char **argv)
   ui_center_cam(ui, &p->pos);
   // END CONNECT
 
+  // Initalize the hammers
+  globals.map.hammer_1 = (Hammer*)init_hammer();
+  globals.map.hammer_2 = (Hammer*)init_hammer();
+
   pthread_t tid;
   pthread_create(&tid, NULL, shell, &c);
 

@@ -104,16 +104,6 @@ void reset_hammer(int team){
   //TODO: After reset we must paint the server map, and also send an event to the clients!!! -RC
 }
 
-Hammer* server_init_hammer(){
-  Hammer *hammer = (Hammer *)malloc(sizeof(Hammer));
-  bzero(hammer, sizeof(Hammer));
-  hammer->p.x = 0;
-  hammer->p.y = 0;
-  hammer->charges = 1; 
-  
-  return hammer;
-}
-
 Pos* get_random_team_flag_position(Color team_color){
   int x = rand() % 200;
   int y = rand() % 200;
@@ -301,7 +291,7 @@ doLoad(){
 		n++;
 	}
 	fclose(myfile);
-         srand(time(NULL)); //seed random
+        srand(time(NULL)); //seed random
 	//fprintf( stderr, "Read %d lines\n", n);
 	load_map(globals.mapbuf, &globals.map);
 	globals.isLoaded = 1;
@@ -450,8 +440,8 @@ main(int argc, char **argv)
         fclose(myfile);
         //fprintf( stderr, "Read %d lines\n", n);
         //Initialize the flags and hammers
-	globals.map.hammer_1 = server_init_hammer();
-        globals.map.hammer_2 = server_init_hammer();
+	globals.map.hammer_1 = (Hammer*)init_hammer();
+        globals.map.hammer_2 = (Hammer*)init_hammer();
         load_map(globals.mapbuf, &globals.map);
         globals.map.flag_red = server_init_flag(RED);
         globals.map.flag_green = server_init_flag(GREEN);

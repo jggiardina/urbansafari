@@ -9,6 +9,16 @@
 //#include "misc.h"
 #include "maze.h"
 
+Hammer* init_hammer(){
+  Hammer *hammer = (Hammer *)malloc(sizeof(Hammer));
+  bzero(hammer, sizeof(Hammer));
+  hammer->p.x = 0;
+  hammer->p.y = 0;
+  hammer->charges = 1;
+
+  return hammer;
+}
+
 int load_map(char* map_file, Map *map){
   int rc=1;
   int i, j;
@@ -82,7 +92,7 @@ int load_map(char* map_file, Map *map){
 int take_hammer(Map *map, Player *player){
 	if (map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer != NULL && player->hammer == 0){
 fprintf( stderr, "Cell set\n" );	
-		map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer == NULL;
+		map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer = NULL;
 		player->hammer = 1;
 		return 1;
 	}else{
@@ -164,13 +174,13 @@ char* dump_map(Map *map){
   for (j = 0; j < MAPHEIGHT; j++){
         for (i = 0; i < MAPWIDTH; i++){
                 c = map->cells[i+(j*MAPHEIGHT)];
-			/*if(c.hammer != NULL){
-                          if(c.hammer->p.x < 100 && c.hammer->p.y < 200){
+			if(c.hammer != NULL){
+                          if(i < 100 && j < 200){
                             map->data_ascii[i+(j*MAPHEIGHT)] = 's';
                           }else{
                             map->data_ascii[i+(j*MAPHEIGHT)] = 'S';
                           }
-                        }else*/ if (c.t == FLOOR){
+                        }else if (c.t == FLOOR){
 				map->data_ascii[i+(j*MAPHEIGHT)] = ' ';
 			}else if (c.t == WALL){
 				map->data_ascii[i+(j*MAPHEIGHT)] = '#';
