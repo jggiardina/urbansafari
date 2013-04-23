@@ -363,6 +363,28 @@ do_pick_up_hammer_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *hammer)
   return rc;
 }
 
+static int
+do_pick_up_flag_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *flag)
+{
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+
+  s = proto_client_rpc_session(c); //ADD CODE: set the Proto_Session, rpc_session is only Proto_Session, so we need it's address here. -JG
+  // marshall
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, flag);
+
+  } else {
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
+}
 
 /*
 static int
@@ -484,7 +506,11 @@ proto_client_pick_up_hammer(Proto_Client_Handle ch, int *hammer)
 {
   return do_pick_up_hammer_rpc(ch, PROTO_MT_REQ_BASE_TAKE_HAMMER, hammer);
 }
-
+extern int
+proto_client_pick_up_flag(Proto_Client_Handle ch, int *flag)
+{
+  return do_pick_up_flag_rpc(ch, PROTO_MT_REQ_BASE_TAKE_FLAG, flag);
+}
 
 
 extern int 

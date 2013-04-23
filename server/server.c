@@ -236,6 +236,20 @@ int takeHammer(void *player){
   return rc;
 }
 
+int takeFlag(void *player){
+  int rc = 0;
+  Player *p = (Player *)player;
+
+  pthread_mutex_lock(&p->lock);
+   if(take_flag(&globals.map, p) == 1){
+    rc = 1;
+   }else{
+    rc = 0;
+   }
+  pthread_mutex_unlock(&p->lock);
+  ui_paintmap(ui, &globals.map);
+  return rc;
+}
 
 int
 doUpdateClients(void)

@@ -158,6 +158,16 @@ int do_move_down_rpc(UI *ui, Client *C)
   return rc;
 }
 
+int do_pickup_flag_rpc(UI *ui, Client *C)
+{
+  int flag = 0;
+  proto_client_pick_up_flag(C->ph, &flag);
+  Player *p = (Player *)C->data;
+  pthread_mutex_lock(&p->lock);
+    p->flag = flag;
+  pthread_mutex_unlock(&p->lock);
+}
+
 int do_pickup_hammer_rpc(UI *ui, Client *C)
 {
   int hammer = 0;
@@ -561,18 +571,17 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       do_move_down_rpc(ui, C);
       return 2;
     }
-    if (sym == SDLK_r && mod == KMOD_NONE)  {  
-      fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
-      return 2;//ui_pickup_red(ui);
+    if (sym == SDLK_f && mod == KMOD_NONE)  {  
+      fprintf(stderr, "%s: pick up flag\n", __func__);
+      do_pickup_flag_rpc(ui, C);
+      return 2;
+      //fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
+      //return 2;//ui_pickup_red(ui);
     }
     if (sym == SDLK_h && mod == KMOD_NONE)  {
       fprintf(stderr, "%s: pick up hammer\n", __func__);
       do_pickup_hammer_rpc(ui, C);
       return 2;
-    }
-    if (sym == SDLK_g && mod == KMOD_NONE)  {   
-      fprintf(stderr, "%s: dummy pickup green flag\n", __func__);
-      return 2;//ui_pickup_green(ui);
     }
     if (sym == SDLK_j && mod == KMOD_NONE)  {   
       fprintf(stderr, "%s: dummy jail\n", __func__);
