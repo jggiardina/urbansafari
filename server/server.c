@@ -366,6 +366,14 @@ int marshall_players(Proto_Session *s){
   }
 
 }
+
+int marshall_flags(Proto_Session *s){
+  proto_session_body_marshall_int(s, globals.map.flag_red->p.x);
+  proto_session_body_marshall_int(s, globals.map.flag_red->p.y);
+  proto_session_body_marshall_int(s, globals.map.flag_green->p.x);
+  proto_session_body_marshall_int(s, globals.map.flag_green->p.y);
+}
+
 int
 getInput()
 {

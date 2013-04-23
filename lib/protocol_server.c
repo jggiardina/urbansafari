@@ -369,6 +369,7 @@ proto_server_mt_update_map_handler(Proto_Session *s){
   proto_session_body_marshall_bytes(se, getAsciiSize(), mapToASCII()); 
   //rc = proto_session_send_msg(s, 1); want to post event instead -JG
   marshall_players(se);
+  marshall_flags(se);
   proto_server_post_event();
 
   return rc;
