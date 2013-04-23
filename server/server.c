@@ -226,7 +226,7 @@ int takeHammer(void *player){
   Player *p = (Player *)player;
 
   pthread_mutex_lock(&p->lock);
-   if(take_hammer(&globals.map, p)){
+   if(take_hammer(&globals.map, p) == 1){
     rc = 1;
    }else{
 	rc = 0;
