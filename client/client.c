@@ -470,8 +470,11 @@ void
 initGlobals(int argc, char **argv)
 {
   if (argc==1) {
+    //TODO: JUST FOR TESTING
     usage(argv[0]);
     exit(-1);
+    //strncpy(globals.host, "curzon", STRLEN);
+    //globals.port = 50373;
   }
 
   if (argc==2) {
