@@ -165,6 +165,34 @@ int do_pickup_flag_rpc(UI *ui, Client *C)
   Player *p = (Player *)C->data;
   pthread_mutex_lock(&p->lock);
     p->flag = flag;
+    if(flag == 1){
+      globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = NULL;
+      globals.map.flag_red->p.x = -1;
+      globals.map.flag_red->p.y = -1;
+    }else if(flag == 2){
+      globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = NULL;
+      globals.map.flag_green->p.x = -1;
+      globals.map.flag_green->p.y = -1;
+    }
+  pthread_mutex_unlock(&p->lock);
+}
+
+int do_drop_flag_rpc(UI *ui, Client *C)
+{
+  int flag = 0;
+  proto_client_drop_flag(C->ph, &flag);
+  Player *p = (Player *)C->data;
+  pthread_mutex_lock(&p->lock);
+    p->flag = 0;
+    if(flag == 1){
+      globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = globals.map.flag_red;
+      globals.map.flag_red->p.x = p->pos.x;
+      globals.map.flag_red->p.y = p->pos.y;
+    }else if(flag == 2){
+      globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = globals.map.flag_green;
+      globals.map.flag_green->p.x = p->pos.x;
+      globals.map.flag_green->p.y = p->pos.y;
+    }
   pthread_mutex_unlock(&p->lock);
 }
 
@@ -391,6 +419,7 @@ update_event_handler(Proto_Session *s)
         me->pos.y = globals.players[i].pos.y;
         me->team = globals.players[i].team;
         me->flag = globals.players[i].flag;
+	me->state = globals.players[i].state;
         me->hammer = globals.players[i].hammer;
         //ui_center_cam(ui, &me->pos);
       pthread_mutex_unlock(&me->lock);
@@ -405,13 +434,17 @@ update_event_handler(Proto_Session *s)
 
   int x,y;
   //Red Flag
-  x = globals.map.flag_red->p.x;
-  y = globals.map.flag_red->p.y;
-  globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_red;
+  if(globals.map.flag_red->p.x != -1){
+    x = globals.map.flag_red->p.x;
+    y = globals.map.flag_red->p.y;
+    globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_red;
+  }
   //Green Flag
-  x = globals.map.flag_green->p.x;
-  y = globals.map.flag_green->p.y;
-  globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_green;
+  if(globals.map.flag_green->p.y != -1){
+    x = globals.map.flag_green->p.x;
+    y = globals.map.flag_green->p.y;
+    globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_green;
+  }
  
   ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
 
@@ -577,6 +610,13 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
     if (sym == SDLK_f && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: pick up flag\n", __func__);
       do_pickup_flag_rpc(ui, C);
+      return 2;
+      //fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
+      //return 2;//ui_pickup_red(ui);
+    }
+    if (sym == SDLK_g && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: drop flag\n", __func__);
+      do_drop_flag_rpc(ui, C);
       return 2;
       //fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
       //return 2;//ui_pickup_red(ui);
