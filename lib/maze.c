@@ -155,6 +155,25 @@ int take_flag(Map *map, Player *player){
     return 0;
   }
 }
+void find_free_jail(Color team_color, Cell_Type cell_type, Pos *p, Map *map){
+  int j, i;
+  Cell c;
+
+  for (j = 0; j < MAPHEIGHT; j++){
+    for (i = 0; i < MAPWIDTH; i++){
+      c = map->cells[i+(j*MAPHEIGHT)];
+
+      if(c.t == cell_type && c.c == team_color){ 
+        if(!c.player && !c.hammer && !c.flag){
+          p->x = c.p.x;
+          p->y = c.p.y;
+          i = MAPWIDTH;
+          j = MAPHEIGHT;
+        }
+      }
+    }
+  }
+}
 
 int drop_flag(Map *map, Player *player){
   int x,y;
@@ -199,10 +218,20 @@ int valid_move(Map *map, Player *player, int x, int y){
 		//INVALID MOVE
 		return 0;
 	}else if (c.player != NULL){
-		fprintf(stderr, "There's a player\n");
+		if (c.player->team_color != player->team_color){
+			if (player->team_color == c.c){
+				find_free_jail(c.c, JAIL, &c.player->pos, map);
+				map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)].player = c.player;
+				c.player == NULL;
+				return 1;
+			}else{
+				find_free_jail(c.c, JAIL, &player->pos, map);
+                                map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
+				return 1;
+			}
+		}
 		return 0;
 	}else{
-		fprintf(stderr, "No player\n");
 		return 1;
 	}
 	/*else{
