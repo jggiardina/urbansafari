@@ -137,15 +137,19 @@ int take_flag(Map *map, Player *player){
   int x,y;
   x = player->pos.x;
   y = player->pos.y;
-  Flag *f = map->cells[x+(y*MAPHEIGHT)].flag; 
-  if (f != NULL && player->flag < 1){
+  if (map->cells[x+(y*MAPHEIGHT)].flag != NULL && player->flag < 1){
     fprintf( stderr, "Cell set\n" );
-    if(f->c == RED){
+    if(map->cells[x+(y*MAPHEIGHT)].flag->c == RED){
       player->flag = 1;
-    }else if(f->c == GREEN){
+      map->flag_red->p.x = -1;
+      map->flag_red->p.y = -1;
+      map->cells[x+(y*MAPHEIGHT)].flag = NULL;
+    }else if(map->cells[x+(y*MAPHEIGHT)].flag->c == GREEN){
       player->flag = 2;
+      map->flag_green->p.x = -1;
+      map->flag_green->p.y = -1;
+      map->cells[x+(y*MAPHEIGHT)].flag = NULL;
     }
-    f = NULL;
     return 1;
   }else{
     return 0;

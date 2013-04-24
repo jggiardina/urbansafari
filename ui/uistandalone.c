@@ -449,7 +449,7 @@ player_paint(UI *ui, SDL_Rect *t, Player *p)
   pthread_mutex_lock(&(p->lock));
     //t->y = p->pos.y * t->h; t->x = p->pos.x * t->w;//NOTE:We assume all players are drawn in the cell that they come from, so t->x,t->y is already correct
     p->uip->clip.x = p->uip->base_clip_x +
-      pxSpriteOffSet(p->team, p->state);
+      pxSpriteOffSet(p->team, p->flag);
     SDL_BlitSurface(p->uip->img, &(p->uip->clip), ui->screen, t);
   pthread_mutex_unlock(&(p->lock));
 }
