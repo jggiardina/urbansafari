@@ -156,6 +156,31 @@ int take_flag(Map *map, Player *player){
   }
 }
 
+int drop_flag(Map *map, Player *player){
+  int x,y;
+  x = player->pos.x;
+  y = player->pos.y;
+  int flag_type = player->flag;
+
+  if(flag_type != 0){
+    fprintf( stderr, "Drop Flag\n" );
+    if(flag_type == 1){
+      player->flag = 0;
+      map->flag_red->p.x = x;
+      map->flag_red->p.y = y;
+      map->cells[x+(y*MAPHEIGHT)].flag = map->flag_red;
+    }else if(flag_type == 2){
+      player->flag = 0;
+      map->flag_green->p.x = x;
+      map->flag_green->p.y = y;
+      map->cells[x+(y*MAPHEIGHT)].flag = map->flag_green;
+    }
+    return flag_type;
+  }else{
+    return 0;
+  }
+}
+
 int valid_move(Map *map, Player *player, int x, int y){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;

@@ -251,6 +251,22 @@ int takeFlag(void *player){
   return rc;
 }
 
+int dropFlag(void *player){
+  int rc = 0;
+  Player *p = (Player *)player;
+
+  pthread_mutex_lock(&p->lock);
+  int flag_type = drop_flag(&globals.map, p);
+   if(flag_type > 0){
+    rc = flag_type;
+   }else{
+    rc = 0;
+   }
+  pthread_mutex_unlock(&p->lock);
+  ui_paintmap(ui, &globals.map);
+  return rc;
+}
+
 int
 doUpdateClients(void)
 {

@@ -165,7 +165,6 @@ int do_pickup_flag_rpc(UI *ui, Client *C)
   Player *p = (Player *)C->data;
   pthread_mutex_lock(&p->lock);
     p->flag = flag;
-    //Not sure if this is right need to test.
     if(flag == 1){
       globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = NULL;
       globals.map.flag_red->p.x = -1;
@@ -174,6 +173,25 @@ int do_pickup_flag_rpc(UI *ui, Client *C)
       globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = NULL;
       globals.map.flag_green->p.x = -1;
       globals.map.flag_green->p.y = -1;
+    }
+  pthread_mutex_unlock(&p->lock);
+}
+
+int do_drop_flag_rpc(UI *ui, Client *C)
+{
+  int flag = 0;
+  proto_client_drop_flag(C->ph, &flag);
+  Player *p = (Player *)C->data;
+  pthread_mutex_lock(&p->lock);
+    p->flag = 0;
+    if(flag == 1){
+      globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = globals.map.flag_red;
+      globals.map.flag_red->p.x = p->pos.x;
+      globals.map.flag_red->p.y = p->pos.y;
+    }else if(flag == 2){
+      globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = globals.map.flag_green;
+      globals.map.flag_green->p.x = p->pos.x;
+      globals.map.flag_green->p.y = p->pos.y;
     }
   pthread_mutex_unlock(&p->lock);
 }
@@ -592,6 +610,13 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
     if (sym == SDLK_f && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: pick up flag\n", __func__);
       do_pickup_flag_rpc(ui, C);
+      return 2;
+      //fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
+      //return 2;//ui_pickup_red(ui);
+    }
+    if (sym == SDLK_g && mod == KMOD_NONE)  {
+      fprintf(stderr, "%s: drop flag\n", __func__);
+      do_drop_flag_rpc(ui, C);
       return 2;
       //fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
       //return 2;//ui_pickup_red(ui);
