@@ -173,7 +173,14 @@ int valid_move(Map *map, Player *player, int x, int y){
 		}
 		//INVALID MOVE
 		return 0;
-	}/*else{
+	}else if (c.player != NULL){
+		fprintf(stderr, "There's a player\n");
+		return 0;
+	}else{
+		fprintf(stderr, "No player\n");
+		return 1;
+	}
+	/*else{
 	//check if collides with player
 	for (int i = 0; i < numplayers; i++){
 		p = players[i];

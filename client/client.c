@@ -572,22 +572,22 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
     if (sym == SDLK_LEFT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move left\n", __func__);
       do_move_left_rpc(ui, C);
-      return 2;
+      return 1;
     }
     if (sym == SDLK_RIGHT && mod == KMOD_NONE) {
       fprintf(stderr, "%s: move right\n", __func__);
       do_move_right_rpc(ui, C);
-      return 2;
+      return 1;
     }
     if (sym == SDLK_UP && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: move up\n", __func__);
       do_move_up_rpc(ui, C);
-      return 2;
+      return 1;
     }
     if (sym == SDLK_DOWN && mod == KMOD_NONE)  {
       fprintf(stderr, "%s: move down\n", __func__);
       do_move_down_rpc(ui, C);
-      return 2;
+      return 1;
     }
     if (sym == SDLK_f && mod == KMOD_NONE)  {  
       fprintf(stderr, "%s: pick up flag\n", __func__);
