@@ -36,6 +36,7 @@
 #define XSTR(s) STR(s)
 #define BUFLEN 16384
 #define STR(s) #s
+#define MAXPLAYERS 200
 
 struct LineBuffer {
   char data[BUFLEN];
@@ -52,13 +53,15 @@ struct Globals {
   int isLoaded;
   Map map;
   char mapbuf[MAPHEIGHT*MAPWIDTH];
-  Player players[200];
+  pthread_mutex_t MAPLOCK;
+  Player players[MAXPLAYERS];
 } globals;
 
 typedef struct ClientState  {
   void *data;
   Proto_Client_Handle ph;
 } Client;
+
 
 UI *ui;
 
@@ -111,7 +114,7 @@ int do_move_left_rpc(UI *ui, Client *C)
   pthread_mutex_lock(&p->lock);
     p->pos.x = tuple.x;
     p->pos.y = tuple.y;
-    ui_center_cam(ui, &p->pos);
+    //ui_center_cam(ui, &p->pos);
   pthread_mutex_unlock(&p->lock);
   return rc;
 }
@@ -125,7 +128,7 @@ int do_move_right_rpc(UI *ui, Client *C)
   pthread_mutex_lock(&p->lock);
     p->pos.x = tuple.x;
     p->pos.y = tuple.y;
-    ui_center_cam(ui, &p->pos);
+    //ui_center_cam(ui, &p->pos);
   pthread_mutex_unlock(&p->lock);
   return rc;
 }
@@ -139,7 +142,7 @@ int do_move_up_rpc(UI *ui, Client *C)
   pthread_mutex_lock(&p->lock);
     p->pos.x = tuple.x;
     p->pos.y = tuple.y;
-    ui_center_cam(ui, &p->pos);
+    //ui_center_cam(ui, &p->pos);
   pthread_mutex_unlock(&p->lock);
   return rc;
 }
@@ -153,7 +156,7 @@ int do_move_down_rpc(UI *ui, Client *C)
   pthread_mutex_lock(&p->lock);
     p->pos.x = tuple.x;
     p->pos.y = tuple.y;
-    ui_center_cam(ui, &p->pos);
+    //ui_center_cam(ui, &p->pos);
   pthread_mutex_unlock(&p->lock);
   return rc;
 }
@@ -165,6 +168,8 @@ int do_pickup_flag_rpc(UI *ui, Client *C)
   Player *p = (Player *)C->data;
   pthread_mutex_lock(&p->lock);
     p->flag = flag;
+  pthread_mutex_unlock(&p->lock);
+  pthread_mutex_lock(&globals.MAPLOCK);
     if(flag == 1){
       globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = NULL;
       globals.map.flag_red->p.x = -1;
@@ -174,7 +179,7 @@ int do_pickup_flag_rpc(UI *ui, Client *C)
       globals.map.flag_green->p.x = -1;
       globals.map.flag_green->p.y = -1;
     }
-  pthread_mutex_unlock(&p->lock);
+  pthread_mutex_unlock(&globals.MAPLOCK);
 }
 
 int do_drop_flag_rpc(UI *ui, Client *C)
@@ -184,6 +189,8 @@ int do_drop_flag_rpc(UI *ui, Client *C)
   Player *p = (Player *)C->data;
   pthread_mutex_lock(&p->lock);
     p->flag = 0;
+  pthread_mutex_unlock(&p->lock);
+  pthread_mutex_lock(&globals.MAPLOCK);
     if(flag == 1){
       globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = globals.map.flag_red;
       globals.map.flag_red->p.x = p->pos.x;
@@ -193,7 +200,7 @@ int do_drop_flag_rpc(UI *ui, Client *C)
       globals.map.flag_green->p.x = p->pos.x;
       globals.map.flag_green->p.y = p->pos.y;
     }
-  pthread_mutex_unlock(&p->lock);
+  pthread_mutex_unlock(&globals.MAPLOCK);
 }
 
 int do_pickup_hammer_rpc(UI *ui, Client *C)
@@ -377,89 +384,25 @@ convertMap(){
 static int
 update_event_handler(Proto_Session *s)
 {
+  fprintf(stderr, "%s: started", __func__);
   int offset = 0;
   Client *C = proto_session_get_data(s);
   Player *me = (Player *)C->data;
-  //Unmarshall map
-  int numCellsUpdate = unmarshall_cells_to_update(s, &offset);
-  /*
-  proto_session_body_unmarshall_bytes(s, 0, getMapSize(), getMapBufPointer());
-  convertMap();
+  pthread_mutex_lock(&globals.MAPLOCK);
+    //Unmarshall map
+    int numCellsUpdate = unmarshall_cells_to_update(s, &offset);
+    //Unmarshall Players
+    int numplayers = unmarshall_players(s, &offset, me);
+    //Unmarshall Flags
+    int numflags = unmarshall_flags(s, &offset);
+    //Unmarshall Hammers
+    int numhammers = unmarshall_hammers(s, &offset);
+  pthread_mutex_unlock(&globals.MAPLOCK);
 
-  offset = getMapSize();
-  */
-  //Unmarshall Players
-  int numplayers = unmarshall_players(s, &offset, me);
-  
-  /*
-  proto_session_body_unmarshall_int(s, offset, &numplayers);
-  //fprintf(stderr, "num players = %d\n", numplayers);
-  bzero(globals.players, numplayers*sizeof(Player));
-  offset+= sizeof(int);
-  for (i = 0; i < numplayers; i++){
-    pthread_mutex_init(&(globals.players[i].lock), NULL);
-    //pthread_mutex_lock(&cur_id_mutex);
-    proto_session_body_unmarshall_int(s, offset, &(globals.players[i].id));
-    proto_session_body_unmarshall_int(s, offset+sizeof(int), &(globals.players[i].pos.x));
-    //fprintf(stderr, "x = %d\n", players[i].pos.x);
-    proto_session_body_unmarshall_int(s, offset + 2*sizeof(int), &(globals.players[i].pos.y));
-    //fprintf(stderr, "x = %d\n", players[i].pos.y);
-    proto_session_body_unmarshall_int(s, offset + 3*sizeof(int), &(globals.players[i].team));
-    //fprintf(stderr, "team = %d\n", players[i].team);
-    proto_session_body_unmarshall_int(s, offset + 4*sizeof(int), &(globals.players[i].hammer));
-    //fprintf(stderr, "hammer = %d\n", players[i].hammer);
-    proto_session_body_unmarshall_int(s, offset + 5*sizeof(int), &(globals.players[i].flag));
-    //fprintf(stderr, "flag = %d\n", players[i].flag);
-    offset+= 6*sizeof(int);
-    globals.map.cells[globals.players[i].pos.x + (globals.players[i].pos.y*MAPHEIGHT)].player = &(globals.players[i]);
-    //pthread_mutex_unlock(&cur_id_mutex);
-    //STATE
-    ui_uip_init(ui, &globals.players[i].uip, globals.players[i].id, globals.players[i].team);      
-    
-    // update me
-    if (globals.players[i].id == me->id) {
-      pthread_mutex_lock(&me->lock);
-        me->pos.x = globals.players[i].pos.x;
-        me->pos.y = globals.players[i].pos.y;
-        me->team = globals.players[i].team;
-        me->flag = globals.players[i].flag;
-	me->state = globals.players[i].state;
-        me->hammer = globals.players[i].hammer;
-        //ui_center_cam(ui, &me->pos);
-      pthread_mutex_unlock(&me->lock);
-    }
-  }
-  */
-  //Unmarshall Flags
-  
-  int numflags = unmarshall_flags(s, &offset);
-  
-  /*
-  proto_session_body_unmarshall_int(s, offset, &(globals.map.flag_red->p.x));
-  proto_session_body_unmarshall_int(s, offset+sizeof(int), &(globals.map.flag_red->p.y));
-  proto_session_body_unmarshall_int(s, offset+2*sizeof(int), &(globals.map.flag_green->p.x));
-  proto_session_body_unmarshall_int(s, offset+3*sizeof(int), &(globals.map.flag_green->p.y));
-
-  int x,y;
-  //Red Flag
-  if(globals.map.flag_red->p.x != -1){
-    x = globals.map.flag_red->p.x;
-    y = globals.map.flag_red->p.y;
-    globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_red;
-  }
-  //Green Flag
-  x = globals.map.flag_green->p.x;
-  y = globals.map.flag_green->p.y;
-  globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_green;
-  */
-
-  //Unmarshall Hammers
-  
-  int numhammers = unmarshall_hammers(s, &offset);
-
+  ui_center_cam(ui, &me->pos);
   ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
   
-  fprintf(stderr, "%s: called", __func__);
+  fprintf(stderr, "%s: ended", __func__);
   return 1;
 }
 
@@ -515,7 +458,7 @@ initGlobals(int argc, char **argv)
     strncpy(globals.host, argv[1], STRLEN);
     globals.port = atoi(argv[2]);
   }
-
+  
 }
 void
 initMap(Map *m, int size){
@@ -553,6 +496,8 @@ main(int argc, char **argv)
   }
   // END ORIGINAL CLIENT
   
+  pthread_mutex_init(&globals.MAPLOCK, 0);
+ 
   // init ui code
   tty_init(STDIN_FILENO);
   ui_init(&(ui));

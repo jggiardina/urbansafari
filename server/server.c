@@ -664,13 +664,14 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *nothing)
     if (sym == SDLK_q) return -1;
     if (sym == SDLK_z && mod == KMOD_NONE) {
       int rc = ui_zoom(ui, 1);
-      Pos center = {MAPWIDTH/2, MAPHEIGHT/2};
+      Pos center = {ui_globals.CAMERA_X + (ui_globals.SCREEN_W/ui_globals.CELL_W), ui_globals.CAMERA_Y + (ui_globals.SCREEN_H/ui_globals.CELL_H)};
+      //Pos center = {MAPWIDTH/2, MAPHEIGHT/2};
       ui_center_cam(ui, &center);
       return rc;
     }
     if (sym == SDLK_z && mod & KMOD_SHIFT) {
       int rc = ui_zoom(ui, -1);
-      Pos center = {MAPWIDTH/2, MAPHEIGHT/2};
+      Pos center = {ui_globals.CAMERA_X + ((ui_globals.SCREEN_W/ui_globals.CELL_W)/4), ui_globals.CAMERA_Y + ((ui_globals.SCREEN_H/ui_globals.CELL_H)/4)};
       ui_center_cam(ui, &center);
       return rc;
     }
