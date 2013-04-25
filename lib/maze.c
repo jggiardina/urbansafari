@@ -217,7 +217,7 @@ int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
   }
 }
 
-int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate){
+int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate, Player *players, int numplayers){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
 	Player p;
@@ -248,15 +248,25 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				find_free_jail(c.c, JAIL, &player->pos, map);
                                 map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
+				player->state = 1;
       				(*numCellsToUpdate)++;
-				return 1;
+				return 0;
 			}
 		}
 		return 0;
 	}else if (player->state ==1 && c.t != JAIL){
 		return 0;
 	}else if (player->state == 0 && c.c != player->team_color && c.t == JAIL){
-		return 2;
+		int i;
+		for (i = 0; i < numplayers;i++){
+                        if (players[i].team_color == player->team_color && players[i].state == 1){
+                                players[i].state = 0;
+				fprintf( stderr, "Player freed\n" );
+                        }
+                }
+
+		
+		return 1;
 	}else{
 		return 1;
 	}
