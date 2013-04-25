@@ -232,12 +232,16 @@ int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Pl
     if(p->team_color == RED){
       if(map->cells[x+(y*MAPHEIGHT)].t == HOME && map->cells[x+(y*MAPHEIGHT)].c == RED){
         red_at_home++;
+      }else if(p->state == 1){
+        red_jailed++;	
       }
     }
 
     if(p->team_color == GREEN){
       if(map->cells[x+(y*MAPHEIGHT)].t == HOME && map->cells[x+(y*MAPHEIGHT)].c == GREEN){
         green_at_home++;
+      }else if(p->state == 1){
+        green_jailed++;
       }
     }
   }
@@ -248,11 +252,12 @@ int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Pl
   gf_x = map->flag_green->p.x;
   gf_y = map->flag_green->p.y;
 
+  //Check for Flags winning the game
   if(red_at_home == num_red){
     if(map->cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && map->cells[rf_x+(rf_y*MAPHEIGHT)].c == RED && map->cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && map->cells[gf_x+(gf_y*MAPHEIGHT)].c == RED){
       //red wins
      fprintf( stderr, "RED TEAM WINS\n" );
-     return 1;
+     return 0;
     }
   }else if(green_at_home == num_green){
     if(map->cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && map->cells[rf_x+(rf_y*MAPHEIGHT)].c == GREEN && map->cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && map->cells[gf_x+(gf_y*MAPHEIGHT)].c == GREEN){
@@ -260,6 +265,15 @@ int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Pl
       fprintf( stderr, "GREEN TEAM WINS\n" );
       return 1;
     }
+  }
+
+  //Check for jailing winning the game
+  if(red_jailed == num_red){
+    fprintf( stderr, "GREEN TEAM WINS\n" );
+    return 1;
+  }else if(green_jailed == num_green){
+    fprintf( stderr, "RED TEAM WINS\n" );
+    return 0;
   }
 }
 
@@ -288,7 +302,8 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				c.player == NULL;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)];
 				(*numCellsToUpdate)++;
-				check_win_condition(map, numplayers, num_red_players, num_green_players, players);
+				int winner = check_win_condition(map, numplayers, num_red_players, num_green_players, players);
+				//proto_server_mt_post_win_handler(winner);
 				return 1;
 			}else{
 				find_free_jail(c.c, JAIL, &player->pos, map);
@@ -296,7 +311,8 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
 				player->state = 1;
       				(*numCellsToUpdate)++;
-				check_win_condition(map, numplayers, num_red_players, num_green_players, players);
+				int winner = check_win_condition(map, numplayers, num_red_players, num_green_players, players);
+				//proto_server_mt_post_win_handler(winner);
 				return 0;
 			}
 		}
