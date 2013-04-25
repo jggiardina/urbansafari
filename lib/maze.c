@@ -222,44 +222,25 @@ int valid_move(Map *map, Player *player, int x, int y){
 			if (player->team_color == c.c){
 				find_free_jail(c.c, JAIL, &c.player->pos, map);
 				map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)].player = c.player;
+				c.player->state = 1;
 				c.player == NULL;
 				return 1;
 			}else{
 				find_free_jail(c.c, JAIL, &player->pos, map);
                                 map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
+				player->state = 1;
 				return 1;
 			}
 		}
 		return 0;
+	}else if (player->state ==1 && c.t != JAIL){
+		return 0;
+	}else if (player->state == 0 && c.c != player->team_color && c.t == JAIL){
+		return 2;
 	}else{
 		return 1;
 	}
 	/*else{
-	//check if collides with player
-	for (int i = 0; i < numplayers; i++){
-		p = players[i];
-		if (p.x == x && p.y == y){//colliding players
-			if (p.c != player->c){
-				if (player->c != c.c && player->state != 0){//moving player will be jailed
-					//NYI- send player to jail function
-					player->state == 1;
-					return 1;
-				}else if (p.c != c.c && p.state != 0){//stationary player will be jailed
-					//NYI- send stationary player to jail function
-					p.state == 1;
-					player->x = x;
-					player->y = y;
-					//check flag
-					return 1;
-				}
-				
-			}else{
-				//INVALID MOVE
-				return 0;
-			}
-			
-		}	
-	}
 	if (c.t == JAIL && player->c != c.c && previousc.t != JAIL){//Jailbreak
 		for (int i = 0; i < numplayers; i++){
                 	p = players[i];

@@ -203,12 +203,20 @@ void paint_players(){
 int move(Tuple *pos, void *player){
   int rc = 0;
   Player *p = (Player *)player;
-  
+ int result, i;
   pthread_mutex_lock(&p->lock);
     globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = NULL; // delete player from his old cell
-    if (valid_move(&globals.map, p, pos->x, pos->y)){
+    result = valid_move(&globals.map, p, pos->x, pos->y);
+    if (result > 0){
     	p->pos.x += pos->x;
     	p->pos.y += pos->y;
+	if (result == 2){
+		for (i = 0; i < globals.numplayers; i++){
+			if (globals.players[i]->team_color == p->team_color && globals.players[i]->state == 1){
+				globals.players[i]->state = 0;
+			}
+		}
+	}
     }
     globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = p; // add player to his new cell
     
