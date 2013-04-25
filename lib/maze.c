@@ -217,7 +217,53 @@ int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
   }
 }
 
-int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate, Player *players, int numplayers){
+int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Player **player_array){
+  int i;
+  int red_at_home = 0;
+  int green_at_home = 0;
+  int red_jailed = 0;
+  int green_jailed = 0;
+
+  for(i=0;i<numplayers;i++){
+    Player *p = (Player*)player_array[i];
+    int x = p->pos.x;
+    int y = p->pos.y;
+
+    if(p->team_color == RED){
+      if(map->cells[x+(y*MAPHEIGHT)].t == HOME && map->cells[x+(y*MAPHEIGHT)].c == RED){
+        red_at_home++;
+      }
+    }
+
+    if(p->team_color == GREEN){
+      if(map->cells[x+(y*MAPHEIGHT)].t == HOME && map->cells[x+(y*MAPHEIGHT)].c == GREEN){
+        green_at_home++;
+      }
+    }
+  }
+
+  int rf_x, rf_y, gf_x, gf_y;
+  rf_x = map->flag_red->p.x;
+  rf_y = map->flag_red->p.y;
+  gf_x = map->flag_green->p.x;
+  gf_y = map->flag_green->p.y;
+
+  if(red_at_home == num_red){
+    if(map->cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && map->cells[rf_x+(rf_y*MAPHEIGHT)].c == RED && map->cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && map->cells[gf_x+(gf_y*MAPHEIGHT)].c == RED){
+      //red wins
+     fprintf( stderr, "RED TEAM WINS\n" );
+     return 1;
+    }
+  }else if(green_at_home == num_green){
+    if(map->cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && map->cells[rf_x+(rf_y*MAPHEIGHT)].c == GREEN && map->cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && map->cells[gf_x+(gf_y*MAPHEIGHT)].c == GREEN){
+      //green wins
+      fprintf( stderr, "GREEN TEAM WINS\n" );
+      return 1;
+    }
+  }
+}
+
+int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
 	Player p;
