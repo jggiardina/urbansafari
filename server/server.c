@@ -53,12 +53,16 @@ struct LineBuffer {
 struct Globals {
   struct LineBuffer in;
   int isLoaded;
+  pthread_mutex_t MAPLOCK;
   Map map;
   Map tempmap;
   //void* player_array[MAXPLAYERS];
   char mapbuf[MAPHEIGHT*MAPWIDTH];
   Player *players[MAXPLAYERS];
   int numplayers;
+  pthread_mutex_t PlayersLock;
+  int num_red_players;
+  int num_green_players;
 } globals;
 
 UI *ui;
@@ -133,11 +137,13 @@ Flag* server_init_flag(Color team_color){
   return flag;
 }
 
-void* server_init_player(int *id, int *team, Tuple *pos)
+void* server_init_player(int *id, int *team, Tuple *pos, int *numCellsToUpdate, int *cellsToUpdate)
 {
+  pthread_mutex_lock(&globals.PlayersLock);
+  
   Player *p = (Player *)malloc(sizeof(Player));
   bzero(p, sizeof(Player));
-pthread_mutex_init(&(p->lock), NULL);
+  pthread_mutex_init(&(p->lock), NULL);
   pthread_mutex_lock(&p->lock);  
 
   //Initialize ID and starting conditions
@@ -156,9 +162,11 @@ pthread_mutex_init(&(p->lock), NULL);
   if(p->id % 2 == 0){
     p->team_color = RED;
     p->team = 0;
+    globals.num_red_players++;
   }else if(p->id % 2 == 1){
     p->team_color = GREEN;
     p->team = 1;
+    globals.num_green_players++;
   }
   
   //Increase the counter for num players  
@@ -173,13 +181,18 @@ pthread_mutex_init(&(p->lock), NULL);
 
   pos->x = p->pos.x;
   pos->y = p->pos.y;
-  globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p;
+  pthread_mutex_lock(&globals.MAPLOCK);
+    globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p;
+    cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)];
+      (*numCellsToUpdate)++;
+  pthread_mutex_unlock(&globals.MAPLOCK);
+  
   globals.players[p->id] = p;
-
   pthread_mutex_unlock(&p->lock);  
 
   ui_paintmap(ui, &globals.map);
   
+  pthread_mutex_unlock(&globals.PlayersLock);
   return (void *)p;
 }
 
@@ -200,79 +213,132 @@ void paint_players(){
 }*/
 
 //TODO: test this code to see if it gets updated, if it doesnt work then change it to only pass s->extra instead.  then there will be warnings with the mutex's tho with &p...cant get to &p.lock its an error
-int move(Tuple *pos, void *player){
+int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
- int result, i;
   pthread_mutex_lock(&p->lock);
-    globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = NULL; // delete player from his old cell
-    result = valid_move(&globals.map, p, pos->x, pos->y);
-    if (result > 0){
+    pthread_mutex_lock(&globals.MAPLOCK);
+      globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = NULL; // delete player from his old cell
+      cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)];
+      (*numCellsToUpdate)++;
+      if (valid_move(&globals.map, p, pos->x, pos->y, numCellsToUpdate, cellsToUpdate)){
     	p->pos.x += pos->x;
     	p->pos.y += pos->y;
-	if (result == 2){
-		for (i = 0; i < globals.numplayers; i++){
-			if (globals.players[i]->team_color == p->team_color && globals.players[i]->state == 1){
-				globals.players[i]->state = 0;
-			}
-		}
-	}
-    }
-    globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = p; // add player to his new cell
-    
+      }
+      globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = p; // add player to his new cell
+      cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)];
+      (*numCellsToUpdate)++;
+    pthread_mutex_unlock(&globals.MAPLOCK);
     rc = 1;
     //Return values of player if needing to update
     pos->x = p->pos.x;
     pos->y = p->pos.y;
+
+    if(globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].t == HOME){
+      check_win_condition();
+    }
   
   pthread_mutex_unlock(&p->lock);
   ui_paintmap(ui, &globals.map); 
   return rc;
 }
-int takeHammer(void *player){
+int takeHammer(void *player, int *numCellsToUpdate, int *cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
 
-  pthread_mutex_lock(&p->lock);
-   if(take_hammer(&globals.map, p) == 1){
-    rc = 1;
-   }else{
+  pthread_mutex_lock(&globals.MAPLOCK);
+    pthread_mutex_lock(&p->lock);
+      if(take_hammer(&globals.map, p, numCellsToUpdate, cellsToUpdate) == 1){
+        rc = 1;
+      }else{
 	rc = 0;
-   }
-  pthread_mutex_unlock(&p->lock);
+      }
+    pthread_mutex_unlock(&p->lock);
+  pthread_mutex_unlock(&globals.MAPLOCK);
   ui_paintmap(ui, &globals.map);
   return rc;
 }
 
-int takeFlag(void *player){
+int takeFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
-
-  pthread_mutex_lock(&p->lock);
-   if(take_flag(&globals.map, p) == 1){
-    rc = 1;
-   }else{
-    rc = 0;
-   }
-  pthread_mutex_unlock(&p->lock);
+ 
+  pthread_mutex_lock(&globals.MAPLOCK);
+    pthread_mutex_lock(&p->lock);
+      if(take_flag(&globals.map, p, numCellsToUpdate, cellsToUpdate) == 1){
+        rc = 1;
+      }else{
+        rc = 0;
+      }
+    pthread_mutex_unlock(&p->lock);
+  pthread_mutex_unlock(&globals.MAPLOCK);
   ui_paintmap(ui, &globals.map);
   return rc;
 }
 
-int dropFlag(void *player){
+int dropFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
 
   pthread_mutex_lock(&p->lock);
-  int flag_type = drop_flag(&globals.map, p);
+  int flag_type = drop_flag(&globals.map, p, numCellsToUpdate, cellsToUpdate);
    if(flag_type > 0){
     rc = flag_type;
+    if(globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].t == HOME){
+      check_win_condition();
+    }
    }else{
     rc = 0;
    }
   pthread_mutex_unlock(&p->lock);
   ui_paintmap(ui, &globals.map);
   return rc;
+}
+
+int check_win_condition(){
+  int i;
+  int red_at_home = 0;
+  int green_at_home = 0;
+  int red_jailed = 0;
+  int green_jailed = 0;
+
+  for(i=0;i<globals.numplayers;i++){
+    Player *p = globals.players[i];
+    int x = p->pos.x;
+    int y = p->pos.y;
+
+    if(p->team_color == RED){
+      if(globals.map.cells[x+(y*MAPHEIGHT)].t == HOME && globals.map.cells[x+(y*MAPHEIGHT)].c == RED){
+        red_at_home++;
+      }
+    }
+
+    if(p->team_color == GREEN){
+      if(globals.map.cells[x+(y*MAPHEIGHT)].t == HOME && globals.map.cells[x+(y*MAPHEIGHT)].c == GREEN){
+        green_at_home++;
+      }
+    }
+  }
+
+  int rf_x, rf_y, gf_x, gf_y;
+  rf_x = globals.map.flag_red->p.x;
+  rf_y = globals.map.flag_red->p.y;
+  gf_x = globals.map.flag_green->p.x;
+  gf_y = globals.map.flag_green->p.y;
+  
+  if(red_at_home == globals.num_red_players){
+    if(globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].c == RED && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].c == RED){
+      //red wins
+     fprintf( stderr, "RED TEAM WINS\n" );
+     return 1;
+    }
+  }else if(green_at_home == globals.num_green_players){
+    if(globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].c == GREEN && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].c == GREEN){
+      //green wins
+      fprintf( stderr, "GREEN TEAM WINS\n" );
+      return 1;
+    }
+  }
 }
 
 int
@@ -385,6 +451,26 @@ int getAsciiSize(){
 char* getPlayers(){
 	return globals.players;
 }
+
+int marshall_cells_to_update(Proto_Session *s, int *numCellsToUpdate, int *cellsToUpdate){
+  Cell **cell_pointers = (Cell **)cellsToUpdate;
+  int i;
+  Cell c;
+  proto_session_body_marshall_int(s, *numCellsToUpdate);
+  for (i = 0; i < *numCellsToUpdate; i++){
+        c = *(cell_pointers[i]);
+        //fprintf(stderr, "id = %d\n", p.id);
+        //fprintf(stderr, "x = %d\n", p.pos.x);
+        //fprintf(stderr, "y = %d\n", p.pos.y);
+        //fprintf(stderr, "team = %d\n", p.team);
+        proto_session_body_marshall_int(s, c.p.x);
+        proto_session_body_marshall_int(s, c.p.y);
+        proto_session_body_marshall_int(s, c.c);
+        proto_session_body_marshall_int(s, c.t);
+        proto_session_body_marshall_int(s, c.breakable);
+  }
+}
+
 int marshall_players(Proto_Session *s){
   int i;
   Player p;
@@ -402,7 +488,6 @@ int marshall_players(Proto_Session *s){
         proto_session_body_marshall_int(s, p.hammer);
         proto_session_body_marshall_int(s, p.flag);
   }
-
 }
 
 int marshall_flags(Proto_Session *s){
@@ -410,6 +495,13 @@ int marshall_flags(Proto_Session *s){
   proto_session_body_marshall_int(s, globals.map.flag_red->p.y);
   proto_session_body_marshall_int(s, globals.map.flag_green->p.x);
   proto_session_body_marshall_int(s, globals.map.flag_green->p.y);
+}
+
+int marshall_hammers(Proto_Session *s){
+  proto_session_body_marshall_int(s, globals.map.hammer_1->p.x);
+  proto_session_body_marshall_int(s, globals.map.hammer_1->p.y);
+  proto_session_body_marshall_int(s, globals.map.hammer_2->p.x);
+  proto_session_body_marshall_int(s, globals.map.hammer_2->p.y);
 }
 
 int
@@ -460,10 +552,11 @@ main(int argc, char **argv)
   tty_init(STDIN_FILENO);
 
   ui_init(&(ui));
-  ui_globals.CELL_W=2;
-  ui_globals.CELL_H=2;
+  ui_globals.CELL_W=2; //zoom out right away
+  ui_globals.CELL_H=2; //zoom out right away
   ui->tile_h = ui_globals.CELL_H;
   ui->tile_w = ui_globals.CELL_W;
+  // center cam on center of map
   Pos center = {MAPWIDTH/2,MAPHEIGHT/2};
   ui_center_cam(ui, &center);
 
@@ -472,8 +565,11 @@ main(int argc, char **argv)
   // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
   // SO JUMP THROW HOOPS :-(
 
-  /* TESTING LOAD MAP */
+  pthread_mutex_init(&globals.PlayersLock, 0);
   globals.numplayers = 0;
+  pthread_mutex_init(&globals.MAPLOCK, 0);
+  globals.num_red_players = 0;
+  globals.num_green_players = 0;
   char linebuf[240];
   FILE * myfile;
   int i, n, len;

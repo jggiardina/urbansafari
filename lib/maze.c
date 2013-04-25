@@ -122,10 +122,19 @@ int check_breakable(Map *map){
   return 0;
 }
 
-int take_hammer(Map *map, Player *player){
+int take_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
 	if (map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer != NULL && player->hammer == 0){
 fprintf( stderr, "Cell set\n" );	
+		if (map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].c == RED) {
+		  map->hammer_1->p.x = -1;
+		  map->hammer_1->p.y = -1;
+		} else {
+		  map->hammer_2->p.x = -1;
+                  map->hammer_2->p.y = -1;
+		}
 		map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer = NULL;
+		cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
+		(*numCellsToUpdate)++;
 		player->hammer = 1;
 		return 1;
 	}else{
@@ -133,7 +142,7 @@ fprintf( stderr, "Cell set\n" );
 	}
 }
 
-int take_flag(Map *map, Player *player){
+int take_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
   int x,y;
   x = player->pos.x;
   y = player->pos.y;
@@ -144,11 +153,15 @@ int take_flag(Map *map, Player *player){
       map->flag_red->p.x = -1;
       map->flag_red->p.y = -1;
       map->cells[x+(y*MAPHEIGHT)].flag = NULL;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
     }else if(map->cells[x+(y*MAPHEIGHT)].flag->c == GREEN){
       player->flag = 2;
       map->flag_green->p.x = -1;
       map->flag_green->p.y = -1;
       map->cells[x+(y*MAPHEIGHT)].flag = NULL;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
     }
     return 1;
   }else{
@@ -175,7 +188,7 @@ void find_free_jail(Color team_color, Cell_Type cell_type, Pos *p, Map *map){
   }
 }
 
-int drop_flag(Map *map, Player *player){
+int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
   int x,y;
   x = player->pos.x;
   y = player->pos.y;
@@ -188,11 +201,15 @@ int drop_flag(Map *map, Player *player){
       map->flag_red->p.x = x;
       map->flag_red->p.y = y;
       map->cells[x+(y*MAPHEIGHT)].flag = map->flag_red;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
     }else if(flag_type == 2){
       player->flag = 0;
       map->flag_green->p.x = x;
       map->flag_green->p.y = y;
       map->cells[x+(y*MAPHEIGHT)].flag = map->flag_green;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
     }
     return flag_type;
   }else{
@@ -200,7 +217,7 @@ int drop_flag(Map *map, Player *player){
   }
 }
 
-int valid_move(Map *map, Player *player, int x, int y){
+int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
 	Player p;
@@ -224,11 +241,14 @@ int valid_move(Map *map, Player *player, int x, int y){
 				map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)].player = c.player;
 				c.player->state = 1;
 				c.player == NULL;
+				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)];
+				(*numCellsToUpdate)++;
 				return 1;
 			}else{
 				find_free_jail(c.c, JAIL, &player->pos, map);
                                 map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
-				player->state = 1;
+				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
+      				(*numCellsToUpdate)++;
 				return 1;
 			}
 		}
@@ -270,13 +290,13 @@ char* dump_map(Map *map){
   for (j = 0; j < MAPHEIGHT; j++){
         for (i = 0; i < MAPWIDTH; i++){
                 c = map->cells[i+(j*MAPHEIGHT)];
-			if(c.hammer != NULL){
+			/*if(c.hammer != NULL){
                           if(i < 100 && j < 200){
                             map->data_ascii[i+(j*MAPHEIGHT)] = 's';
                           }else{
                             map->data_ascii[i+(j*MAPHEIGHT)] = 'S';
                           }
-                        }else if (c.t == FLOOR){
+                        }else*/ if (c.t == FLOOR){
 				map->data_ascii[i+(j*MAPHEIGHT)] = ' ';
 			}else if (c.t == WALL){
 				map->data_ascii[i+(j*MAPHEIGHT)] = '#';
