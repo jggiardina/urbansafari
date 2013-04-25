@@ -236,7 +236,7 @@ int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
     pos->y = p->pos.y;
 
     if(globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].t == HOME){
-      check_win_condition();
+      check_win_condition(&globals.map, globals.numplayers, globals.num_red_players, globals.num_green_players, &globals.players);
     }
   
   pthread_mutex_unlock(&p->lock);
@@ -286,7 +286,7 @@ int dropFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
    if(flag_type > 0){
     rc = flag_type;
     if(globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].t == HOME){
-      check_win_condition();
+      check_win_condition(&globals.map, globals.numplayers, globals.num_red_players, globals.num_green_players, &globals.players);
     }
    }else{
     rc = 0;
@@ -294,52 +294,6 @@ int dropFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
   pthread_mutex_unlock(&p->lock);
   ui_paintmap(ui, &globals.map);
   return rc;
-}
-
-int check_win_condition(){
-  int i;
-  int red_at_home = 0;
-  int green_at_home = 0;
-  int red_jailed = 0;
-  int green_jailed = 0;
-
-  for(i=0;i<globals.numplayers;i++){
-    Player *p = globals.players[i];
-    int x = p->pos.x;
-    int y = p->pos.y;
-
-    if(p->team_color == RED){
-      if(globals.map.cells[x+(y*MAPHEIGHT)].t == HOME && globals.map.cells[x+(y*MAPHEIGHT)].c == RED){
-        red_at_home++;
-      }
-    }
-
-    if(p->team_color == GREEN){
-      if(globals.map.cells[x+(y*MAPHEIGHT)].t == HOME && globals.map.cells[x+(y*MAPHEIGHT)].c == GREEN){
-        green_at_home++;
-      }
-    }
-  }
-
-  int rf_x, rf_y, gf_x, gf_y;
-  rf_x = globals.map.flag_red->p.x;
-  rf_y = globals.map.flag_red->p.y;
-  gf_x = globals.map.flag_green->p.x;
-  gf_y = globals.map.flag_green->p.y;
-  
-  if(red_at_home == globals.num_red_players){
-    if(globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].c == RED && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].c == RED){
-      //red wins
-     fprintf( stderr, "RED TEAM WINS\n" );
-     return 1;
-    }
-  }else if(green_at_home == globals.num_green_players){
-    if(globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].c == GREEN && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].c == GREEN){
-      //green wins
-      fprintf( stderr, "GREEN TEAM WINS\n" );
-      return 1;
-    }
-  }
 }
 
 int
