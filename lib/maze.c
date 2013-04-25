@@ -263,7 +263,7 @@ int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Pl
   }
 }
 
-int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate){
+int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate, Player *players, int numplayers){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
 	Player p;
