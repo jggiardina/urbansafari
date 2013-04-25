@@ -236,7 +236,8 @@ int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
 
     if(globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].t == HOME){
       int winner = check_win_condition(&globals.map, globals.numplayers, globals.num_red_players, globals.num_green_players, &globals.players);
-      proto_server_mt_post_win_handler(winner);
+      if(winner >= 0)
+        proto_server_mt_post_win_handler(winner);
     }
   
   pthread_mutex_unlock(&p->lock);
@@ -287,7 +288,8 @@ int dropFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
     rc = flag_type;
     if(globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].t == HOME){
       int winner = check_win_condition(&globals.map, globals.numplayers, globals.num_red_players, globals.num_green_players, &globals.players);
-      proto_server_mt_post_win_handler(winner);
+      if(winner >= 0)
+        proto_server_mt_post_win_handler(winner);
     }
    }else{
     rc = 0;

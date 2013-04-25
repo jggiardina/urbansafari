@@ -275,6 +275,8 @@ int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Pl
     fprintf( stderr, "RED TEAM WINS\n" );
     return 0;
   }
+
+  return -1;
 }
 
 int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate, Player **players, int numplayers, int num_red_players, int num_green_players){
