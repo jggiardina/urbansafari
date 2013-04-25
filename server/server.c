@@ -216,7 +216,6 @@ void paint_players(){
 int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
-   
   pthread_mutex_lock(&p->lock);
     pthread_mutex_lock(&globals.MAPLOCK);
       globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = NULL; // delete player from his old cell
