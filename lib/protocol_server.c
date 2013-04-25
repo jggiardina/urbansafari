@@ -606,6 +606,33 @@ static int proto_server_mt_take_flag_handler(Proto_Session *s){
   return rc;
 }
 
+static int proto_server_mt_drop_flag_handler(Proto_Session *s){
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_move_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = dropFlag((void *)s->extra, numCellsToUpdate, cellsToUpdate);
+
+  if(ret >= 0){
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_int(s, ret);
+     fprintf(stderr, "Sending %d as flag status", ret);
+
+    rc=proto_session_send_msg(s,1);
+  }
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
+
+  return rc;
+}
+
 /* Handler for Connection */
 static int
 proto_server_mt_hello_handler(Proto_Session *s){
@@ -732,6 +759,8 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_take_hammer_handler);
     }else if(i == PROTO_MT_REQ_BASE_TAKE_FLAG){
       proto_server_set_req_handler(i, proto_server_mt_take_flag_handler);
+    }else if(i == PROTO_MT_REQ_BASE_DROP_FLAG){
+      proto_server_set_req_handler(i, proto_server_mt_drop_flag_handler);
     }
     /*else if(i == PROTO_MT_REQ_BASE_MAP_DUMP){
       proto_server_set_req_handler(i, proto_server_mt_dump_handler);

@@ -384,6 +384,29 @@ do_pick_up_flag_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *flag)
   return rc;
 }
 
+static int
+do_drop_flag_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *flag)
+{
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+
+  s = proto_client_rpc_session(c); //ADD CODE: set the Proto_Session, rpc_session is only Proto_Session, so we need it's address here. -JG
+  // marshall
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, flag);
+
+  } else {
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
+}
+
 /*
 static int
 do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type *cell_type, int *team, int *occupied)
@@ -508,7 +531,11 @@ proto_client_pick_up_flag(Proto_Client_Handle ch, int *flag)
 {
   return do_pick_up_flag_rpc(ch, PROTO_MT_REQ_BASE_TAKE_FLAG, flag);
 }
-
+extern int
+proto_client_drop_flag(Proto_Client_Handle ch, int *flag)
+{
+  return do_drop_flag_rpc(ch, PROTO_MT_REQ_BASE_DROP_FLAG, flag);
+}
 
 extern int 
 proto_client_goodbye(Proto_Client_Handle ch)

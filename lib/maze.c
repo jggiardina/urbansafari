@@ -146,22 +146,78 @@ int take_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
   int x,y;
   x = player->pos.x;
   y = player->pos.y;
-  Flag *f = map->cells[x+(y*MAPHEIGHT)].flag; 
-  if (f != NULL && player->flag < 1){
+  if (map->cells[x+(y*MAPHEIGHT)].flag != NULL && player->flag < 1){
     fprintf( stderr, "Cell set\n" );
-    if(f->c == RED){
+    if(map->cells[x+(y*MAPHEIGHT)].flag->c == RED){
       player->flag = 1;
-    }else if(f->c == GREEN){
+      map->flag_red->p.x = -1;
+      map->flag_red->p.y = -1;
+      map->cells[x+(y*MAPHEIGHT)].flag = NULL;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
+    }else if(map->cells[x+(y*MAPHEIGHT)].flag->c == GREEN){
       player->flag = 2;
+      map->flag_green->p.x = -1;
+      map->flag_green->p.y = -1;
+      map->cells[x+(y*MAPHEIGHT)].flag = NULL;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
     }
-    f = NULL;
     return 1;
   }else{
     return 0;
   }
 }
+void find_free_jail(Color team_color, Cell_Type cell_type, Pos *p, Map *map){
+  int j, i;
+  Cell c;
 
-int valid_move(Map *map, Player *player, int x, int y){
+  for (j = 0; j < MAPHEIGHT; j++){
+    for (i = 0; i < MAPWIDTH; i++){
+      c = map->cells[i+(j*MAPHEIGHT)];
+
+      if(c.t == cell_type && c.c == team_color){ 
+        if(!c.player && !c.hammer && !c.flag){
+          p->x = c.p.x;
+          p->y = c.p.y;
+          i = MAPWIDTH;
+          j = MAPHEIGHT;
+        }
+      }
+    }
+  }
+}
+
+int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
+  int x,y;
+  x = player->pos.x;
+  y = player->pos.y;
+  int flag_type = player->flag;
+
+  if(flag_type != 0){
+    fprintf( stderr, "Drop Flag\n" );
+    if(flag_type == 1){
+      player->flag = 0;
+      map->flag_red->p.x = x;
+      map->flag_red->p.y = y;
+      map->cells[x+(y*MAPHEIGHT)].flag = map->flag_red;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
+    }else if(flag_type == 2){
+      player->flag = 0;
+      map->flag_green->p.x = x;
+      map->flag_green->p.y = y;
+      map->cells[x+(y*MAPHEIGHT)].flag = map->flag_green;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
+    }
+    return flag_type;
+  }else{
+    return 0;
+  }
+}
+
+int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
 	Player p;
@@ -178,7 +234,28 @@ int valid_move(Map *map, Player *player, int x, int y){
 		}
 		//INVALID MOVE
 		return 0;
-	}/*else{
+	}else if (c.player != NULL){
+		if (c.player->team_color != player->team_color){
+			if (player->team_color == c.c){
+				find_free_jail(c.c, JAIL, &c.player->pos, map);
+				map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)].player = c.player;
+				c.player == NULL;
+				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)];
+				(*numCellsToUpdate)++;
+				return 1;
+			}else{
+				find_free_jail(c.c, JAIL, &player->pos, map);
+                                map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
+				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
+      				(*numCellsToUpdate)++;
+				return 1;
+			}
+		}
+		return 0;
+	}else{
+		return 1;
+	}
+	/*else{
 	//check if collides with player
 	for (int i = 0; i < numplayers; i++){
 		p = players[i];

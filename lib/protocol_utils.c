@@ -51,6 +51,9 @@ proto_dump_mt(Proto_Msg_Types type)
   case PROTO_MT_REQ_BASE_TAKE_HAMMER:
     fprintf(stderr, "PROTO_MT_REQ_BASE_TAKE_HAMMER");
     break;
+  case PROTO_MT_REQ_BASE_DROP_FLAG:
+    fprintf(stderr, "PROTO_MT_REQ_BASE_DROP_FLAG");
+    break;
   case PROTO_MT_REQ_BASE_TAKE_FLAG:
     fprintf(stderr, "PROTO_MT_REQ_BASE_TAKE_FLAG");
     break;
@@ -74,6 +77,9 @@ proto_dump_mt(Proto_Msg_Types type)
     break;
   case PROTO_MT_REP_BASE_TAKE_FLAG:
     fprintf(stderr, "PROTO_MT_REP_BASE_TAKE_FLAG");
+    break;
+  case PROTO_MT_REP_BASE_DROP_FLAG:
+    fprintf(stderr, "PROTO_MT_REP_BASE_DROP_FLAG");
     break;
   case PROTO_MT_REP_BASE_RESERVED_LAST: 
     fprintf(stderr, "PROTO_MT_REP_BASE_RESERVED_LAST");

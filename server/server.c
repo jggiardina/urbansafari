@@ -61,6 +61,8 @@ struct Globals {
   Player *players[MAXPLAYERS];
   int numplayers;
   pthread_mutex_t PlayersLock;
+  int num_red_players;
+  int num_green_players;
 } globals;
 
 UI *ui;
@@ -160,9 +162,11 @@ void* server_init_player(int *id, int *team, Tuple *pos, int *numCellsToUpdate, 
   if(p->id % 2 == 0){
     p->team_color = RED;
     p->team = 0;
+    globals.num_red_players++;
   }else if(p->id % 2 == 1){
     p->team_color = GREEN;
     p->team = 1;
+    globals.num_green_players++;
   }
   
   //Increase the counter for num players  
@@ -218,7 +222,7 @@ int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
       globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = NULL; // delete player from his old cell
       cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)];
       (*numCellsToUpdate)++;
-      if (valid_move(&globals.map, p, pos->x, pos->y)){
+      if (valid_move(&globals.map, p, pos->x, pos->y, numCellsToUpdate, cellsToUpdate)){
     	p->pos.x += pos->x;
     	p->pos.y += pos->y;
       }
@@ -230,6 +234,10 @@ int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
     //Return values of player if needing to update
     pos->x = p->pos.x;
     pos->y = p->pos.y;
+
+    if(globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].t == HOME){
+      check_win_condition();
+    }
   
   pthread_mutex_unlock(&p->lock);
   ui_paintmap(ui, &globals.map); 
@@ -255,6 +263,7 @@ int takeHammer(void *player, int *numCellsToUpdate, int *cellsToUpdate){
 int takeFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
+ 
   pthread_mutex_lock(&globals.MAPLOCK);
     pthread_mutex_lock(&p->lock);
       if(take_flag(&globals.map, p, numCellsToUpdate, cellsToUpdate) == 1){
@@ -266,6 +275,71 @@ int takeFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
   pthread_mutex_unlock(&globals.MAPLOCK);
   ui_paintmap(ui, &globals.map);
   return rc;
+}
+
+int dropFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
+  int rc = 0;
+  Player *p = (Player *)player;
+
+  pthread_mutex_lock(&p->lock);
+  int flag_type = drop_flag(&globals.map, p, numCellsToUpdate, cellsToUpdate);
+   if(flag_type > 0){
+    rc = flag_type;
+    if(globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].t == HOME){
+      check_win_condition();
+    }
+   }else{
+    rc = 0;
+   }
+  pthread_mutex_unlock(&p->lock);
+  ui_paintmap(ui, &globals.map);
+  return rc;
+}
+
+int check_win_condition(){
+  int i;
+  int red_at_home = 0;
+  int green_at_home = 0;
+  int red_jailed = 0;
+  int green_jailed = 0;
+
+  for(i=0;i<globals.numplayers;i++){
+    Player *p = globals.players[i];
+    int x = p->pos.x;
+    int y = p->pos.y;
+
+    if(p->team_color == RED){
+      if(globals.map.cells[x+(y*MAPHEIGHT)].t == HOME && globals.map.cells[x+(y*MAPHEIGHT)].c == RED){
+        red_at_home++;
+      }
+    }
+
+    if(p->team_color == GREEN){
+      if(globals.map.cells[x+(y*MAPHEIGHT)].t == HOME && globals.map.cells[x+(y*MAPHEIGHT)].c == GREEN){
+        green_at_home++;
+      }
+    }
+  }
+
+  int rf_x, rf_y, gf_x, gf_y;
+  rf_x = globals.map.flag_red->p.x;
+  rf_y = globals.map.flag_red->p.y;
+  gf_x = globals.map.flag_green->p.x;
+  gf_y = globals.map.flag_green->p.y;
+  
+  if(red_at_home == globals.num_red_players){
+    if(globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].c == RED && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].c == RED){
+      //red wins
+     fprintf( stderr, "RED TEAM WINS\n" );
+     return 1;
+    }
+  }else if(green_at_home == globals.num_green_players){
+    if(globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && globals.map.cells[rf_x+(rf_y*MAPHEIGHT)].c == GREEN && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && globals.map.cells[gf_x+(gf_y*MAPHEIGHT)].c == GREEN){
+      //green wins
+      fprintf( stderr, "GREEN TEAM WINS\n" );
+      return 1;
+    }
+  }
 }
 
 int
@@ -495,6 +569,8 @@ main(int argc, char **argv)
   pthread_mutex_init(&globals.PlayersLock, 0);
   globals.numplayers = 0;
   pthread_mutex_init(&globals.MAPLOCK, 0);
+  globals.num_red_players = 0;
+  globals.num_green_players = 0;
   char linebuf[240];
   FILE * myfile;
   int i, n, len;
