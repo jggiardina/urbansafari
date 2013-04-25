@@ -694,8 +694,7 @@ ui_client_main_loop(UI *ui, void *m, void *C)
   */
   //dummyPlayer_init(ui);
 
-  //ui_paintmap(ui, map);
-
+  ui_paintmap(ui, map);
 
   while (1) {
     if (ui_client_process(ui, map, C)<0) break;

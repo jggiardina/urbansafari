@@ -355,21 +355,22 @@ proto_server_mt_dump_handler(Proto_Session *s){
   return rc;
 }
 static int
-proto_server_mt_update_map_handler(Proto_Session *s){
+proto_server_mt_update_map_handler(Proto_Session *s, int numCellsToUpdate, int *cellsToUpdate){
   int rc = 1;
   Proto_Session *se;
   Proto_Msg_Hdr hdr;
-  char *cells;  
-
+  
   fprintf(stderr, "send map handler:\n");
-
+  
   se = proto_server_event_session();
   hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
   proto_session_hdr_marshall(se, &hdr);
-  proto_session_body_marshall_bytes(se, getAsciiSize(), mapToASCII()); 
+  //proto_session_body_marshall_bytes(se, getAsciiSize(), mapToASCII()); 
   //rc = proto_session_send_msg(s, 1); want to post event instead -JG
+  marshall_cells_to_update(se, numCellsToUpdate, cellsToUpdate);
   marshall_players(se);
   marshall_flags(se);
+  marshall_hammers(se);
   proto_server_post_event();
 
   return rc;
@@ -536,8 +537,10 @@ static int proto_server_mt_move_handler(Proto_Session *s){
   Tuple pos = {0, 0};
   proto_session_body_unmarshall_int(s, 0, &pos.x);
   proto_session_body_unmarshall_int(s, sizeof(int), &pos.y);
-
-  int ret = move(&pos, (void *)s->extra);  
+  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = move(&pos, (void *)s->extra, numCellsToUpdate, cellsToUpdate);  
 
   if(ret==1){
     proto_session_hdr_marshall(s, &h);
@@ -546,8 +549,7 @@ static int proto_server_mt_move_handler(Proto_Session *s){
 
     rc=proto_session_send_msg(s,1);
   }
-  proto_server_mt_update_map_handler(s);
-
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
   return rc;
 }
 static int proto_server_mt_take_hammer_handler(Proto_Session *s){
@@ -560,8 +562,10 @@ static int proto_server_mt_take_hammer_handler(Proto_Session *s){
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-
-  int ret = takeHammer((void *)s->extra);
+  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = takeHammer((void *)s->extra, numCellsToUpdate, cellsToUpdate);
 
   if(ret >= 0){
     proto_session_hdr_marshall(s, &h);
@@ -570,7 +574,7 @@ static int proto_server_mt_take_hammer_handler(Proto_Session *s){
 	
     rc=proto_session_send_msg(s,1);
   }
-  proto_server_mt_update_map_handler(s);
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
 
   return rc;
 }
@@ -585,8 +589,10 @@ static int proto_server_mt_take_flag_handler(Proto_Session *s){
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-
-  int ret = takeFlag((void *)s->extra);
+  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = takeFlag((void *)s->extra, numCellsToUpdate, cellsToUpdate);
 
   if(ret >= 0){
     proto_session_hdr_marshall(s, &h);
@@ -595,7 +601,7 @@ static int proto_server_mt_take_flag_handler(Proto_Session *s){
 
     rc=proto_session_send_msg(s,1);
   }
-  proto_server_mt_update_map_handler(s);
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
 
   return rc;
 }
@@ -620,7 +626,10 @@ proto_server_mt_hello_handler(Proto_Session *s){
   int id = -1;
   int team = -1;
   Tuple pos = {-1, -1};
-  void *p = server_init_player(&id, &team, &pos); 
+  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  void *p = server_init_player(&id, &team, &pos, numCellsToUpdate, cellsToUpdate); 
   s->extra = p;
   
   proto_session_hdr_marshall(s, &h);  
@@ -628,10 +637,14 @@ proto_server_mt_hello_handler(Proto_Session *s){
   proto_session_body_marshall_int(s, pos.x);  
   proto_session_body_marshall_int(s, pos.y);  
   proto_session_body_marshall_int(s, team);  
+  proto_session_body_marshall_bytes(s, getAsciiSize(), mapToASCII());
+  marshall_players(s);
+  marshall_flags(s);
+  marshall_hammers(s);
 
   rc=proto_session_send_msg(s,1);
   if (id != -1)
-    proto_server_mt_update_map_handler(s);
+    proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
   //pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
    
   return rc;

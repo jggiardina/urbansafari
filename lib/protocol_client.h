@@ -34,7 +34,7 @@ extern Proto_Session *proto_client_rpc_session(Proto_Client_Handle ch);
 extern Proto_Session *proto_client_event_session(Proto_Client_Handle ch);
 
 extern int proto_client_init(Proto_Client_Handle *ch);
-extern int proto_client_connect(Proto_Client_Handle ch, char *host, PortType p, int *id, int *team, Tuple *pos);
+extern int proto_client_connect(Proto_Client_Handle ch, char *host, PortType p);
 
 extern int proto_client_set_session_lost_handler(Proto_Client_Handle ch,
 						 Proto_MT_Handler h);
@@ -46,7 +46,7 @@ extern int proto_client_set_event_handler(Proto_Client_Handle ch,
 static char proto_client_event_conn_handler(Proto_Session *s);
 
 // client side protocol rpc's
-extern int proto_client_hello(Proto_Client_Handle ch, int *id, int *team, Tuple *pos);
+extern int proto_client_hello(Proto_Client_Handle ch, int *id, int *team, Tuple *pos, int *offset);
 //extern int proto_client_map_info(Proto_Client_Handle ch, Pos *tuple);
 //extern int proto_client_map_info_team_1(Proto_Client_Handle ch, Pos *tuple);
 //extern int proto_client_map_info_team_2(Proto_Client_Handle ch, Pos *tuple);
