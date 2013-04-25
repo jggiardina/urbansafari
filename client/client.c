@@ -407,6 +407,23 @@ update_event_handler(Proto_Session *s)
 }
 
 static int
+winner_event_handler(Proto_Session *s)
+{
+  fprintf(stderr, "%s: started", __func__);
+  int winner = -1;
+  Client *C = proto_session_get_data(s);
+  Player *me = (Player *)C->data;
+  proto_session_body_unmarshall_int(s, 0, &winner);
+
+  ui_paint_winner(ui, winner);
+ 
+
+  fprintf(stderr, "%s: ended", __func__);
+  return -1;
+}
+
+
+static int
 hello_event_handler(Proto_Session *s)
 {
   Client *C = proto_session_get_data(s);
@@ -769,6 +786,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
       proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, update_event_handler);
       proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_HELLO, hello_event_handler);
       proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_GOODBYE, goodbye_event_handler);
+      proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_WINNER, winner_event_handler);
     }
     
     // now call hello to initialize player and map

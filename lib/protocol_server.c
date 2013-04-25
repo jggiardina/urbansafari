@@ -354,6 +354,7 @@ proto_server_mt_dump_handler(Proto_Session *s){
   
   return rc;
 }
+
 static int
 proto_server_mt_update_map_handler(Proto_Session *s, int numCellsToUpdate, int *cellsToUpdate){
   int rc = 1;
@@ -376,6 +377,23 @@ proto_server_mt_update_map_handler(Proto_Session *s, int numCellsToUpdate, int *
   return rc;
 } 
 
+static int
+proto_server_mt_post_win_handler(int winner){
+  int rc = 1;
+  Proto_Session *se;
+  Proto_Msg_Hdr hdr;
+
+  fprintf(stderr, "send win handler:\n");
+
+  se = proto_server_event_session();
+  hdr.type = PROTO_MT_EVENT_BASE_WINNER;
+  proto_session_hdr_marshall(se, &hdr);
+  proto_session_body_marshall_int(se, winner); 
+  //rc = proto_session_send_msg(s, 1); want to post event instead -JG
+  proto_server_post_event();
+
+  return rc;
+}
 
 /* Handler for returning num_home and num_jail */
 /*static int

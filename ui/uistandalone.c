@@ -410,6 +410,45 @@ ui_paintmap(UI *ui, Map *map)
 }
 
 sval
+ui_paint_y(UI *ui, SDL_Rect *t, int color) {
+  SPRITE_INDEX si = color == 0 ? TEAMA_S : TEAMB_S;
+  draw_cell(ui, si, t, ui->screen);
+  t->x = t->x + 2;
+  draw_cell(ui, si, t, ui->screen);
+  t->x = t->x - 2; t->y = t->y + 1;
+  draw_cell(ui, si, t, ui->screen);
+  t->x = t->x + 1;
+  draw_cell(ui, si, t, ui->screen); 
+  t->x = t->x + 1;
+  draw_cell(ui, si, t, ui->screen);
+  t->x = t->x - 1; t->y = t->y + 1;
+  draw_cell(ui, si, t, ui->screen);
+  t->y = t->y + 1;
+  draw_cell(ui, si, t, ui->screen);
+  return 1;
+}
+
+
+sval
+ui_paint_winner(UI *ui, int winner)
+{
+  SDL_Rect t;
+  t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w;
+
+  for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
+    for (t.x=0; t.x<ui->screen->w; t.x+=t.w) {
+      SPRITE_INDEX si = winner == 0 ? TEAMA_S : TEAMB_S;
+      draw_cell(ui, si, &t, ui->screen);
+    }
+  }
+  t.x = 20; t.y = 20;
+  ui_paint_y(ui, &t, winner);
+
+  SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
+  return 1;
+}
+
+sval
 ui_client_paintmap(UI *ui, Map *map)
 {
   SDL_Rect t;
