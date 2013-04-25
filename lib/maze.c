@@ -217,7 +217,53 @@ int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
   }
 }
 
-int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate){
+int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Player **player_array){
+  int i;
+  int red_at_home = 0;
+  int green_at_home = 0;
+  int red_jailed = 0;
+  int green_jailed = 0;
+
+  for(i=0;i<numplayers;i++){
+    Player *p = (Player*)player_array[i];
+    int x = p->pos.x;
+    int y = p->pos.y;
+
+    if(p->team_color == RED){
+      if(map->cells[x+(y*MAPHEIGHT)].t == HOME && map->cells[x+(y*MAPHEIGHT)].c == RED){
+        red_at_home++;
+      }
+    }
+
+    if(p->team_color == GREEN){
+      if(map->cells[x+(y*MAPHEIGHT)].t == HOME && map->cells[x+(y*MAPHEIGHT)].c == GREEN){
+        green_at_home++;
+      }
+    }
+  }
+
+  int rf_x, rf_y, gf_x, gf_y;
+  rf_x = map->flag_red->p.x;
+  rf_y = map->flag_red->p.y;
+  gf_x = map->flag_green->p.x;
+  gf_y = map->flag_green->p.y;
+
+  if(red_at_home == num_red){
+    if(map->cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && map->cells[rf_x+(rf_y*MAPHEIGHT)].c == RED && map->cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && map->cells[gf_x+(gf_y*MAPHEIGHT)].c == RED){
+      //red wins
+     fprintf( stderr, "RED TEAM WINS\n" );
+     return 1;
+    }
+  }else if(green_at_home == num_green){
+    if(map->cells[rf_x+(rf_y*MAPHEIGHT)].t == HOME && map->cells[rf_x+(rf_y*MAPHEIGHT)].c == GREEN && map->cells[gf_x+(gf_y*MAPHEIGHT)].t == HOME && map->cells[gf_x+(gf_y*MAPHEIGHT)].c == GREEN){
+      //green wins
+      fprintf( stderr, "GREEN TEAM WINS\n" );
+      return 1;
+    }
+  }
+}
+
+int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate, Player *players, int numplayers){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
 	Player p;
@@ -239,6 +285,7 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 			if (player->team_color == c.c){
 				find_free_jail(c.c, JAIL, &c.player->pos, map);
 				map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)].player = c.player;
+				c.player->state = 1;
 				c.player == NULL;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)];
 				(*numCellsToUpdate)++;
@@ -247,40 +294,29 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				find_free_jail(c.c, JAIL, &player->pos, map);
                                 map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
+				player->state = 1;
       				(*numCellsToUpdate)++;
-				return 1;
+				return 0;
 			}
 		}
 		return 0;
+	}else if (player->state ==1 && c.t != JAIL){
+		return 0;
+	}else if (player->state == 0 && c.c != player->team_color && c.t == JAIL){
+		int i;
+		for (i = 0; i < numplayers;i++){
+                        if (players[i].team_color == player->team_color && players[i].state == 1){
+                                players[i].state = 0;
+				fprintf( stderr, "Player freed\n" );
+                        }
+                }
+
+		
+		return 1;
 	}else{
 		return 1;
 	}
 	/*else{
-	//check if collides with player
-	for (int i = 0; i < numplayers; i++){
-		p = players[i];
-		if (p.x == x && p.y == y){//colliding players
-			if (p.c != player->c){
-				if (player->c != c.c && player->state != 0){//moving player will be jailed
-					//NYI- send player to jail function
-					player->state == 1;
-					return 1;
-				}else if (p.c != c.c && p.state != 0){//stationary player will be jailed
-					//NYI- send stationary player to jail function
-					p.state == 1;
-					player->x = x;
-					player->y = y;
-					//check flag
-					return 1;
-				}
-				
-			}else{
-				//INVALID MOVE
-				return 0;
-			}
-			
-		}	
-	}
 	if (c.t == JAIL && player->c != c.c && previousc.t != JAIL){//Jailbreak
 		for (int i = 0; i < numplayers; i++){
                 	p = players[i];
