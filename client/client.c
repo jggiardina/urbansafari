@@ -414,12 +414,12 @@ winner_event_handler(Proto_Session *s)
   Client *C = proto_session_get_data(s);
   Player *me = (Player *)C->data;
   proto_session_body_unmarshall_int(s, 0, &winner);
-
-  ui_paint_winner(ui, winner);
+  // TODO: MAKE THIS PRETTIER
+  //ui_paint_winner(ui, winner);
  
 
   fprintf(stderr, "%s: ended", __func__);
-  return -1;
+  return 1;
 }
 
 
