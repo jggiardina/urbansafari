@@ -263,10 +263,9 @@ int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Pl
   }
 }
 
-int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate, Player *players, int numplayers){
+int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate, Player **players, int numplayers, int num_red_players, int num_green_players){
 	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
-	Player p;
 	//previousc = map->cells[player->x +(player->y*MAPHEIGHT)];
 	c = map->cells[(x + player->pos.x)+((player->pos.y + y)*MAPHEIGHT)];
 	if (c.t == WALL){
@@ -289,6 +288,7 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				c.player == NULL;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)];
 				(*numCellsToUpdate)++;
+				check_win_condition(map, numplayers, num_red_players, num_green_players, players);
 				return 1;
 			}else{
 				find_free_jail(c.c, JAIL, &player->pos, map);
@@ -296,6 +296,7 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
 				player->state = 1;
       				(*numCellsToUpdate)++;
+				check_win_condition(map, numplayers, num_red_players, num_green_players, players);
 				return 0;
 			}
 		}
@@ -305,8 +306,9 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 	}else if (player->state == 0 && c.c != player->team_color && c.t == JAIL){
 		int i;
 		for (i = 0; i < numplayers;i++){
-                        if (players[i].team_color == player->team_color && players[i].state == 1){
-                                players[i].state = 0;
+                        if (players[i]->team_color == player->team_color){
+                                Player *p = (Player*)players[i];
+				p->state = 0;
 				fprintf( stderr, "Player freed\n" );
                         }
                 }
