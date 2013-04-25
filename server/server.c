@@ -282,6 +282,8 @@ int check_win_condition(){
   int i;
   int red_at_home = 0;
   int green_at_home = 0;
+  int red_jailed = 0;
+  int green_jailed = 0;
 
   for(i=0;i<globals.numplayers;i++){
     Player *p = globals.players[i];
