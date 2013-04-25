@@ -377,7 +377,7 @@ proto_server_mt_update_map_handler(Proto_Session *s, int numCellsToUpdate, int *
   return rc;
 } 
 
-static int
+extern int
 proto_server_mt_post_win_handler(int winner){
   int rc = 1;
   Proto_Session *se;
