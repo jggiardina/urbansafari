@@ -133,9 +133,42 @@ Flag* server_init_flag(Color team_color){
   flag->p.y = p->y;
   flag->c = team_color;
   flag->discovered = 0;
-  globals.map.cells[p->x+(p->y*MAPHEIGHT)].flag = flag;
+  
+  //TODO: Remove after testing
+  //flag->p.x = (int)team_color ? 4 : 3;
+  //flag->p.y = (int)team_color ? 90 : 90;
+
+  globals.map.cells[flag->p.x+(flag->p.y*MAPHEIGHT)].flag = flag;
   
   return flag;
+}
+
+int remove_player(Player *p, int *numCellsToUpdate, int *cellsToUpdate) {
+  pthread_mutex_lock(&globals.PlayersLock);
+  
+    pthread_mutex_lock(&globals.MAPLOCK);
+      //Drop Flag if they have it
+      if(p->flag >= 1)
+        drop_flag(globals.map, p, numCellsToUpdate, cellsToUpdate);
+      //Drop Hammer if they have it
+      if(p->hammer >= 1)
+        drop_hammer(globals.map, p, numCellsToUpdate, cellsToUpdate);
+
+      // remove player from cell
+      globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = NULL;
+      cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)];
+      (*numCellsToUpdate)++;
+    pthread_mutex_unlock(&globals.MAPLOCK);    
+                                
+    globals.players[p->id] = NULL;
+    if(p->id % 2 == 0){
+      globals.num_red_players--;
+    }else if(p->id % 2 == 1){
+      globals.num_green_players--;
+    }
+    globals.numplayers--; 
+  pthread_mutex_unlock(&globals.PlayersLock);
+  return 1;
 }
 
 void* server_init_player(int *id, int *team, Tuple *pos, int *numCellsToUpdate, int *cellsToUpdate)
@@ -555,7 +588,7 @@ main(int argc, char **argv)
   // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
   // SO JUMP THROW HOOPS :-(
 
-  pthread_mutex_init(&globals.PlayersLock, 0);
+  pthread_mutex_init(&globals.PlayersLock, NULL);
   globals.numplayers = 0;
   pthread_mutex_init(&globals.MAPLOCK, 0);
   globals.num_red_players = 0;

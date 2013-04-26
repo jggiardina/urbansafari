@@ -729,9 +729,15 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
       break;
     }
   }
-  
+
   pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
   */
+  // remove player and update clients
+  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = remove_player((void *)s->extra, numCellsToUpdate, cellsToUpdate);
+  
   Proto_Session *se;
   Proto_Msg_Hdr hdr;
   
@@ -739,12 +745,7 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
   rc=proto_session_send_msg(s,1);
     
   //Post Event Disconnect 
-  se = proto_server_event_session();
-  hdr.type = PROTO_MT_EVENT_BASE_GOODBYE;
-  proto_session_body_marshall_int(se, i);
-  proto_session_hdr_marshall(se, &hdr);
-  proto_server_post_event(); 
-
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
   return rc;
 }
 

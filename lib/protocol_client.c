@@ -225,12 +225,12 @@ proto_client_event_dispatcher(void * arg)
       }
     } else {
       //ADD CODE: maybe set the sessions_lost handler but not sure. -JG
-      proto_client_set_session_lost_handler(c,
-                                proto_client_session_lost_default_hdlr);
+      //proto_client_set_session_lost_handler(c, proto_client_session_lost_default_hdlr);
       goto leave;
     }
   }
  leave:
+  proto_client_set_session_lost_handler(c, proto_client_session_lost_default_hdlr);
   close(s->fd);
   return NULL;
 }

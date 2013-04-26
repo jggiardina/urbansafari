@@ -306,7 +306,7 @@ docmd(Client *C, char cmd)
   switch (cmd) {
   case 'q':
     printf("q ->quitting...\n");
-    doQuit();
+    //doQuit(C);
     rc=-1;
     break;
   case 'r':
@@ -406,7 +406,7 @@ update_event_handler(Proto_Session *s)
   return 1;
 }
 
-static int
+static void
 winner_event_handler(Proto_Session *s)
 {
   fprintf(stderr, "%s: started", __func__);
@@ -415,10 +415,13 @@ winner_event_handler(Proto_Session *s)
   Player *me = (Player *)C->data;
   proto_session_body_unmarshall_int(s, 0, &winner);
   // TODO: MAKE THIS PRETTIER
-  //ui_paint_winner(ui, winner);
- 
+  //ui_paint_winner(ui, winner/*, me->team*/);
 
   fprintf(stderr, "%s: ended", __func__);
+  //sleep(5);
+  //ui_shutdown_sdl();
+  //doQuit(C);
+  //exit(-1);
   return 1;
 }
 
@@ -608,7 +611,10 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       fprintf(stderr, "%s: dummy inc player id \n", __func__);
       return ui_dummy_inc_id(ui);
     }*/
-    if (sym == SDLK_q) return -1;
+    if (sym == SDLK_q) {
+      //doQuit(C);
+      return -1;
+    }
     if (sym == SDLK_z && mod == KMOD_NONE) {
       if (ui_zoom(ui, 1)==2) {
         Player *p = (Player *)C->data;
@@ -843,7 +849,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 int
 startDisconnection(Client *C)
 {
-  Proto_Session* se = proto_client_event_session(C->ph);
+  Proto_Session *se = proto_client_event_session(C->ph);
   close(se->fd);
   int rc = proto_client_goodbye(C->ph);
   // close connection to rpc and event channel
@@ -1065,8 +1071,8 @@ doQuit(Client *C)
   //printf("quit pressed\n");
   if (globals.connected == 1) {
     // disconnect first
-    //if (startDisconnection(C)<0) printf("Not able to disconnect. Quitting.\n");
-    //else fprintf(stdout, "Disconnected.\n");
+    if (startDisconnection(C)<0) printf("Not able to disconnect. Quitting.\n");
+    else fprintf(stdout, "Disconnected.\n");
   }
   return -1;
 }
