@@ -132,8 +132,9 @@ Flag* server_init_flag(Color team_color){
   flag->p.x = p->x;
   flag->p.y = p->y;
   flag->c = team_color;
+  flag->discovered = 0;
   globals.map.cells[p->x+(p->y*MAPHEIGHT)].flag = flag;
-
+  
   return flag;
 }
 
@@ -212,7 +213,15 @@ void paint_players(){
   globals.player_array[pl->id] = pl; //Just to put it somewhere for now TODO
 }*/
 
-//TODO: test this code to see if it gets updated, if it doesnt work then change it to only pass s->extra instead.  then there will be warnings with the mutex's tho with &p...cant get to &p.lock its an error
+int check_flags_discovered(Pos *p) {
+  if (abs(p->x - globals.map.flag_red->p.x) <= 5 && 
+      abs(p->y - globals.map.flag_red->p.y) <= 5)
+    globals.map.flag_red->discovered = 1;
+  if (abs(p->x - globals.map.flag_green->p.x) <= 5 && 
+      abs(p->y - globals.map.flag_green->p.y) <= 5)
+    globals.map.flag_green->discovered = 1;
+}
+
 int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
@@ -225,6 +234,9 @@ int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
       if (valid == 1){
     	p->pos.x += pos->x;
     	p->pos.y += pos->y;
+        // after valid move, check if flags need to be discovered
+        if (!globals.map.flag_red->discovered || !globals.map.flag_green->discovered)
+          check_flags_discovered(&p->pos);
       }else if(valid == 2){
         proto_server_mt_post_win_handler(0);
       }else if(valid == 3){
@@ -454,10 +466,25 @@ int marshall_players(Proto_Session *s){
 }
 
 int marshall_flags(Proto_Session *s){
-  proto_session_body_marshall_int(s, globals.map.flag_red->p.x);
-  proto_session_body_marshall_int(s, globals.map.flag_red->p.y);
-  proto_session_body_marshall_int(s, globals.map.flag_green->p.x);
-  proto_session_body_marshall_int(s, globals.map.flag_green->p.y);
+  Tuple rflag_pos = {-1, -1};
+  // has red been discovered yet?
+  proto_session_body_marshall_int(s, globals.map.flag_red->discovered);
+  if (globals.map.flag_red->discovered) {
+    rflag_pos.x = globals.map.flag_red->p.x;
+    rflag_pos.y = globals.map.flag_red->p.y;
+  }
+  proto_session_body_marshall_int(s, rflag_pos.x);
+  proto_session_body_marshall_int(s, rflag_pos.y);
+  
+  Tuple gflag_pos = {-1, -1};
+  // has green been discovered yet?
+  proto_session_body_marshall_int(s, globals.map.flag_green->discovered);
+  if (globals.map.flag_red->discovered) {
+    gflag_pos.x = globals.map.flag_green->p.x;
+    gflag_pos.y = globals.map.flag_green->p.y;
+  }
+  proto_session_body_marshall_int(s, gflag_pos.x);
+  proto_session_body_marshall_int(s, gflag_pos.y);
 }
 
 int marshall_hammers(Proto_Session *s){
