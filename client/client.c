@@ -429,7 +429,7 @@ winner_event_handler(Proto_Session *s)
   Player *me = (Player *)C->data;
   proto_session_body_unmarshall_int(s, 0, &winner);
   // TODO: MAKE THIS PRETTIER
-  //ui_paint_winner(ui, winner/*, me->team*/);
+  ui_paint_winner(ui, winner, me->team);
 
   fprintf(stderr, "%s: ended", __func__);
   //sleep(5);
