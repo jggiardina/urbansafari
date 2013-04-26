@@ -168,7 +168,7 @@ int take_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
     return 0;
   }
 }
-void find_free_jail(Color team_color, Cell_Type cell_type, Pos *p, Map *map){
+void find_free_cell(Color team_color, Cell_Type cell_type, Pos *p, Map *map){
   int j, i;
   Cell c;
 
@@ -218,24 +218,24 @@ int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
 }
 int drop_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
   int x,y;
-  x = player->pos.x;
-  y = player->pos.y;
 
   if(player->hammer != 0){
     fprintf( stderr, "Drop Hammer\n" );
     if(map->hammer_1->p.x == -1 && map->hammer_1->p.y == -1){
       player->hammer = 0;
-      map->hammer_1->p.x = x;
-      map->hammer_2->p.y = y;
-      map->cells[x+(y*MAPHEIGHT)].hammer = map->hammer_1;
-      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      map->hammer_1->p.x = 2;
+      map->hammer_1->p.y = 90;
+      /*find_free_cell(RED, HOME, &(map->hammer_1->p), map);*/
+      map->cells[map->hammer_1->p.x+(map->hammer_1->p.y*MAPHEIGHT)].hammer = map->hammer_1;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[map->hammer_1->p.x+(map->hammer_1->p.y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }else if(map->hammer_2->p.x == -1 && map->hammer_2->p.y == -1){
       player->hammer = 0;
-      map->hammer_2->p.x = x;
-      map->hammer_2->p.y = y;
-      map->cells[x+(y*MAPHEIGHT)].hammer = map->hammer_2;
-      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      map->hammer_1->p.x = 197;
+      map->hammer_1->p.y = 90;
+	/*find_free_cell(GREEN, HOME, &(map->hammer_2->p), map);*/
+	map->cells[map->hammer_2->p.x+(map->hammer_2->p.y*MAPHEIGHT)].hammer = map->hammer_2;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[map->hammer_2->p.x+(map->hammer_2->p.y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }
     return player->hammer;
@@ -308,29 +308,25 @@ int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Pl
 }
 
 int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate, Player **players, int numplayers, int num_red_players, int num_green_players){
-	//x, y are the destination coords. we get the current pos of player from *player->x/y
 	Cell c;
-	//previousc = map->cells[player->x +(player->y*MAPHEIGHT)];
 	c = map->cells[(x + player->pos.x)+((player->pos.y + y)*MAPHEIGHT)];
 	if (c.t == WALL){
-
 		if (player->hammer && c.breakable == 0){
 			map->cells[(x + player->pos.x)+((player->pos.y + y)*MAPHEIGHT)].t = FLOOR;//convert the destination to floor
-			//need to decrease hammer count, not sure how to do so yet
-			//trigger break wall event
+			drop_hammer(map, player, numCellsToUpdate, cellsToUpdate);
 			return 1;
-		
 		}
-		//INVALID MOVE
 		return 0;
 	}else if (c.player != NULL){
 		if (c.player->team_color != player->team_color){
 			if (player->team_color == c.c){
-				//Drop Flag if they have it
  				if(c.player->flag >= 1){
 				  drop_flag(map, c.player, numCellsToUpdate, cellsToUpdate);
 				}
-				find_free_jail(c.c, JAIL, &c.player->pos, map);
+				if (c.player->hammer == 1){
+				  drop_hammer(map, c.player, numCellsToUpdate, cellsToUpdate);
+				}
+				find_free_cell(c.c, JAIL, &c.player->pos, map);
 				map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)].player = c.player;
 				c.player->state = 1;
 				c.player == NULL;
@@ -344,11 +340,13 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
  				}
 				return 1;
 			}else{
-				//Drop Flag if they have it
                                 if(player->flag >= 1){
                                   drop_flag(map, player, numCellsToUpdate, cellsToUpdate);
                                 }
-				find_free_jail(c.c, JAIL, &player->pos, map);
+				if(player->hammer == 1){
+				  drop_hammer(map, c.player, numCellsToUpdate, cellsToUpdate);
+				}
+				find_free_cell(c.c, JAIL, &player->pos, map);
                                 map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
 				player->state = 1;
@@ -374,36 +372,12 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				fprintf( stderr, "Player freed\n" );
                         }
                 }
-
-		
 		return 1;
 	}else{
 		return 1;
 	}
-	/*else{
-	if (c.t == JAIL && player->c != c.c && previousc.t != JAIL){//Jailbreak
-		for (int i = 0; i < numplayers; i++){
-                	p = players[i];
-			if (p.state == JAILED && p.c == player->c){
-				p.state = FREE;
-			}
-		}
-		
-	}
-	//else check if jail, if foreign jail then free all players
-	}*/
 	return 1;
 }	
-//wall collision
-//whether 5 away from flag
-//player collision
-//jail collision
-
-
-/*TO ADD:
-UPDATE ALL PLAYERS EVENT
-UPDATE ALL FLAGS EVENT
-*/ 
 char* dump_map(Map *map){ 
   int j, i;
   Cell c;
