@@ -448,6 +448,23 @@ ui_paint_winner(UI *ui, int winner)
   return 1;
 }
 
+sval ui_paint_game_not_started(UI *ui){
+  /*SDL_Rect t;
+  t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w;
+
+  for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
+    for (t.x=0; t.x<ui->screen->w; t.x+=t.w) {
+      SPRITE_INDEX si = winner == 0 ? TEAMA_S : TEAMB_S;
+      draw_cell(ui, si, &t, ui->screen);
+    }
+  }
+  t.x = 20; t.y = 20;
+  ui_paint_y(ui, &t, winner);
+
+  SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
+  return 1;*/
+}
+
 sval
 ui_client_paintmap(UI *ui, Map *map)
 {
