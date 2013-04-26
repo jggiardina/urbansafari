@@ -216,6 +216,34 @@ int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
     return 0;
   }
 }
+int drop_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
+  int x,y;
+  x = player->pos.x;
+  y = player->pos.y;
+
+  if(player->hammer != 0){
+    fprintf( stderr, "Drop Hammer\n" );
+    if(map->hammer_1->p.x == -1 && map->hammer_1->p.y == -1){
+      player->hammer = 0;
+      map->hammer_1->p.x = x;
+      map->hammer_2->p.y = y;
+      map->cells[x+(y*MAPHEIGHT)].hammer = map->hammer_1;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
+    }else if(map->hammer_2->p.x == -1 && map->hammer_2->p.y == -1){
+      player->hammer = 0;
+      map->hammer_2->p.x = x;
+      map->hammer_2->p.y = y;
+      map->cells[x+(y*MAPHEIGHT)].hammer = map->hammer_2;
+      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      (*numCellsToUpdate)++;
+    }
+    return player->hammer;
+  }else{
+    return 0;
+  }
+}
+
 
 int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Player **player_array){
   int i;
@@ -298,6 +326,10 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 	}else if (c.player != NULL){
 		if (c.player->team_color != player->team_color){
 			if (player->team_color == c.c){
+				//Drop Flag if they have it
+ 				if(c.player->flag >= 1){
+				  drop_flag(map, c.player, numCellsToUpdate, cellsToUpdate);
+				}
 				find_free_jail(c.c, JAIL, &c.player->pos, map);
 				map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)].player = c.player;
 				c.player->state = 1;
@@ -312,6 +344,10 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
  				}
 				return 1;
 			}else{
+				//Drop Flag if they have it
+                                if(player->flag >= 1){
+                                  drop_flag(map, player, numCellsToUpdate, cellsToUpdate);
+                                }
 				find_free_jail(c.c, JAIL, &player->pos, map);
                                 map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
