@@ -479,7 +479,7 @@ int marshall_flags(Proto_Session *s){
   Tuple gflag_pos = {-1, -1};
   // has green been discovered yet?
   proto_session_body_marshall_int(s, globals.map.flag_green->discovered);
-  if (globals.map.flag_red->discovered) {
+  if (globals.map.flag_green->discovered) {
     gflag_pos.x = globals.map.flag_green->p.x;
     gflag_pos.y = globals.map.flag_green->p.y;
   }
