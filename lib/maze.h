@@ -17,6 +17,7 @@ typedef struct
 {
   Pos p;
   Color c;
+  int discovered;
 } __attribute__((__packed__)) Flag;
 
 typedef struct

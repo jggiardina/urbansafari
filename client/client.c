@@ -509,6 +509,7 @@ Flag* client_init_flag(Color team_color){
   flag->p.x = p.x;
   flag->p.y = p.y;
   flag->c = team_color;
+  flag->discovered = 0;
   //globals.map.cells[p->x+(p->y*MAPHEIGHT)].flag = flag;
 
   return flag;
@@ -749,21 +750,25 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
 int unmarshall_flags(Proto_Session *s, int *offset)
 {
   //Unmarshall Flags
-  proto_session_body_unmarshall_int(s, *offset, &(globals.map.flag_red->p.x));
-  proto_session_body_unmarshall_int(s, *offset+sizeof(int), &(globals.map.flag_red->p.y));
-  proto_session_body_unmarshall_int(s, *offset+2*sizeof(int), &(globals.map.flag_green->p.x));
-  proto_session_body_unmarshall_int(s, *offset+3*sizeof(int), &(globals.map.flag_green->p.y));
-  *offset += 4*sizeof(int);
-  int x,y;
+  proto_session_body_unmarshall_int(s, *offset, &(globals.map.flag_red->discovered));
+  proto_session_body_unmarshall_int(s, *offset+sizeof(int), &(globals.map.flag_red->p.x));
+  proto_session_body_unmarshall_int(s, *offset+2*sizeof(int), &(globals.map.flag_red->p.y));
+  proto_session_body_unmarshall_int(s, *offset+3*sizeof(int), &(globals.map.flag_green->discovered));
+  proto_session_body_unmarshall_int(s, *offset+4*sizeof(int), &(globals.map.flag_green->p.x));
+  proto_session_body_unmarshall_int(s, *offset+5*sizeof(int), &(globals.map.flag_green->p.y));
+  *offset += 6*sizeof(int);
+  int x,y,discovered;
   //Red Flag
   x = globals.map.flag_red->p.x;
   y = globals.map.flag_red->p.y;
-  if (x != -1 && y != -1)
+  discovered = globals.map.flag_red->discovered;
+  if (x != -1 && y != -1 && discovered)
     globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_red;
   //Green Flag
   x = globals.map.flag_green->p.x;
   y = globals.map.flag_green->p.y;
-  if(x != -1 && y != -1)
+  discovered = globals.map.flag_green->discovered;
+  if(x != -1 && y != -1 && discovered)
     globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_green;
   
   return 2;
