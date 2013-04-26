@@ -231,8 +231,8 @@ int drop_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpd
       (*numCellsToUpdate)++;
     }else if(map->hammer_2->p.x == -1 && map->hammer_2->p.y == -1){
       player->hammer = 0;
-      map->hammer_1->p.x = 197;
-      map->hammer_1->p.y = 90;
+      map->hammer_2->p.x = 197;
+      map->hammer_2->p.y = 90;
 	/*find_free_cell(GREEN, HOME, &(map->hammer_2->p), map);*/
 	map->cells[map->hammer_2->p.x+(map->hammer_2->p.y*MAPHEIGHT)].hammer = map->hammer_2;
       cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[map->hammer_2->p.x+(map->hammer_2->p.y*MAPHEIGHT)];
