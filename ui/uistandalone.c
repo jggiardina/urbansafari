@@ -58,6 +58,11 @@ struct UI_Globals {
 #define UI_REDFLAG_BMP "../ui/redflag.bmp"
 #define UI_GREENFLAG_BMP "../ui/greenflag.bmp"
 #define UI_JACKHAMMER_BMP "../ui/shovel.bmp"
+#define UI_GREENLOSE_BMP "../ui/greenlose.bmp"
+#define UI_REDLOSE_BMP "../ui/redlose.bmp"
+#define UI_GREENWIN_BMP "../ui/greenwin.bmp"
+#define UI_REDWIN_BMP "../ui/redwin.bmp"
+
 
 typedef enum {UI_SDLEVENT_UPDATE, UI_SDLEVENT_QUIT} UI_SDL_Event;
 
@@ -430,9 +435,9 @@ ui_paint_y(UI *ui, SDL_Rect *t, int color) {
 
 
 sval
-ui_paint_winner(UI *ui, int winner)
+ui_paint_winner(UI *ui, int winner, int team)
 {
-  SDL_Rect t;
+  /*SDL_Rect t;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w;
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
@@ -445,7 +450,75 @@ ui_paint_winner(UI *ui, int winner)
   ui_paint_y(ui, &t, winner);
 
   SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
+  return 1;*/
+  SDL_Rect r;
+  SDL_Surface *temp;
+  if (winner == 0){
+	if (team == 0){
+		temp = SDL_LoadBMP(UI_REDWIN_BMP);
+	}else{
+		temp = SDL_LoadBMP(UI_GREENLOSE_BMP);
+	}
+  }else{
+	if (team == 0){
+		temp = SDL_LoadBMP(UI_REDLOSE_BMP);
+	}else{
+		temp = SDL_LoadBMP(UI_GREENWIN_BMP);
+	}
+  }
+
+  if (temp != NULL) {
+    ui->sprites[RESULT_S].img = SDL_DisplayFormat(temp);
+    SDL_FreeSurface(temp);
+    r.h = ui->sprites[RESULT_S].img->h;
+    r.w = ui->sprites[RESULT_S].img->w;
+    r.x = ui->screen->w/2 - r.w/2;
+    r.y = ui->screen->h/2 - r.h/2;
+    //    printf("r.h=%d r.w=%d r.x=%d r.y=%d\n", r.h, r.w, r.x, r.y);
+    SDL_BlitSurface(ui->sprites[RESULT_S].img, NULL, ui->screen, &r);
+  } else {
+    /* Map the color yellow to this display (R=0xff, G=0xFF, B=0x00)
+       Note:  If the display is palettized, you must set the palette first.
+    
+    r.h = 40;
+    r.w = 80;
+    r.x = ui->screen->w/2 - r.w/2;
+    r.y = ui->screen->h/2 - r.h/2;
+
+    if ( SDL_MUSTLOCK(ui->screen) ) {
+      if ( SDL_LockSurface(ui->screen) < 0 ) {
+        fprintf(stderr, "Can't lock screen: %s\n", SDL_GetError());
+        return -1;
+      }
+    }
+    SDL_FillRect(ui->screen, &r, ui->yellow_c);
+
+    if ( SDL_MUSTLOCK(ui->screen) ) {
+      SDL_UnlockSurface(ui->screen);
+    }
+	*/
+  }
+  /* Update just the part of the display that we've changed */
+  SDL_UpdateRect(ui->screen, r.x, r.y, r.w, r.h);
   return 1;
+
+}
+
+sval ui_paint_game_not_started(UI *ui){
+  /*SDL_Rect t;
+  t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w;
+
+  for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
+    for (t.x=0; t.x<ui->screen->w; t.x+=t.w) {
+      SPRITE_INDEX si = winner == 0 ? TEAMA_S : TEAMB_S;
+      draw_cell(ui, si, &t, ui->screen);
+    }
+  }
+  t.x = 20; t.y = 20;
+  ui_paint_y(ui, &t, winner);
+
+  SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
+  return 1;*/
 }
 
 sval

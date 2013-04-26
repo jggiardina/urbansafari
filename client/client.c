@@ -26,7 +26,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <pthread.h>
-
+#include <semaphore.h>
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
 #include "../ui/tty.h"
@@ -55,6 +55,7 @@ struct Globals {
   char mapbuf[MAPHEIGHT*MAPWIDTH];
   pthread_mutex_t MAPLOCK;
   Player players[MAXPLAYERS];
+  int numplayers;
 } globals;
 
 typedef struct ClientState  {
@@ -64,6 +65,8 @@ typedef struct ClientState  {
 
 
 UI *ui;
+int game_started = 0;
+sem_t game_started_sem;
 
 int
 getInput()
@@ -399,10 +402,21 @@ update_event_handler(Proto_Session *s)
     int numhammers = unmarshall_hammers(s, &offset);
   pthread_mutex_unlock(&globals.MAPLOCK);
 
-  ui_center_cam(ui, &me->pos);
-  ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
+  if(!game_started){
+    if(globals.numplayers >= 2){
+      sem_post(&game_started_sem);
+      sem_post(&game_started_sem);
+      game_started = 1;
+    }
+  }
+
+  if(game_started){
+    ui_center_cam(ui, &me->pos);
+    ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
   
-  fprintf(stderr, "%s: ended", __func__);
+    fprintf(stderr, "%s: ended", __func__);
+  }
+
   return 1;
 }
 
@@ -516,9 +530,10 @@ main(int argc, char **argv)
     return -1;
   }
   // END ORIGINAL CLIENT
-  
+  globals.numplayers = 0; 
   pthread_mutex_init(&globals.MAPLOCK, 0);
- 
+  sem_init(&game_started_sem, 0, 0);
+
   // init ui code
   tty_init(STDIN_FILENO);
   ui_init(&(ui));
@@ -544,6 +559,12 @@ main(int argc, char **argv)
   // SO JUMP THROW HOOPS :-(
   
   proto_debug_on();
+
+  //Wait to start the game
+  if(!game_started){
+    sem_wait(&game_started_sem);
+  }
+
   ui_client_main_loop(ui, (void *)&globals.map, &c); //TODO:FIX if the update_event_handler for hello is not hit before this, then the map will not be initialized and the main loop will just print all floor (JAIL) cells until the handler is hit.
   return 0;
 }
@@ -695,6 +716,8 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
   //fprintf(stderr, "num players = %d\n", numplayers);
   bzero(globals.players, numplayers*sizeof(Player));
   *offset += sizeof(int);
+  globals.numplayers = numplayers;
+
   for (i = 0; i < numplayers; i++){
     pthread_mutex_init(&(globals.players[i].lock), NULL);
     //pthread_mutex_lock(&cur_id_mutex);
