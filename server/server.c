@@ -221,9 +221,14 @@ int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
       globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = NULL; // delete player from his old cell
       cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)];
       (*numCellsToUpdate)++;
-      if (valid_move(&globals.map, p, pos->x, pos->y, numCellsToUpdate, cellsToUpdate, globals.players, globals.numplayers, globals.num_red_players, globals.num_green_players)){
+      int valid = valid_move(&globals.map, p, pos->x, pos->y, numCellsToUpdate, cellsToUpdate, globals.players, globals.numplayers, globals.num_red_players, globals.num_green_players);
+      if (valid == 1){
     	p->pos.x += pos->x;
     	p->pos.y += pos->y;
+      }else if(valid == 2){
+        proto_server_mt_post_win_handler(0);
+      }else if(valid == 3){
+        proto_server_mt_post_win_handler(1);
       }
       globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = p; // add player to his new cell
       cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)];
