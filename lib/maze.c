@@ -298,6 +298,10 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 	}else if (c.player != NULL){
 		if (c.player->team_color != player->team_color){
 			if (player->team_color == c.c){
+				//Drop Flag if they have it
+ 				if(c.player->flag >= 1){
+				  drop_flag(map, c.player, numCellsToUpdate, cellsToUpdate);
+				}
 				find_free_jail(c.c, JAIL, &c.player->pos, map);
 				map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)].player = c.player;
 				c.player->state = 1;
@@ -312,6 +316,10 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
  				}
 				return 1;
 			}else{
+				//Drop Flag if they have it
+                                if(player->flag >= 1){
+                                  drop_flag(map, player, numCellsToUpdate, cellsToUpdate);
+                                }
 				find_free_jail(c.c, JAIL, &player->pos, map);
                                 map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
