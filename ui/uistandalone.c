@@ -47,6 +47,7 @@ struct UI_Globals {
   int CELL_W;
   int CAMERA_X;
   int CAMERA_Y;
+  pthread_mutex_t PAINTLOCK;
 } ui_globals;
 
 #define UI_FLOOR_BMP "../ui/floor.bmp"
@@ -364,6 +365,7 @@ draw_cell(UI *ui, SPRITE_INDEX si, SDL_Rect *t, SDL_Surface *s)
 sval
 ui_paintmap(UI *ui, Map *map) 
 {
+  pthread_mutex_lock(&ui_globals.PAINTLOCK);
   SDL_Rect t;
   int i = ui_globals.CAMERA_X;
   int j = ui_globals.CAMERA_Y;
@@ -411,6 +413,7 @@ ui_paintmap(UI *ui, Map *map)
   //dummyPlayer_paint(ui, &t);
 
   SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
+  pthread_mutex_unlock(&ui_globals.PAINTLOCK);
   return 1;
 }
 
@@ -824,6 +827,7 @@ ui_init(UI **ui)
   bzero(*ui, sizeof(UI));
   
   bzero(&ui_globals, sizeof(ui_globals));
+  pthread_mutex_init(&ui_globals.PAINTLOCK, 0);
 
   ui_globals.SCREEN_H = SCREENHEIGHT;
   ui_globals.SCREEN_W = SCREENWIDTH;
