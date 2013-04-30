@@ -173,7 +173,9 @@ int do_pickup_flag_rpc(UI *ui, Client *C)
   pthread_mutex_lock(&p->lock);
     p->flag = flag;
   pthread_mutex_unlock(&p->lock);
+  fprintf(stderr, "trying to get MAPLOCK\n");
   pthread_mutex_lock(&globals.MAPLOCK);
+  fprintf(stderr, "got MAPLOCK\n");
     if(flag == 1){
       globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = NULL;
       globals.map.flag_red->p.x = -1;
@@ -183,7 +185,9 @@ int do_pickup_flag_rpc(UI *ui, Client *C)
       globals.map.flag_green->p.x = -1;
       globals.map.flag_green->p.y = -1;
     }
+  fprintf(stderr, "trying to release MAPLOCK\n");
   pthread_mutex_unlock(&globals.MAPLOCK);
+  fprintf(stderr, "released MAPLOCK\n");
 }
 
 int do_drop_flag_rpc(UI *ui, Client *C)
@@ -194,7 +198,9 @@ int do_drop_flag_rpc(UI *ui, Client *C)
   pthread_mutex_lock(&p->lock);
     p->flag = 0;
   pthread_mutex_unlock(&p->lock);
+  fprintf(stderr, "trying to get MAPLOCK\n");
   pthread_mutex_lock(&globals.MAPLOCK);
+  fprintf(stderr, "got MAPLOCK\n");
     if(flag == 1){
       globals.map.cells[p->pos.x+(p->pos.y*MAPHEIGHT)].flag = globals.map.flag_red;
       globals.map.flag_red->p.x = p->pos.x;
@@ -204,7 +210,9 @@ int do_drop_flag_rpc(UI *ui, Client *C)
       globals.map.flag_green->p.x = p->pos.x;
       globals.map.flag_green->p.y = p->pos.y;
     }
+  fprintf(stderr, "trying to release MAPLOCK\n");
   pthread_mutex_unlock(&globals.MAPLOCK);
+  fprintf(stderr, "released MAPLOCK\n");
 }
 
 int do_pickup_hammer_rpc(UI *ui, Client *C)
@@ -388,11 +396,13 @@ convertMap(){
 static int
 update_event_handler(Proto_Session *s)
 {
-  fprintf(stderr, "%s: started", __func__);
+  fprintf(stderr, "%s: started\n", __func__);
   int offset = 0;
   Client *C = proto_session_get_data(s);
   Player *me = (Player *)C->data;
+  fprintf(stderr, "trying to get MAPLOCK\n");
   pthread_mutex_lock(&globals.MAPLOCK);
+  fprintf(stderr, "got MAPLOCK\n");
     //Unmarshall map
     int numCellsUpdate = unmarshall_cells_to_update(s, &offset);
     //Unmarshall Players
@@ -401,7 +411,9 @@ update_event_handler(Proto_Session *s)
     int numflags = unmarshall_flags(s, &offset);
     //Unmarshall Hammers
     int numhammers = unmarshall_hammers(s, &offset);
+  fprintf(stderr, "trying to release MAPLOCK\n");
   pthread_mutex_unlock(&globals.MAPLOCK);
+  fprintf(stderr, "released MAPLOCK\n");
 
   if(!game_started){
     if(globals.numplayers >= 2){
@@ -415,9 +427,9 @@ update_event_handler(Proto_Session *s)
     ui_center_cam(ui, &me->pos);
     ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
   
-    fprintf(stderr, "%s: ended", __func__);
+    fprintf(stderr, "%s: ended\n", __func__);
   }else if(game_over){
-    fprintf(stderr, "%s: Game is OVER!  You will be kicked in 10 seconds", __func__);
+    fprintf(stderr, "%s: Game is OVER!  You will be kicked in 10 seconds\n", __func__);
     sleep(10);
   }
 
@@ -427,7 +439,7 @@ update_event_handler(Proto_Session *s)
 static void
 winner_event_handler(Proto_Session *s)
 {
-  fprintf(stderr, "%s: started", __func__);
+  fprintf(stderr, "%s: started\n", __func__);
   int winner = -1;
   Client *C = proto_session_get_data(s);
   Player *me = (Player *)C->data;
@@ -436,7 +448,7 @@ winner_event_handler(Proto_Session *s)
   ui_paint_winner(ui, winner, me->team);
   game_over = 1;
 
-  fprintf(stderr, "%s: ended", __func__);
+  fprintf(stderr, "%s: ended\n", __func__);
   //sleep(5);
   //ui_shutdown_sdl();
   //doQuit(C);
@@ -450,7 +462,7 @@ hello_event_handler(Proto_Session *s)
 {
   Client *C = proto_session_get_data(s);
   
-  fprintf(stderr, "%s: called", __func__);
+  fprintf(stderr, "%s: called\n", __func__);
   return 1;
 }
 
@@ -459,38 +471,32 @@ goodbye_event_handler(Proto_Session *s)
 {
   Client *C = proto_session_get_data(s);
 
-  fprintf(stderr, "%s: called", __func__);
+  fprintf(stderr, "%s: called\n", __func__);
   return 1;
 }
 
 void
 usage(char *pgm)
 {
-  fprintf(stderr, "USAGE: %s <port|<<host port> [shell] [gui]>>\n"
+  fprintf(stderr, "USAGE: %s <host port> [shell] [gui]>>\n"
   " port : rpc port of a game server if this is only argument\n"
   " specified then host will default to localhost and\n"
   " only the graphical user interface will be started\n"
   " host port: if both host and port are specifed then the game\n"
   "examples:\n"
-  " %s 12345 : starts client connecting to localhost:12345\n"
-  " %s localhost 12345 : starts client connecting to locaalhost:12345\n",
+  " %s localhost 12345 : starts client connecting to localhost:12345\n",
   pgm, pgm, pgm, pgm);
 }
 
 void
 initGlobals(int argc, char **argv)
 {
-  if (argc==1) {
+  if (argc < 3) {
     //TODO: JUST FOR TESTING
     usage(argv[0]);
     exit(-1);
     //strncpy(globals.host, "curzon", STRLEN);
     //globals.port = 50373;
-  }
-
-  if (argc==2) {
-    strncpy(globals.host, "localhost", STRLEN);
-    globals.port = atoi(argv[1]);
   }
 
   if (argc>=3) {
@@ -547,6 +553,9 @@ main(int argc, char **argv)
   // end init ui code
 
   // RUN AUTO-CONNECT FIRST
+  fprintf(stderr, "trying to get MAPLOCK\n");
+  pthread_mutex_lock(&globals.MAPLOCK);
+  fprintf(stderr, "got MAPLOCK\n");
   if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) return -1;
   else {
     globals.connected = 1;
@@ -555,6 +564,9 @@ main(int argc, char **argv)
   // center the camera
   Player *p = (Player *)c.data;
   ui_center_cam(ui, &p->pos);
+  fprintf(stderr, "trying to release MAPLOCK\n");
+  pthread_mutex_unlock(&globals.MAPLOCK);
+  fprintf(stderr, "released MAPLOCK\n");
   // END CONNECT
 
   pthread_t tid;
@@ -884,7 +896,7 @@ startDisconnection(Client *C)
   Proto_Session* sr = proto_client_rpc_session(C->ph);
   close(sr->fd);
   globals.connected = 0;
-  return 0;
+  return rc;
 }
 
 // old client commands:
@@ -898,7 +910,7 @@ doConnect(Client *C)
   //VPRINTF("BEGIN: %s\n", globals.in.data);
 
   if (globals.connected==1) {
-     fprintf(stderr, "Already connected to server"); //do nothing
+     fprintf(stderr, "Already connected to server\n"); //do nothing
      //fprintf(stderr, "\n"); //do nothing
      return 1;
   } else {
