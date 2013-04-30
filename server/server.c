@@ -228,6 +228,7 @@ void* server_init_player(int *id, int *team, Tuple *pos, int *numCellsToUpdate, 
   pthread_mutex_unlock(&globals.MAPLOCK);
   
   globals.players[p->id] = p;
+  p->timestamp = (unsigned)time(NULL);
   pthread_mutex_unlock(&p->lock);  
 
   ui_paintmap(ui, &globals.map);
@@ -273,6 +274,7 @@ int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
       if (valid == 1){
     	p->pos.x += pos->x;
     	p->pos.y += pos->y;
+	p->timestamp = (unsigned)time(NULL);
         // after valid move, check if flags need to be discovered
         if (!globals.map.flag_red->discovered || !globals.map.flag_green->discovered)
           check_flags_discovered(&p->pos);
@@ -499,6 +501,7 @@ int marshall_players(Proto_Session *s){
       //fprintf(stderr, "y = %d\n", p.pos.y);
       //fprintf(stderr, "team = %d\n", p.team);
       proto_session_body_marshall_int(s, p.id);
+      proto_session_body_marshall_int(s, p.timestamp);
       proto_session_body_marshall_int(s, p.pos.x);
       proto_session_body_marshall_int(s, p.pos.y);
       proto_session_body_marshall_int(s, p.team);

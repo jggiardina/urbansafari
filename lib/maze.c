@@ -328,6 +328,7 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				}
 				find_free_cell(c.c, JAIL, &c.player->pos, map);
 				map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)].player = c.player;
+				c.player->timestamp = (unsigned)time(NULL);
 				c.player->state = 1;
 				c.player == NULL;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)];
@@ -347,6 +348,7 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				  drop_hammer(map, c.player, numCellsToUpdate, cellsToUpdate);
 				}
 				find_free_cell(c.c, JAIL, &player->pos, map);
+				player->timestamp = (unsigned)time(NULL);
                                 map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
 				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
 				player->state = 1;
@@ -366,9 +368,10 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 	}else if (player->state == 0 && c.c != player->team_color && c.t == JAIL){
 		int i;
 		for (i = 0; i < numplayers;i++){
-                        if (players[i]->team_color == player->team_color){
+                        if (players[i]->team_color == player->team_color && players[i]->state == 1){
                                 Player *p = (Player*)players[i];
 				p->state = 0;
+				p->timestamp = (unsigned)time(NULL);
 				fprintf( stderr, "Player freed\n" );
                         }
                 }
