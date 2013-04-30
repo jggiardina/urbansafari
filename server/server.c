@@ -486,21 +486,27 @@ int marshall_cells_to_update(Proto_Session *s, int *numCellsToUpdate, int *cells
 }
 
 int marshall_players(Proto_Session *s){
-  int i;
+  int i = 0;
+  int count = 0;
   Player p;
   proto_session_body_marshall_int(s, globals.numplayers);
-  for (i = 0; i < globals.numplayers; i++){
-	p = *(globals.players[i]);
-        //fprintf(stderr, "id = %d\n", p.id);
-	//fprintf(stderr, "x = %d\n", p.pos.x);
-	//fprintf(stderr, "y = %d\n", p.pos.y);
-        //fprintf(stderr, "team = %d\n", p.team);
-        proto_session_body_marshall_int(s, p.id);
-        proto_session_body_marshall_int(s, p.pos.x);
-        proto_session_body_marshall_int(s, p.pos.y);
-        proto_session_body_marshall_int(s, p.team);
-        proto_session_body_marshall_int(s, p.hammer);
-        proto_session_body_marshall_int(s, p.flag);
+  while (count < globals.numplayers && i < MAXPLAYERS) {
+  //for (i = 0; i < globals.numplayers; i++){
+    if (globals.players[i] != NULL) {
+      p = *(globals.players[i]);
+      //fprintf(stderr, "id = %d\n", p.id);
+      //fprintf(stderr, "x = %d\n", p.pos.x);
+      //fprintf(stderr, "y = %d\n", p.pos.y);
+      //fprintf(stderr, "team = %d\n", p.team);
+      proto_session_body_marshall_int(s, p.id);
+      proto_session_body_marshall_int(s, p.pos.x);
+      proto_session_body_marshall_int(s, p.pos.y);
+      proto_session_body_marshall_int(s, p.team);
+      proto_session_body_marshall_int(s, p.hammer);
+      proto_session_body_marshall_int(s, p.flag);
+      count++;
+    }
+    i++;
   }
 }
 
