@@ -43,6 +43,7 @@ typedef struct {
   int hammer;
   int flag;
   int state;
+  int timestamp;
 } __attribute__((__packed__)) Player;
 
 typedef struct
