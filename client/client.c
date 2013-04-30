@@ -310,7 +310,7 @@ docmd(Client *C, char cmd)
   switch (cmd) {
   case 'q':
     printf("q ->quitting...\n");
-    //doQuit(C);
+    doQuit(C);
     rc=-1;
     break;
   case 'r':
@@ -638,7 +638,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       return ui_dummy_inc_id(ui);
     }*/
     if (sym == SDLK_q) {
-      //doQuit(C);
+      doQuit(C);
       return -1;
     }
     if (sym == SDLK_z && mod == KMOD_NONE) {

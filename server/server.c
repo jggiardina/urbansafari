@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include <errno.h>
 #include <time.h>
 #include <sys/types.h>
@@ -145,7 +146,6 @@ Flag* server_init_flag(Color team_color){
 
 int remove_player(Player *p, int *numCellsToUpdate, int *cellsToUpdate) {
   pthread_mutex_lock(&globals.PlayersLock);
-  
     pthread_mutex_lock(&globals.MAPLOCK);
       //Drop Flag if they have it
       if(p->flag >= 1)
@@ -573,7 +573,7 @@ main(int argc, char **argv)
   pthread_t tid;
 
   tty_init(STDIN_FILENO);
-
+  
   ui_init(&(ui));
   ui_globals.CELL_W=2; //zoom out right away
   ui_globals.CELL_H=2; //zoom out right away
@@ -587,7 +587,6 @@ main(int argc, char **argv)
   proto_debug_on();
   // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
   // SO JUMP THROW HOOPS :-(
-
   pthread_mutex_init(&globals.PlayersLock, NULL);
   globals.numplayers = 0;
   pthread_mutex_init(&globals.MAPLOCK, 0);
