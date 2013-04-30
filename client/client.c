@@ -736,21 +736,27 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
 
   for (i = 0; i < numplayers; i++){
     pthread_mutex_init(&(globals.players[i].lock), NULL);
-    //pthread_mutex_lock(&cur_id_mutex);
+    pthread_mutex_lock(&(globals.players[i].lock));
+    int timestamp;
+
     proto_session_body_unmarshall_int(s, *offset, &(globals.players[i].id));
-    proto_session_body_unmarshall_int(s, *offset+sizeof(int), &(globals.players[i].pos.x));
-    //fprintf(stderr, "x = %d\n", players[i].pos.x);
-    proto_session_body_unmarshall_int(s, *offset + 2*sizeof(int), &(globals.players[i].pos.y));
-    //fprintf(stderr, "x = %d\n", players[i].pos.y);
-    proto_session_body_unmarshall_int(s, *offset + 3*sizeof(int), &(globals.players[i].team));
-    //fprintf(stderr, "team = %d\n", players[i].team);
-    proto_session_body_unmarshall_int(s, *offset + 4*sizeof(int), &(globals.players[i].hammer));
-    //fprintf(stderr, "hammer = %d\n", players[i].hammer);
-    proto_session_body_unmarshall_int(s, *offset + 5*sizeof(int), &(globals.players[i].flag));
-    //fprintf(stderr, "flag = %d\n", players[i].flag);
-    *offset+= 6*sizeof(int);
-    globals.map.cells[globals.players[i].pos.x + (globals.players[i].pos.y*MAPHEIGHT)].player = &(globals.players[i]);
-    //pthread_mutex_unlock(&cur_id_mutex);
+    proto_session_body_unmarshall_int(s, *offset + sizeof(int), &timestamp);
+    if (timestamp > globals.players[i].timestamp) {
+      globals.players[i].timestamp = timestamp;
+      proto_session_body_unmarshall_int(s, *offset+2*sizeof(int), &(globals.players[i].pos.x));
+      //fprintf(stderr, "x = %d\n", players[i].pos.x);
+      proto_session_body_unmarshall_int(s, *offset + 3*sizeof(int), &(globals.players[i].pos.y));
+      //fprintf(stderr, "x = %d\n", players[i].pos.y);
+      proto_session_body_unmarshall_int(s, *offset + 4*sizeof(int), &(globals.players[i].team));
+      //fprintf(stderr, "team = %d\n", players[i].team);
+      proto_session_body_unmarshall_int(s, *offset + 5*sizeof(int), &(globals.players[i].hammer));
+      //fprintf(stderr, "hammer = %d\n", players[i].hammer);
+      proto_session_body_unmarshall_int(s, *offset + 6*sizeof(int), &(globals.players[i].flag));
+      //fprintf(stderr, "flag = %d\n", players[i].flag);
+      globals.map.cells[globals.players[i].pos.x + (globals.players[i].pos.y*MAPHEIGHT)].player = &(globals.players[i]);
+    }
+    *offset += 7*sizeof(int);
+    pthread_mutex_unlock(&(globals.players[i].lock));
     //STATE
     ui_uip_init(ui, &globals.players[i].uip, globals.players[i].id, globals.players[i].team);
     
