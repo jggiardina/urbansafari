@@ -318,7 +318,7 @@ docmd(Client *C, char cmd)
   switch (cmd) {
   case 'q':
     printf("q ->quitting...\n");
-    //doQuit(C);
+    doQuit(C);
     rc=-1;
     break;
   case 'r':
@@ -426,7 +426,6 @@ update_event_handler(Proto_Session *s)
   if(game_started && !game_over){
     ui_center_cam(ui, &me->pos);
     ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
-  
     fprintf(stderr, "%s: ended\n", __func__);
   }else if(game_over){
     fprintf(stderr, "%s: Game is OVER!  You will be kicked in 10 seconds\n", __func__);
@@ -650,7 +649,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       return ui_dummy_inc_id(ui);
     }*/
     if (sym == SDLK_q) {
-      //doQuit(C);
+      doQuit(C);
       return -1;
     }
     if (sym == SDLK_z && mod == KMOD_NONE) {
@@ -890,7 +889,7 @@ int
 startDisconnection(Client *C)
 {
   Proto_Session *se = proto_client_event_session(C->ph);
-  close(se->fd);
+  //close(se->fd);
   int rc = proto_client_goodbye(C->ph);
   // close connection to rpc and event channel
   Proto_Session* sr = proto_client_rpc_session(C->ph);

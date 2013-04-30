@@ -709,8 +709,8 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
 
-  int userfd = s->fd;
-  int i;
+  //int userfd = s->fd;
+  //int i;
   
   /*pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
   fprintf(stderr, "looking for %d\n", userfd);
@@ -736,12 +736,13 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
   int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once
   int tmp = 0;
   int *numCellsToUpdate = &tmp;
-  int ret = remove_player((void *)s->extra, numCellsToUpdate, cellsToUpdate);
+  int ret = 1;
+  ret = remove_player((void *)s->extra, numCellsToUpdate, cellsToUpdate);
   
   Proto_Session *se;
   Proto_Msg_Hdr hdr;
   
-  proto_session_body_marshall_int(s, 1);
+  proto_session_body_marshall_int(s, ret);
   rc=proto_session_send_msg(s,1);
     
   //Post Event Disconnect 
