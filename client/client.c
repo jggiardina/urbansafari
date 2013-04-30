@@ -642,14 +642,14 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e, void *client)
       return -1;
     }
     if (sym == SDLK_z && mod == KMOD_NONE) {
-      if (ui_zoom(ui, 1)==2) {
+      if (ui_zoom(ui, 1)==2 && !game_over) {
         Player *p = (Player *)C->data;
         ui_center_cam(ui, &p->pos);
         return 2;
       }
     }
     if (sym == SDLK_z && mod & KMOD_SHIFT) {
-      if (ui_zoom(ui, -1)==2) {
+      if (ui_zoom(ui, -1)==2 && !game_over) {
         Player *p = (Player *)C->data;
         ui_center_cam(ui, &p->pos);
         return 2;
