@@ -265,6 +265,8 @@ proto_server_req_dispatcher(void * arg)
   //Proto_Server.ADD CODE Not sure but I think that we need to nullify with a -1 the eventsession.fd because we close the session next -RC
   Proto_Server.EventSession.fd = -1;
   close(s.fd);
+  s.rhdr.type = PROTO_MT_REQ_BASE_GOODBYE;
+  proto_server_mt_goodbye_handler(&s);
   return NULL;
 }
 
@@ -735,7 +737,7 @@ proto_server_mt_hello_handler(Proto_Session *s){
 }
 
 /* Handler for Disconnect */
-static int
+int
 proto_server_mt_goodbye_handler(Proto_Session *s){
   // TODO: For testing the re-painting on client issue
   pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
