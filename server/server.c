@@ -149,25 +149,31 @@ int remove_player(Player *p, int *numCellsToUpdate, int *cellsToUpdate) {
     pthread_mutex_lock(&globals.MAPLOCK);
       //Drop Flag if they have it
       if(p->flag >= 1)
-        drop_flag(globals.map, p, numCellsToUpdate, cellsToUpdate);
+        drop_flag(&globals.map, p, numCellsToUpdate, cellsToUpdate);
       //Drop Hammer if they have it
       if(p->hammer >= 1)
-        drop_hammer(globals.map, p, numCellsToUpdate, cellsToUpdate);
+        drop_hammer(&globals.map, p, numCellsToUpdate, cellsToUpdate);
 
       // remove player from cell
       globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = NULL;
       cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)];
       (*numCellsToUpdate)++;
     pthread_mutex_unlock(&globals.MAPLOCK);    
-                                
-    globals.players[p->id] = NULL;
+    
     if(p->id % 2 == 0){
       globals.num_red_players--;
     }else if(p->id % 2 == 1){
       globals.num_green_players--;
     }
+    globals.players[p->id] = NULL;
     globals.numplayers--; 
   pthread_mutex_unlock(&globals.PlayersLock);
+
+  if(globals.num_red_players == 0 && globals.numplayers > 0){
+    proto_server_mt_post_win_handler(1);
+  }else if(globals.num_green_players == 0 && globals.numplayers > 0){
+    proto_server_mt_post_win_handler(0);
+  }
   return 1;
 }
 

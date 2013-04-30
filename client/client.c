@@ -414,7 +414,6 @@ update_event_handler(Proto_Session *s)
   if(game_started && !game_over){
     ui_center_cam(ui, &me->pos);
     ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
-  
     fprintf(stderr, "%s: ended", __func__);
   }else if(game_over){
     fprintf(stderr, "%s: Game is OVER!  You will be kicked in 10 seconds", __func__);
@@ -878,7 +877,7 @@ int
 startDisconnection(Client *C)
 {
   Proto_Session *se = proto_client_event_session(C->ph);
-  close(se->fd);
+  //close(se->fd);
   int rc = proto_client_goodbye(C->ph);
   // close connection to rpc and event channel
   Proto_Session* sr = proto_client_rpc_session(C->ph);
