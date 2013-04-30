@@ -823,8 +823,8 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
     proto_session_set_data(proto_client_event_session(C->ph), C);
     if (h != NULL) {// THIS IS KEY - this is where we set event handlers
       proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, update_event_handler);
-      proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_HELLO, hello_event_handler);
-      proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_GOODBYE, goodbye_event_handler);
+      //proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_HELLO, hello_event_handler);
+      //proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_GOODBYE, goodbye_event_handler);
       proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_WINNER, winner_event_handler);
     }
     
