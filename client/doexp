@@ -1,0 +1,33 @@
+#!/bin/bash
+
+EXP=$1
+PORT=$2
+NUMROBOTS=$3
+
+if [[ -z $EXP || -z $PORT ]]; then
+  echo "USAGE: $0 <experimentname> <port> [robotcount]"
+  exit -1;
+fi
+
+[[ -z $NUMROBOTS ]] && NUMROBOTS=2
+
+export STARTDELAY=2;
+export ENDDELAY=2;
+export TS=$(date +'%d%m%y:%T')
+
+if [[ ! -d logs ]] && ! mkdir logs; then
+   echo "ERROR: failed to mkdir logs"
+   exit -1
+fi
+
+for ((i=0; i<NUMROBOTS; i++)); do
+      echo -e "rm3\nrm1\nrm2\nrm0\n" | (
+      sleep $STARTDELAY; 
+      while read cmd; do
+          echo $cmd; 
+      done; 
+      sleep $ENDDELAY;
+      echo q) | ./client curzon $PORT > logs/$EXP.$TS.$i 2>&1 &
+done
+
+wait
