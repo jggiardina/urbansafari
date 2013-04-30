@@ -66,6 +66,7 @@ typedef struct ClientState  {
 
 UI *ui;
 int game_started = 0;
+int game_over = 0;
 sem_t game_started_sem;
 
 int
@@ -410,11 +411,14 @@ update_event_handler(Proto_Session *s)
     }
   }
 
-  if(game_started){
+  if(game_started && !game_over){
     ui_center_cam(ui, &me->pos);
     ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
   
     fprintf(stderr, "%s: ended", __func__);
+  }else if(game_over){
+    fprintf(stderr, "%s: Game is OVER!  You will be kicked in 10 seconds", __func__);
+    sleep(10);
   }
 
   return 1;
@@ -430,6 +434,7 @@ winner_event_handler(Proto_Session *s)
   proto_session_body_unmarshall_int(s, 0, &winner);
   // TODO: MAKE THIS PRETTIER
   ui_paint_winner(ui, winner, me->team);
+  game_over = 1;
 
   fprintf(stderr, "%s: ended", __func__);
   //sleep(5);
