@@ -643,7 +643,7 @@ static int proto_server_mt_take_flag_handler(Proto_Session *s){
   proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
 
   //TODO: SAME TODO AS ABOVE
-  pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
 
 
   return rc;
