@@ -136,6 +136,7 @@ fprintf( stderr, "Cell set\n" );
 		cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
 		(*numCellsToUpdate)++;
 		player->hammer = 1;
+		player->timestamp = (unsigned)time(NULL);
 		return 1;
 	}else{
 		return 0;
@@ -163,6 +164,7 @@ int take_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
       cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }
+	player->timestamp = (unsigned)time(NULL);
     return 1;
   }else{
     return 0;
@@ -211,6 +213,7 @@ int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
       cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }
+	player->timestamp = (unsigned)time(NULL);
     return flag_type;
   }else{
     return 0;
@@ -238,6 +241,7 @@ int drop_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpd
       cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[map->hammer_2->p.x+(map->hammer_2->p.y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }
+	player->timestamp = (unsigned)time(NULL);
     return player->hammer;
   }else{
     return 0;
