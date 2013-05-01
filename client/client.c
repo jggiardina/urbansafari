@@ -733,9 +733,9 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
   //Unmarshall Players
   proto_session_body_unmarshall_int(s, *offset, &numplayers);
   //fprintf(stderr, "num players = %d\n", numplayers);
-  Player oldplayers[globals.numplayers];
+  //Player oldplayers[globals.numplayers];
   *offset += sizeof(int);
-  memcpy(oldplayers, globals.players, sizeof(Player)*globals.numplayers);
+  //memcpy(oldplayers, globals.players, sizeof(Player)*globals.numplayers);
   globals.numplayers = numplayers;
   int n = 0;
   bzero(globals.players, numplayers*sizeof(Player));
@@ -755,7 +755,7 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
       proto_session_body_unmarshall_int(s, *offset + 5*sizeof(int), &(globals.players[i].hammer));
       //fprintf(stderr, "hammer = %d\n", players[i].hammer);
       proto_session_body_unmarshall_int(s, *offset + 6*sizeof(int), &(globals.players[i].flag));
-    while(n < numplayers){
+    /*while(n < numplayers){
         if (oldplayers[n].id >= globals.players[i].id){
                 if (oldplayers[n].id == globals.players[i].id){
 			if (globals.players[i].timestamp < oldplayers[n].timestamp){ 
@@ -772,7 +772,7 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
         }else{
 		n++;
 	}
-    }
+    }*/
       //fprintf(stderr, "flag = %d\n", players[i].flag);
       globals.map.cells[globals.players[i].pos.x + (globals.players[i].pos.y*MAPHEIGHT)].player = &(globals.players[i]);
     *offset += 7*sizeof(int);
