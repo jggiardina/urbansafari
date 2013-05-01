@@ -128,14 +128,15 @@ fprintf( stderr, "Cell set\n" );
 		if (map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].c == RED) {
 		  map->hammer_1->p.x = -1;
 		  map->hammer_1->p.y = -1;
+		  player->hammer = 1;
 		} else {
 		  map->hammer_2->p.x = -1;
                   map->hammer_2->p.y = -1;
+		  player->hammer = 2;
 		}
 		map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer = NULL;
 		cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
 		(*numCellsToUpdate)++;
-		player->hammer = 1;
 		player->timestamp = (unsigned)time(NULL);
 		return 1;
 	}else{
@@ -224,15 +225,15 @@ int drop_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpd
 
   if(player->hammer != 0){
     fprintf( stderr, "Drop Hammer\n" );
-    if(map->hammer_1->p.x == -1 && map->hammer_1->p.y == -1){
-      player->hammer = 0;
-      map->hammer_1->p.x = 2;
-      map->hammer_1->p.y = 90;
-      /*find_free_cell(RED, HOME, &(map->hammer_1->p), map);*/
-      map->cells[map->hammer_1->p.x+(map->hammer_1->p.y*MAPHEIGHT)].hammer = map->hammer_1;
-      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[map->hammer_1->p.x+(map->hammer_1->p.y*MAPHEIGHT)];
-      (*numCellsToUpdate)++;
-    }else if(map->hammer_2->p.x == -1 && map->hammer_2->p.y == -1){
+    if(player->hammer == 1){
+      		player->hammer = 0;
+      		map->hammer_1->p.x = 2;
+       		map->hammer_1->p.y = 90;
+      		/*find_free_cell(RED, HOME, &(map->hammer_1->p), map);*/
+      		map->cells[map->hammer_1->p.x+(map->hammer_1->p.y*MAPHEIGHT)].hammer = map->hammer_1;
+      		cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[map->hammer_1->p.x+(map->hammer_1->p.y*MAPHEIGHT)];
+      		(*numCellsToUpdate)++;
+    }else if(player->hammer == 2){
       player->hammer = 0;
       map->hammer_2->p.x = 197;
       map->hammer_2->p.y = 90;
@@ -327,7 +328,7 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
  				if(c.player->flag >= 1){
 				  drop_flag(map, c.player, numCellsToUpdate, cellsToUpdate);
 				}
-				if (c.player->hammer == 1){
+				if (c.player->hammer > 0){
 				  drop_hammer(map, c.player, numCellsToUpdate, cellsToUpdate);
 				}
 				find_free_cell(c.c, JAIL, &c.player->pos, map);
@@ -348,7 +349,7 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
                                 if(player->flag >= 1){
                                   drop_flag(map, player, numCellsToUpdate, cellsToUpdate);
                                 }
-				if(player->hammer == 1){
+				if(player->hammer > 0){
 				  drop_hammer(map, c.player, numCellsToUpdate, cellsToUpdate);
 				}
 				find_free_cell(c.c, JAIL, &player->pos, map);
