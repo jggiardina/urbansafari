@@ -428,8 +428,9 @@ update_event_handler(Proto_Session *s)
     ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
     fprintf(stderr, "%s: ended\n", __func__);
   }else if(game_over){
-    fprintf(stderr, "%s: Game is OVER!  You will be kicked in 10 seconds\n", __func__);
-    sleep(10);
+    fprintf(stderr, "%s: Game is OVER!  You will be kicked soon\n", __func__);
+    //sleep(10);
+    
   }
 
   return 1;
@@ -448,10 +449,12 @@ winner_event_handler(Proto_Session *s)
   game_over = 1;
 
   fprintf(stderr, "%s: ended\n", __func__);
-  //sleep(5);
-  //ui_shutdown_sdl();
-  //doQuit(C);
-  //exit(-1);
+
+  fprintf(stderr, "%s: Game is OVER!  You will be kicked in 10 seconds\n", __func__);
+  sleep(10);
+  ui_shutdown_sdl();
+  doQuit(C);
+  exit(-1);
   return 1;
 }
 

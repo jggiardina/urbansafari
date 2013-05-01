@@ -27,7 +27,8 @@ for ((i=0; i<NUMROBOTS; i++)); do
           echo $cmd; 
       done; 
       sleep $ENDDELAY;
-      echo q) | ./client curzon $PORT > logs/$EXP.$TS.$i 2>&1 &
+      #echo q
+      ) | ./client curzon $PORT > logs/$EXP.$TS.$i 2>&1 &
 done
 
 wait
