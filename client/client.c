@@ -730,19 +730,19 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
   //Unmarshall Players
   proto_session_body_unmarshall_int(s, *offset, &numplayers);
   //fprintf(stderr, "num players = %d\n", numplayers);
-  bzero(globals.players, numplayers*sizeof(Player));
+  Player oldplayers[globals.numplayers];
   *offset += sizeof(int);
+  memcpy(oldplayers, globals.players, sizeof(Player)*globals.numplayers);
   globals.numplayers = numplayers;
-
+  int n = 0;
+  bzero(globals.players, numplayers*sizeof(Player));
   for (i = 0; i < numplayers; i++){
     pthread_mutex_init(&(globals.players[i].lock), NULL);
     pthread_mutex_lock(&(globals.players[i].lock));
     int timestamp;
 
     proto_session_body_unmarshall_int(s, *offset, &(globals.players[i].id));
-    proto_session_body_unmarshall_int(s, *offset + sizeof(int), &timestamp);
-    if (timestamp > globals.players[i].timestamp) {
-      globals.players[i].timestamp = timestamp;
+    proto_session_body_unmarshall_int(s, *offset + sizeof(int), &(globals.players[i].timestamp));
       proto_session_body_unmarshall_int(s, *offset+2*sizeof(int), &(globals.players[i].pos.x));
       //fprintf(stderr, "x = %d\n", players[i].pos.x);
       proto_session_body_unmarshall_int(s, *offset + 3*sizeof(int), &(globals.players[i].pos.y));
@@ -752,9 +752,26 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
       proto_session_body_unmarshall_int(s, *offset + 5*sizeof(int), &(globals.players[i].hammer));
       //fprintf(stderr, "hammer = %d\n", players[i].hammer);
       proto_session_body_unmarshall_int(s, *offset + 6*sizeof(int), &(globals.players[i].flag));
+    while(n < numplayers){
+        if (oldplayers[n].id >= globals.players[i].id){
+                if (oldplayers[n].id == globals.players[i].id){
+			if (globals.players[i].timestamp < oldplayers[n].timestamp){ 
+                        	globals.players[i].timestamp = oldplayers[n].timestamp;
+                        	globals.players[i].pos.x = oldplayers[n].pos.x;
+                        	globals.players[i].pos.y = oldplayers[n].pos.y;
+                       	 	globals.players[i].team = oldplayers[n].team;
+                        	globals.players[i].hammer = oldplayers[n].hammer;
+                        	globals.players[i].flag = oldplayers[n].flag;
+			}
+			n++;
+                } 
+		break;
+        }else{
+		n++;
+	}
+    }
       //fprintf(stderr, "flag = %d\n", players[i].flag);
       globals.map.cells[globals.players[i].pos.x + (globals.players[i].pos.y*MAPHEIGHT)].player = &(globals.players[i]);
-    }
     *offset += 7*sizeof(int);
     pthread_mutex_unlock(&(globals.players[i].lock));
     //STATE
