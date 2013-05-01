@@ -452,10 +452,10 @@ winner_event_handler(Proto_Session *s)
 
   fprintf(stderr, "%s: Game is OVER!  You will be kicked in 10 seconds\n", __func__);
   sleep(10);
-  ui_shutdown_sdl();
   doQuit(C);
+  fflush(stdout);
+  //ui_shutdown_sdl();
   exit(-1);
-  return 1;
 }
 
 
