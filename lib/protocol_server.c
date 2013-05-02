@@ -19,7 +19,7 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 *****************************************************************************/
-
+#include <sys/timeb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -232,6 +232,9 @@ proto_server_post_event(void)
 static void *
 proto_server_req_dispatcher(void * arg)
 {
+  struct timeb time_start;
+  struct timeb time_end;
+
   Proto_Session s;
   Proto_Msg_Types mt;
   Proto_MT_Handler hdlr;
@@ -256,8 +259,11 @@ proto_server_req_dispatcher(void * arg)
         if(mt > PROTO_MT_REQ_BASE_RESERVED_FIRST &&
            mt < PROTO_MT_REQ_BASE_RESERVED_LAST) { // Changed PROTO_MT_EVENT_BASE_RESERVED_FIRST and LAST to REQ, since we are dealing with requests/rpc and not the event channel. -JG
         i=mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
-        hdlr = Proto_Server.base_req_handlers[i]; 
+        hdlr = Proto_Server.base_req_handlers[i];
+        ftime(&time_start);
 	if (hdlr(&s)<0) goto leave;
+        ftime(&time_end);
+        fprintf(stderr, "proto_rpc_dispatcher TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
       }
     } else {
       goto leave;
