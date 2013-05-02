@@ -509,6 +509,7 @@ int marshall_players(Proto_Session *s){
       proto_session_body_marshall_int(s, p.team);
       proto_session_body_marshall_int(s, p.hammer);
       proto_session_body_marshall_int(s, p.flag);
+      proto_session_body_marshall_int(s, p.state);
       count++;
     }
     i++;

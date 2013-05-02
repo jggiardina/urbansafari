@@ -76,14 +76,15 @@ ui_player_img(UI *ui, int team)
 }
 
 static inline sval 
-pxSpriteOffSet(int team, int state)
+pxSpriteOffSet(int team, int state, int jailed)
 {
-  if (state == 1)
-    return (team==0) ? SPRITE_W*1 : SPRITE_W*2;
-  if (state == 2) 
-    return (team==0) ? SPRITE_W*2 : SPRITE_W*1;
-  if (state == 3) return SPRITE_W*3;
-  return 0;
+    if (jailed == 1) return SPRITE_W*3;
+    if (state == 1)
+      return (team==0) ? SPRITE_W*1 : SPRITE_W*2;
+    if (state == 2) 
+      return (team==0) ? SPRITE_W*2 : SPRITE_W*1;
+    if (state == 3) return SPRITE_W*3;
+    return 0;
 }
 
 extern sval
@@ -567,7 +568,7 @@ player_paint(UI *ui, SDL_Rect *t, Player *p)
   pthread_mutex_lock(&(p->lock));
     //t->y = p->pos.y * t->h; t->x = p->pos.x * t->w;//NOTE:We assume all players are drawn in the cell that they come from, so t->x,t->y is already correct
     p->uip->clip.x = p->uip->base_clip_x +
-      pxSpriteOffSet(p->team, p->flag);
+      pxSpriteOffSet(p->team, p->flag, p->state);
     SDL_BlitSurface(p->uip->img, &(p->uip->clip), ui->screen, t);
   pthread_mutex_unlock(&(p->lock));
 }
