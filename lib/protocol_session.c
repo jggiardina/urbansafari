@@ -205,6 +205,17 @@ proto_session_body_marshall_int(Proto_Session *s, int v)
   }
   return -1;
 }
+extern int
+proto_session_body_marshall_short_int(Proto_Session *s, short int v)
+{
+  if (s && ((s->slen + sizeof(short int)) < PROTO_SESSION_BUF_SIZE)) {
+    *((int *)(s->sbuf + s->slen)) = htonl(v);
+    s->slen+=sizeof(short int);
+    return 1;
+  }
+  return -1;
+}
+
 
 extern int 
 proto_session_body_unmarshall_int(Proto_Session *s, int offset, int *v)
@@ -216,6 +227,17 @@ proto_session_body_unmarshall_int(Proto_Session *s, int offset, int *v)
   }
   return -1;
 }
+extern int
+proto_session_body_unmarshall_short_int(Proto_Session *s, int offset, short int *v)
+{
+  if (s && ((s->rlen  - (offset + sizeof(short int))) >=0 )) {
+    *v = *((short int *)(s->rbuf + offset));
+    *v = htonl(*v);
+    return offset + sizeof(short int);
+  }
+  return -1;
+}
+
 
 extern int 
 proto_session_body_marshall_char(Proto_Session *s, char v)

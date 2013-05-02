@@ -166,6 +166,8 @@ proto_server_post_event(void)
 {
   int i;
   int num;
+  struct timeb time_start;
+
   //ADDED CODE
   struct timeval timeout;//timeout struct -WA
   int ready;//ready int to be used later -WA
@@ -185,6 +187,8 @@ proto_server_post_event(void)
 	//fprintf(stderr, "fd=%d\n", Proto_Server.EventSession.fd);
       num--;
 	//ADDED CODE -WA
+      ftime(&time_start);
+      proto_session_body_marshall_short_int(&Proto_Server.EventSession, time_start.millitm);
       if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {//here we push to the client the updated state -WA
 	//END ADDED CODE
 	// must have lost an event connection

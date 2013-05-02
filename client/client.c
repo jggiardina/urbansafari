@@ -400,6 +400,7 @@ update_event_handler(Proto_Session *s)
 {
   struct timeb time_start;
   struct timeb time_end;
+  struct timeb time_msg_end;
   ftime(&time_start);
   fprintf(stderr, "%s: started\n", __func__); 
   int offset = 0;
@@ -416,6 +417,10 @@ update_event_handler(Proto_Session *s)
     int numflags = unmarshall_flags(s, &offset);
     //Unmarshall Hammers
     int numhammers = unmarshall_hammers(s, &offset);
+  short int start;
+  proto_session_body_unmarshall_short_int(s, offset, &start);
+  ftime(&time_msg_end);
+  fprintf(stderr, "update msg send time  TOOK %hd MILLISECONDS\n", (time_msg_end.millitm-start));
   fprintf(stderr, "trying to release MAPLOCK\n");
   pthread_mutex_unlock(&globals.MAPLOCK);
   fprintf(stderr, "released MAPLOCK\n");
