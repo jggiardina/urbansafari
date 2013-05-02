@@ -27,6 +27,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <sys/time.h>
+#include <sys/timeb.h>
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
 #include "../ui/tty.h"
@@ -396,7 +398,10 @@ convertMap(){
 static int
 update_event_handler(Proto_Session *s)
 {
-  fprintf(stderr, "%s: started\n", __func__); // TIME
+  struct timeb time_start;
+  struct timeb time_end;
+  ftime(&time_start);
+  fprintf(stderr, "%s: started\n", __func__); 
   int offset = 0;
   Client *C = proto_session_get_data(s);
   Player *me = (Player *)C->data;
@@ -432,7 +437,10 @@ update_event_handler(Proto_Session *s)
     //sleep(10);
     
   }
-  fprintf(stderr, "%s: ended\n", __func__); //TIME
+  fprintf(stderr, "%s: ended\n", __func__); 
+  ftime(&time_end);
+  fprintf(stderr, "update_event_handler TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+
   return 1;
 }
 
@@ -704,7 +712,9 @@ clientInit(Client *C)
 
 int unmarshall_cells_to_update(Proto_Session *s, int *offset)
 {
-  // TIME
+   struct timeb time_start;
+  struct timeb time_end;
+  ftime(&time_start);
   int numCellsToUpdate, i;
   //Unmarshall Cells 
   proto_session_body_unmarshall_int(s, *offset, &numCellsToUpdate);
@@ -723,13 +733,17 @@ int unmarshall_cells_to_update(Proto_Session *s, int *offset)
     c->hammer = NULL;
     c->flag = NULL;
   }
-  //TIME
+  ftime(&time_end);
+  fprintf(stderr, "unmarshall_cells_to_update TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+
   return numCellsToUpdate;
 }
 
 int unmarshall_players(Proto_Session *s, int *offset, Player *me)
 {
-  //TIME
+  struct timeb time_start;
+  struct timeb time_end;
+  ftime(&time_start);
   int numplayers, i;
   //Unmarshall Players
   proto_session_body_unmarshall_int(s, *offset, &numplayers);
@@ -802,13 +816,16 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
       pthread_mutex_unlock(&me->lock);
     }
   }
-  //TIME
+  ftime(&time_end);
+  fprintf(stderr, "unmarshall_players TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
   return numplayers;
 }
 
 int unmarshall_flags(Proto_Session *s, int *offset)
 {
-  //TIME
+  struct timeb time_start;
+  struct timeb time_end;
+  ftime(&time_start);
   //Unmarshall Flags
   proto_session_body_unmarshall_int(s, *offset, &(globals.map.flag_red->discovered));
   proto_session_body_unmarshall_int(s, *offset+sizeof(int), &(globals.map.flag_red->p.x));
@@ -830,13 +847,17 @@ int unmarshall_flags(Proto_Session *s, int *offset)
   discovered = globals.map.flag_green->discovered;
   if(x != -1 && y != -1 && discovered)
     globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_green;
-  //TIME
+  ftime(&time_end);
+  fprintf(stderr, "unmarshall_flags TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
   return 2;
 }
 
 int unmarshall_hammers(Proto_Session *s, int *offset)
 {
-  //TIME
+ struct timeb time_start;
+  struct timeb time_end;
+  ftime(&time_start);
+ 
   //Unmarshall Hammers
   proto_session_body_unmarshall_int(s, *offset, &(globals.map.hammer_1->p.x));
   proto_session_body_unmarshall_int(s, *offset+sizeof(int), &(globals.map.hammer_1->p.y));
@@ -854,7 +875,8 @@ int unmarshall_hammers(Proto_Session *s, int *offset)
   y = globals.map.hammer_2->p.y;
   if (x != -1 && y != -1)
     globals.map.cells[x+(y*MAPHEIGHT)].hammer = globals.map.hammer_2;
-  //TIME
+  ftime(&time_end);
+  fprintf(stderr, "unmarshall_hammers TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
   return 2;
 }
 

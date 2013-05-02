@@ -24,6 +24,7 @@
 #include <stdlib.h> /* for exit() */
 #include <pthread.h>
 #include <assert.h>
+#include <sys/timeb.h>
 #include "uistandalone.h"
 //#include "../lib/maze.h"
 #include "../lib/misc.h"
@@ -367,7 +368,10 @@ draw_cell(UI *ui, SPRITE_INDEX si, SDL_Rect *t, SDL_Surface *s)
 sval
 ui_paintmap(UI *ui, Map *map) 
 {
-  //TIME
+  struct timeb time_start;
+  struct timeb time_end;
+  ftime(&time_start);
+
   pthread_mutex_lock(&ui_globals.PAINTLOCK);
   SDL_Rect t;
   int i = ui_globals.CAMERA_X;
@@ -417,7 +421,8 @@ ui_paintmap(UI *ui, Map *map)
 
   SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
   pthread_mutex_unlock(&ui_globals.PAINTLOCK);
-  //TIME
+  ftime(&time_end);
+  fprintf(stderr, "ui_paintmap TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
   return 1;
 }
 

@@ -27,6 +27,8 @@
 #include <errno.h>
 #include <pthread.h>
 #include <assert.h>
+#include <sys/time.h>
+#include <sys/timeb.h>
 #include "misc.h"
 #include "protocol.h"
 #include "protocol_utils.h"
@@ -520,7 +522,12 @@ extern int
 proto_client_move(Proto_Client_Handle ch, Tuple *tuple)
 {
   //TIME
-  int rc = do_move_rpc(ch,PROTO_MT_REQ_BASE_MOVE, tuple);  
+  struct timeb time_start;
+  struct timeb time_end;
+  ftime(&time_start);
+  int rc = do_move_rpc(ch,PROTO_MT_REQ_BASE_MOVE, tuple);
+  ftime(&time_end);
+  fprintf(stderr, "proto_client_move TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
   //TIME
   return rc;
 }
