@@ -760,6 +760,7 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
       proto_session_body_unmarshall_int(s, *offset + 5*sizeof(int), &(globals.players[i].hammer));
       //fprintf(stderr, "hammer = %d\n", players[i].hammer);
       proto_session_body_unmarshall_int(s, *offset + 6*sizeof(int), &(globals.players[i].flag));
+      proto_session_body_unmarshall_int(s, *offset + 7*sizeof(int), &(globals.players[i].state));
     /*while(n < numplayers){
         if (oldplayers[n].id >= globals.players[i].id){
                 if (oldplayers[n].id == globals.players[i].id){
@@ -780,7 +781,7 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
     }*/
       //fprintf(stderr, "flag = %d\n", players[i].flag);
       globals.map.cells[globals.players[i].pos.x + (globals.players[i].pos.y*MAPHEIGHT)].player = &(globals.players[i]);
-    *offset += 7*sizeof(int);
+    *offset += 8*sizeof(int);
     pthread_mutex_unlock(&(globals.players[i].lock));
     //STATE
     ui_uip_init(ui, &globals.players[i].uip, globals.players[i].id, globals.players[i].team);
@@ -792,6 +793,7 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
         me->pos.y = globals.players[i].pos.y;
         me->team = globals.players[i].team;
         me->flag = globals.players[i].flag;
+        me->state = globals.players[i].state;
         me->hammer = globals.players[i].hammer;
         //ui_center_cam(ui, &me->pos);
       pthread_mutex_unlock(&me->lock);
