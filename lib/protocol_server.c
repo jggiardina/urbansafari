@@ -548,7 +548,7 @@ proto_server_mt_cinfo_handler(Proto_Session *s){
 
 static int proto_server_mt_move_handler(Proto_Session *s){
   // TODO: For testing the re-painting on client issue
-  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
 
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -578,13 +578,13 @@ static int proto_server_mt_move_handler(Proto_Session *s){
   proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
 
   // TODO: SAME AS TODO ABOVE
-  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
 
   return rc;
 }
 static int proto_server_mt_take_hammer_handler(Proto_Session *s){
   // TODO: For testing the re-painting on client issue
-  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
 
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -610,7 +610,7 @@ static int proto_server_mt_take_hammer_handler(Proto_Session *s){
   proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
 
   //TODO: SAME AS TODO ABOVE
-  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
 
 
   return rc;
@@ -618,7 +618,7 @@ static int proto_server_mt_take_hammer_handler(Proto_Session *s){
 
 static int proto_server_mt_take_flag_handler(Proto_Session *s){
   // TODO: For testing the re-painting on client issue
-  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
 
 
   int rc = 1;
@@ -645,7 +645,7 @@ static int proto_server_mt_take_flag_handler(Proto_Session *s){
   proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
 
   //TODO: SAME TODO AS ABOVE
-  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
 
 
   return rc;
@@ -653,7 +653,7 @@ static int proto_server_mt_take_flag_handler(Proto_Session *s){
 
 static int proto_server_mt_drop_flag_handler(Proto_Session *s){
   // TODO: For testing the re-painting on client issue
-  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
 
 
   int rc = 1;
@@ -680,7 +680,7 @@ static int proto_server_mt_drop_flag_handler(Proto_Session *s){
   proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
 
   // TODO: SAME TODO AS ABOVE
-  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
 
 
   return rc;
@@ -690,7 +690,7 @@ static int proto_server_mt_drop_flag_handler(Proto_Session *s){
 static int
 proto_server_mt_hello_handler(Proto_Session *s){
   // TODO: For testing the re-painting on client issue
-  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
 
 
   int rc = 1;
@@ -732,7 +732,7 @@ proto_server_mt_hello_handler(Proto_Session *s){
   //pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 
   // TODO: SAME TODO AS ABOVE
-  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
 
    
   return rc;
@@ -742,7 +742,7 @@ proto_server_mt_hello_handler(Proto_Session *s){
 int
 proto_server_mt_goodbye_handler(Proto_Session *s){
   // TODO: For testing the re-painting on client issue
-  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
 
 
   int rc = 1;
@@ -796,7 +796,7 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
   proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
 
   // TODO: SAME TODO AS ABOVE
-  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+  pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
 
 
   return rc;
