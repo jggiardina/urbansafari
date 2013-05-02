@@ -246,9 +246,11 @@ proto_server_req_dispatcher(void * arg)
 
   fprintf(stderr, "proto_rpc_dispatcher: %p: Started: fd=%d\n", 
 	  pthread_self(), s.fd);
+  int rcv_msg;
 
   for (;;) {
-    if (proto_session_rcv_msg(&s)==1) {
+    rcv_msg = proto_session_rcv_msg(&s);
+    if (rcv_msg==1) {
         //ADD CODE: Very similar to the dispatcher from client - RC
         mt = proto_session_hdr_unmarshall_type(&s);
         if(mt > PROTO_MT_REQ_BASE_RESERVED_FIRST &&
@@ -265,8 +267,8 @@ proto_server_req_dispatcher(void * arg)
   //Proto_Server.ADD CODE Not sure but I think that we need to nullify with a -1 the eventsession.fd because we close the session next -RC
   Proto_Server.EventSession.fd = -1;
   close(s.fd);
-  s.rhdr.type = PROTO_MT_REQ_BASE_GOODBYE;
-  proto_server_mt_goodbye_handler(&s);
+  //When we get here on a quit command, the rcv_msg is -1, but they already removed player.
+  proto_server_set_req_handler(PROTO_MT_REQ_BASE_GOODBYE, proto_server_mt_goodbye_handler(&s));
   return NULL;
 }
 
