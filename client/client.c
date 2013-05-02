@@ -36,7 +36,7 @@
 #define XSTR(s) STR(s)
 #define BUFLEN 16384
 #define STR(s) #s
-#define MAXPLAYERS 200
+//#define MAXPLAYERS 200
 
 struct LineBuffer {
   char data[BUFLEN];
@@ -428,7 +428,7 @@ update_event_handler(Proto_Session *s)
     ui_paintmap(ui, &globals.map);//TODO: this call is making the movement a little laggy - need to optimize this function so we paint quicker 
     fprintf(stderr, "%s: ended\n", __func__);
   }else if(game_over){
-    fprintf(stderr, "%s: Game is OVER!  You will be kicked soon\n", __func__);
+    fprintf(stderr, "%s: Game is OVER!\n", __func__);
     //sleep(10);
     
   }
@@ -436,7 +436,7 @@ update_event_handler(Proto_Session *s)
   return 1;
 }
 
-static void
+static int
 winner_event_handler(Proto_Session *s)
 {
   fprintf(stderr, "%s: started\n", __func__);
@@ -450,12 +450,10 @@ winner_event_handler(Proto_Session *s)
 
   fprintf(stderr, "%s: ended\n", __func__);
 
-  fprintf(stderr, "%s: Game is OVER!  You will be kicked in 10 seconds\n", __func__);
-  sleep(10);
-  doQuit(C);
-  fflush(stdout);
-  //ui_shutdown_sdl();
-  exit(-1);
+  fprintf(stderr, "%s: Game is OVER!\n", __func__);
+  //sleep(10);
+  //doQuit(C);
+  return 1;
 }
 
 
@@ -733,9 +731,16 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
   //Unmarshall Players
   proto_session_body_unmarshall_int(s, *offset, &numplayers);
   //fprintf(stderr, "num players = %d\n", numplayers);
-  //Player oldplayers[globals.numplayers];
+  Player oldplayers[globals.numplayers];
   *offset += sizeof(int);
-  //memcpy(oldplayers, globals.players, sizeof(Player)*globals.numplayers);
+
+  // delete old players from cells
+  memcpy(oldplayers, globals.players, sizeof(Player)*globals.numplayers);
+  for (i = 0; i < globals.numplayers; i++) {
+    Player p = globals.players[i];
+    globals.map.cells[p.pos.x + (p.pos.y*MAPHEIGHT)].player = NULL;
+  }
+
   globals.numplayers = numplayers;
   int n = 0;
   bzero(globals.players, numplayers*sizeof(Player));

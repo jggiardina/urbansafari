@@ -43,7 +43,7 @@
 #define BUFLEN 16384
 #define STR(s) #s
 
-#define MAXPLAYERS 200
+//#define MAXPLAYERS 200
 
 struct LineBuffer {
   char data[BUFLEN];

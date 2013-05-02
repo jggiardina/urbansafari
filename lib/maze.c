@@ -257,8 +257,11 @@ int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Pl
   int red_jailed = 0;
   int green_jailed = 0;
 
-  for(i=0;i<numplayers;i++){
+  for(i=0;i<MAXPLAYERS;i++){
     Player *p = (Player*)player_array[i];
+    if (p == NULL) {
+      continue;
+    }
     int x = p->pos.x;
     int y = p->pos.y;
 

@@ -2,6 +2,7 @@
 #include "types.h"
 #define MAPHEIGHT 200
 #define MAPWIDTH 200
+#define MAXPLAYERS 200
 
 typedef enum {RED, GREEN} Color;
 
