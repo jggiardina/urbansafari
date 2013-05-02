@@ -144,7 +144,7 @@ Flag* server_init_flag(Color team_color){
   return flag;
 }
 
-int remove_player(Player *p, int *numCellsToUpdate, int *cellsToUpdate) {
+int remove_player(Player *p, int *numCellsToUpdate, void **cellsToUpdate) {
   if(globals.players[p->id] != NULL){
     pthread_mutex_lock(&globals.PlayersLock);
       pthread_mutex_lock(&globals.MAPLOCK);
@@ -157,7 +157,7 @@ int remove_player(Player *p, int *numCellsToUpdate, int *cellsToUpdate) {
 
         // remove player from cell
         globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = NULL;
-        cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)];
+        cellsToUpdate[*numCellsToUpdate] = (void *)&globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)];
         (*numCellsToUpdate)++;
       pthread_mutex_unlock(&globals.MAPLOCK);    
     
@@ -179,7 +179,7 @@ int remove_player(Player *p, int *numCellsToUpdate, int *cellsToUpdate) {
   return 1;
 }
 
-void* server_init_player(int *id, int *team, Tuple *pos, int *numCellsToUpdate, int *cellsToUpdate)
+void* server_init_player(int *id, int *team, Tuple *pos, int *numCellsToUpdate, void **cellsToUpdate)
 {
   pthread_mutex_lock(&globals.PlayersLock);
   
@@ -225,7 +225,7 @@ void* server_init_player(int *id, int *team, Tuple *pos, int *numCellsToUpdate, 
   pos->y = p->pos.y;
   pthread_mutex_lock(&globals.MAPLOCK);
     globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)].player = p;
-    cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)];
+    cellsToUpdate[*numCellsToUpdate] = (void *)&globals.map.cells[p->pos.x + (p->pos.y*globals.map.w)];
       (*numCellsToUpdate)++;
   pthread_mutex_unlock(&globals.MAPLOCK);
   
@@ -264,13 +264,13 @@ int check_flags_discovered(Pos *p) {
     globals.map.flag_green->discovered = 1;
 }
 
-int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
+int move(Tuple *pos, void *player, int *numCellsToUpdate, void **cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
   pthread_mutex_lock(&p->lock);
     pthread_mutex_lock(&globals.MAPLOCK);
       globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = NULL; // delete player from his old cell
-      cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)];
+      cellsToUpdate[*numCellsToUpdate] = (void *)&globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)];
       (*numCellsToUpdate)++;
       int valid = valid_move(&globals.map, p, pos->x, pos->y, numCellsToUpdate, cellsToUpdate, globals.players, globals.numplayers, globals.num_red_players, globals.num_green_players);
       if (valid == 1){
@@ -286,7 +286,7 @@ int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
         proto_server_mt_post_win_handler(1);
       }
       globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)].player = p; // add player to his new cell
-      cellsToUpdate[*numCellsToUpdate] = (int)&globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)];
+      cellsToUpdate[*numCellsToUpdate] = (void *)&globals.map.cells[p->pos.x + (p->pos.y*MAPWIDTH)];
       (*numCellsToUpdate)++;
     pthread_mutex_unlock(&globals.MAPLOCK);
     rc = 1;
@@ -304,7 +304,7 @@ int move(Tuple *pos, void *player, int *numCellsToUpdate, int *cellsToUpdate){
   ui_paintmap(ui, &globals.map); 
   return rc;
 }
-int takeHammer(void *player, int *numCellsToUpdate, int *cellsToUpdate){
+int takeHammer(void *player, int *numCellsToUpdate, void **cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
 
@@ -321,7 +321,7 @@ int takeHammer(void *player, int *numCellsToUpdate, int *cellsToUpdate){
   return rc;
 }
 
-int takeFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
+int takeFlag(void *player, int *numCellsToUpdate, void **cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
  
@@ -338,7 +338,7 @@ int takeFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
   return rc;
 }
 
-int dropFlag(void *player, int *numCellsToUpdate, int *cellsToUpdate){
+int dropFlag(void *player, int *numCellsToUpdate, void **cellsToUpdate){
   int rc = 0;
   Player *p = (Player *)player;
 
@@ -466,11 +466,11 @@ char* mapToASCII(){
 int getAsciiSize(){
 	return sizeof(globals.map.data_ascii);
 }
-char* getPlayers(){
+Player** getPlayers(){
 	return globals.players;
 }
 
-int marshall_cells_to_update(Proto_Session *s, int *numCellsToUpdate, int *cellsToUpdate){
+int marshall_cells_to_update(Proto_Session *s, int *numCellsToUpdate, void **cellsToUpdate){
   Cell **cell_pointers = (Cell **)cellsToUpdate;
   int i;
   Cell c;

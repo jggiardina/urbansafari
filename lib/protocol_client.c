@@ -27,7 +27,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <assert.h>
-
+#include "misc.h"
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_client.h"
@@ -519,7 +519,10 @@ extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType 
 extern int 
 proto_client_move(Proto_Client_Handle ch, Tuple *tuple)
 {
-  return do_move_rpc(ch,PROTO_MT_REQ_BASE_MOVE, tuple);  
+  //TIME
+  int rc = do_move_rpc(ch,PROTO_MT_REQ_BASE_MOVE, tuple);  
+  //TIME
+  return rc;
 }
 extern int
 proto_client_pick_up_hammer(Proto_Client_Handle ch, int *hammer)
