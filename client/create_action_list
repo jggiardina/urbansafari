@@ -1,0 +1,12 @@
+#!/bin/bash
+
+number=$1
+
+if [[ -z $number ]]; then
+  number=200
+fi
+
+for ((i=0; i<$number; i++))
+do
+  printf "rm$((RANDOM % 4))\\\n"
+done

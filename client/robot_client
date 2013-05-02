@@ -1,0 +1,8 @@
+#!/bin/bash
+
+#host=$1
+#port=$2
+
+#echo "$host $port"
+cat ./random_numbers_200
+
