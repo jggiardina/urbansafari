@@ -372,7 +372,7 @@ ui_paintmap(UI *ui, Map *map)
   struct timeb time_end;
   ftime(&time_start);
 
-  pthread_mutex_lock(&ui_globals.PAINTLOCK);
+  //pthread_mutex_lock(&ui_globals.PAINTLOCK);
   SDL_Rect t;
   int i = ui_globals.CAMERA_X;
   int j = ui_globals.CAMERA_Y;
@@ -420,7 +420,7 @@ ui_paintmap(UI *ui, Map *map)
   //dummyPlayer_paint(ui, &t);
 
   SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
-  pthread_mutex_unlock(&ui_globals.PAINTLOCK);
+  //pthread_mutex_unlock(&ui_globals.PAINTLOCK);
   ftime(&time_end);
   fprintf(stderr, "ui_paintmap TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
   return 1;

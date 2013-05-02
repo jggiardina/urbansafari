@@ -329,22 +329,22 @@ docmd(Client *C, char cmd)
   case 'w':
     printf("w ->do rpc: up\n");
     do_move_up_rpc(ui, C);
-    rc=2;
+    rc=1;
     break;
   case 's':
     printf("s ->do rpc: down\n");
     do_move_down_rpc(ui, C);
-    rc=2;
+    rc=1;
     break;
   case 'a':
     printf("a ->do rpc: left\n");
     do_move_left_rpc(ui, C);
-    rc=2;
+    rc=1;
     break;
   case 'd':
     printf("d ->do rpc: right\n");
     do_move_right_rpc(ui, C);
-    rc=2;
+    rc=1;
     break;
   case '\n':
     rc=1;
