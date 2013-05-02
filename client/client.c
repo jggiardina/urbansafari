@@ -575,7 +575,7 @@ main(int argc, char **argv)
   // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
   // SO JUMP THROW HOOPS :-(
   
-  proto_debug_on();
+  //proto_debug_on();
 
   //Wait to start the game
   if(!game_started){

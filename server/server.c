@@ -601,7 +601,7 @@ main(int argc, char **argv)
   ui_center_cam(ui, &center);
 
   pthread_create(&tid, NULL, shell, NULL);
-  proto_debug_on();
+  //proto_debug_on();
   // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
   // SO JUMP THROW HOOPS :-(
   pthread_mutex_init(&globals.PlayersLock, NULL);

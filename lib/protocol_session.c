@@ -37,13 +37,13 @@
 extern void
 proto_session_dump(Proto_Session *s)
 {
-  fprintf(stderr, "Session s=%p:\n", s);
-  fprintf(stderr, " fd=%d, extra=%p slen=%d, rlen=%d\n shdr:\n  ", 
-	  s->fd, s->extra,
-	  s->slen, s->rlen);
-  proto_dump_msghdr(&(s->shdr));
-  fprintf(stderr, " rhdr:\n  ");
-  proto_dump_msghdr(&(s->rhdr));
+  //fprintf(stderr, "Session s=%p:\n", s);
+  //fprintf(stderr, " fd=%d, extra=%p slen=%d, rlen=%d\n shdr:\n  ", 
+	  //s->fd, s->extra,
+	  //s->slen, s->rlen);
+  //proto_dump_msghdr(&(s->shdr));
+  //fprintf(stderr, " rhdr:\n  ");
+  //proto_dump_msghdr(&(s->rhdr));
 }
 
 extern void
