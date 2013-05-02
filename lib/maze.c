@@ -122,7 +122,7 @@ int check_breakable(Map *map){
   return 0;
 }
 
-int take_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
+int take_hammer(Map *map, Player *player, int *numCellsToUpdate, void **cellsToUpdate){
 	if (map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer != NULL && player->hammer == 0){
 fprintf( stderr, "Cell set\n" );	
 		if (map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].c == RED) {
@@ -135,7 +135,7 @@ fprintf( stderr, "Cell set\n" );
 		  player->hammer = 2;
 		}
 		map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].hammer = NULL;
-		cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
+		cellsToUpdate[*numCellsToUpdate] = (void *)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
 		(*numCellsToUpdate)++;
 		player->timestamp = (unsigned)time(NULL);
 		return 1;
@@ -144,7 +144,7 @@ fprintf( stderr, "Cell set\n" );
 	}
 }
 
-int take_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
+int take_flag(Map *map, Player *player, int *numCellsToUpdate, void **cellsToUpdate){
   int x,y;
   x = player->pos.x;
   y = player->pos.y;
@@ -155,14 +155,14 @@ int take_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
       map->flag_red->p.x = -1;
       map->flag_red->p.y = -1;
       map->cells[x+(y*MAPHEIGHT)].flag = NULL;
-      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      cellsToUpdate[*numCellsToUpdate] = (void *)&map->cells[x+(y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }else if(map->cells[x+(y*MAPHEIGHT)].flag->c == GREEN){
       player->flag = 2;
       map->flag_green->p.x = -1;
       map->flag_green->p.y = -1;
       map->cells[x+(y*MAPHEIGHT)].flag = NULL;
-      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      cellsToUpdate[*numCellsToUpdate] = (void *)&map->cells[x+(y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }
 	player->timestamp = (unsigned)time(NULL);
@@ -191,7 +191,7 @@ void find_free_cell(Color team_color, Cell_Type cell_type, Pos *p, Map *map){
   }
 }
 
-int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
+int drop_flag(Map *map, Player *player, int *numCellsToUpdate, void **cellsToUpdate){
   int x,y;
   x = player->pos.x;
   y = player->pos.y;
@@ -204,14 +204,14 @@ int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
       map->flag_red->p.x = x;
       map->flag_red->p.y = y;
       map->cells[x+(y*MAPHEIGHT)].flag = map->flag_red;
-      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      cellsToUpdate[*numCellsToUpdate] = (void *)&map->cells[x+(y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }else if(flag_type == 2){
       player->flag = 0;
       map->flag_green->p.x = x;
       map->flag_green->p.y = y;
       map->cells[x+(y*MAPHEIGHT)].flag = map->flag_green;
-      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[x+(y*MAPHEIGHT)];
+      cellsToUpdate[*numCellsToUpdate] = (void *)&map->cells[x+(y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }
 	player->timestamp = (unsigned)time(NULL);
@@ -220,7 +220,7 @@ int drop_flag(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdat
     return 0;
   }
 }
-int drop_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpdate){
+int drop_hammer(Map *map, Player *player, int *numCellsToUpdate, void **cellsToUpdate){
   int x,y;
 
   if(player->hammer != 0){
@@ -231,7 +231,7 @@ int drop_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpd
        		map->hammer_1->p.y = 90;
       		/*find_free_cell(RED, HOME, &(map->hammer_1->p), map);*/
       		map->cells[map->hammer_1->p.x+(map->hammer_1->p.y*MAPHEIGHT)].hammer = map->hammer_1;
-      		cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[map->hammer_1->p.x+(map->hammer_1->p.y*MAPHEIGHT)];
+      		cellsToUpdate[*numCellsToUpdate] = (void *)&map->cells[map->hammer_1->p.x+(map->hammer_1->p.y*MAPHEIGHT)];
       		(*numCellsToUpdate)++;
     }else if(player->hammer == 2){
       player->hammer = 0;
@@ -239,7 +239,7 @@ int drop_hammer(Map *map, Player *player, int *numCellsToUpdate, int *cellsToUpd
       map->hammer_2->p.y = 90;
 	/*find_free_cell(GREEN, HOME, &(map->hammer_2->p), map);*/
 	map->cells[map->hammer_2->p.x+(map->hammer_2->p.y*MAPHEIGHT)].hammer = map->hammer_2;
-      cellsToUpdate[*numCellsToUpdate] = (int *)&map->cells[map->hammer_2->p.x+(map->hammer_2->p.y*MAPHEIGHT)];
+      cellsToUpdate[*numCellsToUpdate] = (void *)&map->cells[map->hammer_2->p.x+(map->hammer_2->p.y*MAPHEIGHT)];
       (*numCellsToUpdate)++;
     }
 	player->timestamp = (unsigned)time(NULL);
@@ -315,7 +315,7 @@ int check_win_condition(Map *map, int numplayers, int num_red, int num_green, Pl
   return -1;
 }
 
-int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, int *cellsToUpdate, Player **players, int numplayers, int num_red_players, int num_green_players){
+int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, void **cellsToUpdate, Player **players, int numplayers, int num_red_players, int num_green_players){
 	Cell c;
 	c = map->cells[(x + player->pos.x)+((player->pos.y + y)*MAPHEIGHT)];
 	if (c.t == WALL){
@@ -339,7 +339,7 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				c.player->timestamp = (unsigned)time(NULL);
 				c.player->state = 1;
 				c.player == NULL;
-				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)];
+				cellsToUpdate[*numCellsToUpdate] = (void *)&map->cells[(c.player->pos.x)+((c.player->pos.y)*MAPHEIGHT)];
 				(*numCellsToUpdate)++;
 				int winner = check_win_condition(map, numplayers, num_red_players, num_green_players, players);
 				if(winner == 0){
@@ -358,7 +358,7 @@ int valid_move(Map *map, Player *player, int x, int y, int *numCellsToUpdate, in
 				find_free_cell(c.c, JAIL, &player->pos, map);
 				player->timestamp = (unsigned)time(NULL);
                                 map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)].player = player;
-				cellsToUpdate[*numCellsToUpdate] = (int)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
+				cellsToUpdate[*numCellsToUpdate] = (void *)&map->cells[(player->pos.x)+((player->pos.y)*MAPHEIGHT)];
 				player->state = 1;
       				(*numCellsToUpdate)++;
 				int winner = check_win_condition(map, numplayers, num_red_players, num_green_players, players);

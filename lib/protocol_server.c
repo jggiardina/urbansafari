@@ -367,7 +367,7 @@ proto_server_mt_dump_handler(Proto_Session *s){
 }
 
 static int
-proto_server_mt_update_map_handler(Proto_Session *s, int numCellsToUpdate, int *cellsToUpdate){
+proto_server_mt_update_map_handler(Proto_Session *s, int *numCellsToUpdate, void **cellsToUpdate){
   int rc = 1;
   Proto_Session *se;
   Proto_Msg_Hdr hdr;
@@ -569,7 +569,7 @@ static int proto_server_mt_move_handler(Proto_Session *s){
   Tuple pos = {0, 0};
   proto_session_body_unmarshall_int(s, 0, &pos.x);
   proto_session_body_unmarshall_int(s, sizeof(int), &pos.y);
-  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once
   int tmp = 0;
   int *numCellsToUpdate = &tmp;
   int ret = move(&pos, (void *)s->extra, numCellsToUpdate, cellsToUpdate);  
@@ -601,7 +601,7 @@ static int proto_server_mt_take_hammer_handler(Proto_Session *s){
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
   int tmp = 0;
   int *numCellsToUpdate = &tmp;
   int ret = takeHammer((void *)s->extra, numCellsToUpdate, cellsToUpdate);
@@ -636,7 +636,7 @@ static int proto_server_mt_take_flag_handler(Proto_Session *s){
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
   int tmp = 0;
   int *numCellsToUpdate = &tmp;
   int ret = takeFlag((void *)s->extra, numCellsToUpdate, cellsToUpdate);
@@ -671,7 +671,7 @@ static int proto_server_mt_drop_flag_handler(Proto_Session *s){
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
-  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
   int tmp = 0;
   int *numCellsToUpdate = &tmp;
   int ret = dropFlag((void *)s->extra, numCellsToUpdate, cellsToUpdate);
@@ -716,10 +716,10 @@ proto_server_mt_hello_handler(Proto_Session *s){
   int id = -1;
   int team = -1;
   Tuple pos = {-1, -1};
-  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
   int tmp = 0;
   int *numCellsToUpdate = &tmp;
-  void *p = server_init_player(&id, &team, &pos, numCellsToUpdate, cellsToUpdate); 
+  void *p = (void *)server_init_player(&id, &team, &pos, numCellsToUpdate, cellsToUpdate); 
   s->extra = p;
   
   proto_session_hdr_marshall(s, &h);  
@@ -727,7 +727,7 @@ proto_server_mt_hello_handler(Proto_Session *s){
   proto_session_body_marshall_int(s, pos.x);  
   proto_session_body_marshall_int(s, pos.y);  
   proto_session_body_marshall_int(s, team);  
-  proto_session_body_marshall_bytes(s, getAsciiSize(), mapToASCII());
+  proto_session_body_marshall_bytes(s, getAsciiSize(), (char *)mapToASCII());
   marshall_players(s);
   marshall_flags(s);
   marshall_hammers(s);
@@ -786,7 +786,7 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
   pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
   */
   // remove player and update clients
-  int cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once
   int tmp = 0;
   int *numCellsToUpdate = &tmp;
   int ret = 1;

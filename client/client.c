@@ -31,7 +31,7 @@
 #include "../lib/protocol_utils.h"
 #include "../ui/tty.h"
 #include "../ui/uistandalone.c"
-
+#include "../lib/misc.h"
 #define STRLEN 81
 #define XSTR(s) STR(s)
 #define BUFLEN 16384
@@ -375,7 +375,7 @@ shell(void *arg)
   ui_quit(ui);
   return NULL;
 }
-char*
+Map *
 getMapPointer(){
         return &globals.map;
 }
@@ -396,7 +396,7 @@ convertMap(){
 static int
 update_event_handler(Proto_Session *s)
 {
-  fprintf(stderr, "%s: started\n", __func__);
+  fprintf(stderr, "%s: started\n", __func__); // TIME
   int offset = 0;
   Client *C = proto_session_get_data(s);
   Player *me = (Player *)C->data;
@@ -432,7 +432,7 @@ update_event_handler(Proto_Session *s)
     //sleep(10);
     
   }
-
+  fprintf(stderr, "%s: ended\n", __func__); //TIME
   return 1;
 }
 
@@ -704,6 +704,7 @@ clientInit(Client *C)
 
 int unmarshall_cells_to_update(Proto_Session *s, int *offset)
 {
+  // TIME
   int numCellsToUpdate, i;
   //Unmarshall Cells 
   proto_session_body_unmarshall_int(s, *offset, &numCellsToUpdate);
@@ -711,22 +712,24 @@ int unmarshall_cells_to_update(Proto_Session *s, int *offset)
   for (i = 0; i < numCellsToUpdate; i++){
     // LOCK THE MAP
     Pos pos = {-1,-1}; 
-    proto_session_body_unmarshall_int(s, *offset, &(pos.x));
-    proto_session_body_unmarshall_int(s, *offset+sizeof(int), &(pos.y));
+    proto_session_body_unmarshall_int(s, *offset, (int *)&(pos.x));
+    proto_session_body_unmarshall_int(s, *offset+sizeof(int), (int *)&(pos.y));
     Cell *c = &globals.map.cells[pos.x + (pos.y*MAPWIDTH)];
-    proto_session_body_unmarshall_int(s, *offset + 2*sizeof(int), &(c->c));
-    proto_session_body_unmarshall_int(s, *offset + 3*sizeof(int), &(c->t));
-    proto_session_body_unmarshall_int(s, *offset + 4*sizeof(int), &(c->breakable));
+    proto_session_body_unmarshall_int(s, *offset + 2*sizeof(int), (int *)&(c->c));
+    proto_session_body_unmarshall_int(s, *offset + 3*sizeof(int), (int *)&(c->t));
+    proto_session_body_unmarshall_int(s, *offset + 4*sizeof(int), (int *)&(c->breakable));
     *offset += 5*sizeof(int);
     c->player = NULL; // remove the player/hammer/flag from this cell just in case, it will fix itself later
     c->hammer = NULL;
     c->flag = NULL;
   }
+  //TIME
   return numCellsToUpdate;
 }
 
 int unmarshall_players(Proto_Session *s, int *offset, Player *me)
 {
+  //TIME
   int numplayers, i;
   //Unmarshall Players
   proto_session_body_unmarshall_int(s, *offset, &numplayers);
@@ -760,6 +763,7 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
       proto_session_body_unmarshall_int(s, *offset + 5*sizeof(int), &(globals.players[i].hammer));
       //fprintf(stderr, "hammer = %d\n", players[i].hammer);
       proto_session_body_unmarshall_int(s, *offset + 6*sizeof(int), &(globals.players[i].flag));
+      proto_session_body_unmarshall_int(s, *offset + 7*sizeof(int), &(globals.players[i].state));
     /*while(n < numplayers){
         if (oldplayers[n].id >= globals.players[i].id){
                 if (oldplayers[n].id == globals.players[i].id){
@@ -780,7 +784,7 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
     }*/
       //fprintf(stderr, "flag = %d\n", players[i].flag);
       globals.map.cells[globals.players[i].pos.x + (globals.players[i].pos.y*MAPHEIGHT)].player = &(globals.players[i]);
-    *offset += 7*sizeof(int);
+    *offset += 8*sizeof(int);
     pthread_mutex_unlock(&(globals.players[i].lock));
     //STATE
     ui_uip_init(ui, &globals.players[i].uip, globals.players[i].id, globals.players[i].team);
@@ -792,16 +796,19 @@ int unmarshall_players(Proto_Session *s, int *offset, Player *me)
         me->pos.y = globals.players[i].pos.y;
         me->team = globals.players[i].team;
         me->flag = globals.players[i].flag;
+        me->state = globals.players[i].state;
         me->hammer = globals.players[i].hammer;
         //ui_center_cam(ui, &me->pos);
       pthread_mutex_unlock(&me->lock);
     }
   }
+  //TIME
   return numplayers;
 }
 
 int unmarshall_flags(Proto_Session *s, int *offset)
 {
+  //TIME
   //Unmarshall Flags
   proto_session_body_unmarshall_int(s, *offset, &(globals.map.flag_red->discovered));
   proto_session_body_unmarshall_int(s, *offset+sizeof(int), &(globals.map.flag_red->p.x));
@@ -823,12 +830,13 @@ int unmarshall_flags(Proto_Session *s, int *offset)
   discovered = globals.map.flag_green->discovered;
   if(x != -1 && y != -1 && discovered)
     globals.map.cells[x+(y*MAPHEIGHT)].flag = globals.map.flag_green;
-  
+  //TIME
   return 2;
 }
 
 int unmarshall_hammers(Proto_Session *s, int *offset)
 {
+  //TIME
   //Unmarshall Hammers
   proto_session_body_unmarshall_int(s, *offset, &(globals.map.hammer_1->p.x));
   proto_session_body_unmarshall_int(s, *offset+sizeof(int), &(globals.map.hammer_1->p.y));
@@ -846,7 +854,7 @@ int unmarshall_hammers(Proto_Session *s, int *offset)
   y = globals.map.hammer_2->p.y;
   if (x != -1 && y != -1)
     globals.map.cells[x+(y*MAPHEIGHT)].hammer = globals.map.hammer_2;
-
+  //TIME
   return 2;
 }
 
