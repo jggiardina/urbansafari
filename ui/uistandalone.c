@@ -50,6 +50,8 @@ struct UI_Globals {
   int CAMERA_X;
   int CAMERA_Y;
   pthread_mutex_t PAINTLOCK;
+  int total_paint_map;
+  int num_paint_map;
 } ui_globals;
 
 #define UI_FLOOR_BMP "../ui/floor.bmp"
@@ -74,6 +76,13 @@ ui_player_img(UI *ui, int team)
 {  
   return (team == 0) ? ui->sprites[TEAMA_S].img 
     : ui->sprites[TEAMB_S].img;
+}
+int avg_paintmap(int new){
+        if (new > 0){
+                ui_globals.total_paint_map+=new;
+                ui_globals.num_paint_map++;
+        }
+        return ui_globals.total_paint_map/ui_globals.num_paint_map;
 }
 
 static inline sval 
@@ -423,6 +432,7 @@ ui_paintmap(UI *ui, Map *map)
   //pthread_mutex_unlock(&ui_globals.PAINTLOCK);
   ftime(&time_end);
   fprintf(stderr, "ui_paintmap TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+  fprintf(stderr, "ui_paintmap AVG %hd MILLISECONDS\n", avg_paintmap(time_end.millitm-time_start.millitm));
   return 1;
 }
 
@@ -844,6 +854,8 @@ ui_init(UI **ui)
   ui_globals.CELL_W = SPRITE_W;
   ui_globals.CAMERA_X = 0;
   ui_globals.CAMERA_Y = 0;
+  ui_globals.total_paint_map = 0;
+  ui_globals.num_paint_map = 0;
 
   (*ui)->tile_h = ui_globals.CELL_H;
   (*ui)->tile_w = ui_globals.CELL_W;

@@ -58,6 +58,12 @@ struct Globals {
   pthread_mutex_t MAPLOCK;
   Player players[MAXPLAYERS];
   int numplayers;
+  int total_paint_map;
+  int num_paint_map;
+  int total_update;
+  int num_update;
+  int total_proto_move;
+  int num_proto_move;
 } globals;
 
 typedef struct ClientState  {
@@ -70,6 +76,24 @@ UI *ui;
 int game_started = 0;
 int game_over = 0;
 sem_t game_started_sem;
+
+
+int avg_update(int new){
+	if (new > 0){
+        	globals.total_update+=new;
+        	globals.num_update++;
+	}
+        return globals.total_update/globals.num_update;
+}
+int avg_proto_move(int new){
+        if (new > 0){
+                globals.total_proto_move+=new;
+                globals.num_proto_move++;
+        }
+        return globals.total_proto_move/globals.num_proto_move;
+}
+
+
 
 int
 getInput()
@@ -445,6 +469,7 @@ update_event_handler(Proto_Session *s)
   fprintf(stderr, "%s: ended\n", __func__); 
   ftime(&time_end);
   fprintf(stderr, "update_event_handler TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+  fprintf(stderr, "update_event_handler AVG %hd MILLISECONDS\n", avg_update(time_end.millitm-time_start.millitm));
 
   return 1;
 }
@@ -554,7 +579,13 @@ main(int argc, char **argv)
     return -1;
   }
   // END ORIGINAL CLIENT
-  globals.numplayers = 0; 
+  globals.numplayers = 0;
+  globals.total_paint_map = 0;
+  globals.num_paint_map = 0;
+  globals.total_update = 0;
+  globals.num_update = 0;
+  globals.total_proto_move = 0;
+  globals.num_proto_move = 0;
   pthread_mutex_init(&globals.MAPLOCK, 0);
   sem_init(&game_started_sem, 0, 0);
 

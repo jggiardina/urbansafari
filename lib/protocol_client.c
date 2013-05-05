@@ -528,6 +528,7 @@ proto_client_move(Proto_Client_Handle ch, Tuple *tuple)
   int rc = do_move_rpc(ch,PROTO_MT_REQ_BASE_MOVE, tuple);
   ftime(&time_end);
   fprintf(stderr, "proto_client_move TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+  fprintf(stderr, "proto_client_move AVG %hd MILLISECONDS\n", avg_proto_move(time_end.millitm-time_start.millitm));
   //TIME
   return rc;
 }
