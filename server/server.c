@@ -64,9 +64,37 @@ struct Globals {
   pthread_mutex_t PlayersLock;
   int num_red_players;
   int num_green_players;
+  int total_update;
+  int num_update;
+  int total_rpc;
+  int num_rpc;
 } globals;
 
 UI *ui;
+
+int avg_update(int new){ 
+        if (new > 0){
+                globals.total_update+=new;
+                globals.num_update++;
+        }
+        if (globals.num_update != 0){
+        	return globals.total_update/globals.num_update;
+	}else{
+		return 0;
+	}
+}   
+int avg_rpc(int new){ 
+        if (new > 0){
+                globals.total_rpc+=new;
+                globals.num_rpc++;
+        }
+	if (globals.num_rpc != 0){
+        	return globals.total_rpc/globals.num_rpc;
+	}else{
+		return 0;
+	}
+}
+
 
 /* Find a free spot on a team cell type for a client */
 void find_free(Color team_color, Cell_Type cell_type, Pos *p){
@@ -610,6 +638,10 @@ main(int argc, char **argv)
   pthread_mutex_init(&globals.MAPLOCK, 0);
   globals.num_red_players = 0;
   globals.num_green_players = 0;
+  globals.total_update = 0;
+  globals.num_update = 0;
+  globals.total_rpc = 0;
+  globals.num_rpc = 0;
   char linebuf[240];
   FILE * myfile;
   int i, n, len;
