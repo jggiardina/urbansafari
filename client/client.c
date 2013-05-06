@@ -575,6 +575,18 @@ Flag* client_init_flag(Color team_color){
   return flag;
 }
 
+//#define JA_HACK
+
+#ifdef JA_HACK
+void * 
+dummy(void *arg) 
+{
+  while (1) {
+    pthread_yield();
+  }
+}
+#endif
+
 int
 main(int argc, char **argv)
 {
@@ -608,6 +620,38 @@ main(int argc, char **argv)
   fprintf(stderr, "trying to get MAPLOCK\n");
   pthread_mutex_lock(&globals.MAPLOCK);
   fprintf(stderr, "got MAPLOCK\n");
+
+#ifdef JA_HACK
+  {
+    int rc, i,failed=0, dummies=0, count=0;
+#if  0    
+    pthread_t dummy_tid;
+    for (i=0; i<100; i++) {
+      rc = pthread_create(&dummy_tid, NULL, dummy, NULL);
+      if (rc != 0) failed++;
+      else  dummies++;
+    }
+    fprintf(stderr, "launched %d/%d dummy threads %d failed. Press key to contineu\n", dummies, dummies+failed, failed);
+    getchar();
+#endif
+
+    for (i=0; i<40; i++) {
+      //      Client *clnt = malloc(sizeof(Client));
+      if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
+	//	fprintf(stdout, "%d: FAILED\n", i); 
+      }  else {
+	count++;
+	//	fprintf(stdout, "%d: %d: SUCCESS\n", i, count);
+      }
+    }
+    fprintf(stderr, "%d: successfull connections out of %d.\nPress a key to quit\n", count,i);
+    globals.connected = 1;
+    getchar();
+    exit(-1);
+  }
+#endif 
+
+
   if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) return -1;
   else {
     globals.connected = 1;
