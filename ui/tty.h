@@ -1,5 +1,5 @@
-#ifndef __MISC_H__
-#define __MISC_H__
+#ifndef __TTY_H__
+#define __TTY_H__
 /******************************************************************************
 * Copyright (C) 2011 by Jonathan Appavoo, Boston University
 *
@@ -22,12 +22,6 @@
 * THE SOFTWARE.
 *****************************************************************************/
 
-#define NYI fprintf(stderr, "%s: NYI\n", __func__)
-
-typedef struct
-{
-  int x;
-  int y;
-} __attribute__((__packed__)) Tuple;
+void tty_init(int fd);
 
 #endif

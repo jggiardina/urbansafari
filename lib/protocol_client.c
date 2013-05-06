@@ -27,12 +27,12 @@
 #include <errno.h>
 #include <pthread.h>
 #include <assert.h>
-
+#include <sys/time.h>
+#include <sys/timeb.h>
+#include "misc.h"
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_client.h"
-#include "misc.h"
-//#include "maze.h"
 
 typedef struct {
   Proto_Session rpc_session;
@@ -227,12 +227,12 @@ proto_client_event_dispatcher(void * arg)
       }
     } else {
       //ADD CODE: maybe set the sessions_lost handler but not sure. -JG
-      proto_client_set_session_lost_handler(c,
-                                proto_client_session_lost_default_hdlr);
+      //proto_client_set_session_lost_handler(c, proto_client_session_lost_default_hdlr);
       goto leave;
     }
   }
  leave:
+  proto_client_set_session_lost_handler(c, proto_client_session_lost_default_hdlr);
   close(s->fd);
   return NULL;
 }
@@ -276,9 +276,7 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port)
     perror("proto_client_init:");
     return -3;
   }
-
-  int rc = proto_client_hello(ch);
-  return rc;
+  return 1;
 }
 
 static void
@@ -306,6 +304,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
     proto_session_body_unmarshall_int(s, 0, (int *)&rc); 
+    //bzero(s->rbuf, sizeof(s->rbuf)); // clear out the rbuf
   } else {
     //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
     c->session_lost_handler(s);
@@ -316,7 +315,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt)
 }
 
 static int
-do_unmarshall_two_ints_from_body_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *dim)
+do_move_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Tuple *tuple)
 {
   int rc;
   Proto_Session *s;
@@ -326,10 +325,35 @@ do_unmarshall_two_ints_from_body_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt,
 
   // marshall
   marshall_mtonly(s, mt);
+  proto_session_body_marshall_int(s, tuple->x);
+  proto_session_body_marshall_int(s, tuple->y);
+
   rc = proto_session_rpc(s);//perform our rpc call
   if (rc==1) {
-    proto_session_body_unmarshall_int(s, 0, &(dim->x));
-    proto_session_body_unmarshall_int(s, sizeof(int), &(dim->y));
+    proto_session_body_unmarshall_int(s, 0, &(tuple->x));
+    proto_session_body_unmarshall_int(s, sizeof(int), &(tuple->y));
+  } else {
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
+}
+static int
+do_pick_up_hammer_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *hammer)
+{
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+
+  s = proto_client_rpc_session(c); //ADD CODE: set the Proto_Session, rpc_session is only Proto_Session, so we need it's address here. -JG
+  // marshall
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, hammer);
+    
   } else {
     //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
     c->session_lost_handler(s);
@@ -339,6 +363,53 @@ do_unmarshall_two_ints_from_body_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt,
   return rc;
 }
 
+static int
+do_pick_up_flag_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *flag)
+{
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+
+  s = proto_client_rpc_session(c); //ADD CODE: set the Proto_Session, rpc_session is only Proto_Session, so we need it's address here. -JG
+  // marshall
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, flag);
+
+  } else {
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
+}
+
+static int
+do_drop_flag_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *flag)
+{
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+
+  s = proto_client_rpc_session(c); //ADD CODE: set the Proto_Session, rpc_session is only Proto_Session, so we need it's address here. -JG
+  // marshall
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, flag);
+
+  } else {
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
+}
+
+/*
 static int
 do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type *cell_type, int *team, int *occupied)
 {
@@ -368,14 +439,44 @@ do_map_cinfo_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, Pos *pos, Cell_Type
 
   return rc;
 }
+*/
 
-extern int 
-proto_client_hello(Proto_Client_Handle ch)
+
+static int
+do_init_player_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt, int *id, int *team, Tuple *pos, int *offset)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_HELLO);  
+  int rc;
+  Proto_Session *s;
+  Proto_Client *c = ch;
+
+  s = proto_client_rpc_session(c);
+
+  // marshall
+  marshall_mtonly(s, mt);
+  rc = proto_session_rpc(s);//perform our rpc call
+  if (rc==1) {
+    proto_session_body_unmarshall_int(s, 0, id);
+    if (*id == -1) return -1; 
+    proto_session_body_unmarshall_int(s, sizeof(int), &(pos->x));
+    proto_session_body_unmarshall_int(s, 2*sizeof(int), &(pos->y));
+    proto_session_body_unmarshall_int(s, 3*sizeof(int), team);
+    *offset = 4*sizeof(int);
+  } else {
+    //ADD CODE send_msg communication failed so assign the session lost handler and close the session. -JG
+    c->session_lost_handler(s);
+    close(s->fd);
+  }
+
+  return rc;
 }
 
-extern int
+extern int 
+proto_client_hello(Proto_Client_Handle ch, int *id, int *team, Tuple *pos, int *offset)
+{ 
+  return do_init_player_rpc(ch,PROTO_MT_REQ_BASE_HELLO, id, team, pos, offset); 
+}
+
+/*extern int
 proto_client_map_info_team_1(Proto_Client_Handle ch, Pos *tuple)
 {
   return do_unmarshall_two_ints_from_body_rpc(ch,PROTO_MT_REQ_BASE_MAP_INFO_1, tuple);
@@ -410,19 +511,43 @@ proto_client_map_dump(Proto_Client_Handle ch)
 {
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MAP_DUMP);
 }
-
+*/
 /*
 extern int proto_client_disconnect(Proto_Client_Handle ch, char *host, PortType port){
   return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_DISCONNECT);  
 }
 */
-/*
+
 extern int 
-proto_client_move(Proto_Client_Handle ch, char data)
+proto_client_move(Proto_Client_Handle ch, Tuple *tuple)
 {
-  return do_generic_dummy_rpc(ch,PROTO_MT_REQ_BASE_MOVE);  
+  //TIME
+  struct timeb time_start;
+  struct timeb time_end;
+  ftime(&time_start);
+  int rc = do_move_rpc(ch,PROTO_MT_REQ_BASE_MOVE, tuple);
+  ftime(&time_end);
+  fprintf(stderr, "proto_client_move TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+  fprintf(stderr, "proto_client_move AVG %hd MILLISECONDS\n", avg_proto_move(time_end.millitm-time_start.millitm));
+  //TIME
+  return rc;
 }
-*/
+extern int
+proto_client_pick_up_hammer(Proto_Client_Handle ch, int *hammer)
+{
+  return do_pick_up_hammer_rpc(ch, PROTO_MT_REQ_BASE_TAKE_HAMMER, hammer);
+}
+extern int
+proto_client_pick_up_flag(Proto_Client_Handle ch, int *flag)
+{
+  return do_pick_up_flag_rpc(ch, PROTO_MT_REQ_BASE_TAKE_FLAG, flag);
+}
+extern int
+proto_client_drop_flag(Proto_Client_Handle ch, int *flag)
+{
+  return do_drop_flag_rpc(ch, PROTO_MT_REQ_BASE_DROP_FLAG, flag);
+}
+
 extern int 
 proto_client_goodbye(Proto_Client_Handle ch)
 {

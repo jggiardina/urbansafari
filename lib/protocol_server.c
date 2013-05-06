@@ -19,7 +19,7 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 *****************************************************************************/
-
+#include <sys/timeb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -35,15 +35,16 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_server.h"
-#include "misc.h"
-#include "maze.h"
 #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
 
 struct {
   FDType   RPCListenFD;
   PortType RPCPort;
 
-
+  int lastPlayerId;
+  int lastTeamAssigned;
+  int numRedPlayers;
+  int numGreenPlayers;
   FDType             EventListenFD;
   PortType           EventPort;
   pthread_t          EventListenTid;
@@ -56,9 +57,10 @@ struct {
   Proto_MT_Handler   session_lost_handler;
   Proto_MT_Handler   base_req_handlers[PROTO_MT_REQ_BASE_RESERVED_LAST - 
 				       PROTO_MT_REQ_BASE_RESERVED_FIRST-1];
+  pthread_mutex_t    HandlerUpdateLock;
 } Proto_Server;
 
-Map game_map;
+//Map game_map;
 
 extern PortType proto_server_rpcport(void) { return Proto_Server.RPCPort; }
 extern PortType proto_server_eventport(void) { return Proto_Server.EventPort; }
@@ -164,6 +166,8 @@ proto_server_post_event(void)
 {
   int i;
   int num;
+  struct timeb time_start;
+  struct timeb time_end;
   //ADDED CODE
   struct timeval timeout;//timeout struct -WA
   int ready;//ready int to be used later -WA
@@ -177,16 +181,18 @@ proto_server_post_event(void)
 
   i = 0;
   num = Proto_Server.EventNumSubscribers;
+  ftime(&time_start);
   while (num) {
     Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
     if (Proto_Server.EventSession.fd != -1) {
 	//fprintf(stderr, "fd=%d\n", Proto_Server.EventSession.fd);
       num--;
 	//ADDED CODE -WA
+      //proto_session_body_marshall_short_int(&Proto_Server.EventSession, time_start.millitm);
       if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {//here we push to the client the updated state -WA
 	//END ADDED CODE
 	// must have lost an event connection
-	close(Proto_Server.EventSession.fd+1);
+	//close(Proto_Server.EventSession.fd+1); -JG
 	close(Proto_Server.EventSession.fd);
 	Proto_Server.EventSubscribers[i]=-1;
 	Proto_Server.EventNumSubscribers--;
@@ -222,6 +228,9 @@ proto_server_post_event(void)
     }
     i++;
   }
+  ftime(&time_end);
+        fprintf(stderr, "proto_server_post_event TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+  fprintf(stderr, "proto_server_post_event AVG %hd MILLISECONDS\n", avg_update(time_end.millitm-time_start.millitm));
   proto_session_reset_send(&Proto_Server.EventSession);
   pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 }
@@ -230,6 +239,9 @@ proto_server_post_event(void)
 static void *
 proto_server_req_dispatcher(void * arg)
 {
+  struct timeb time_start;
+  struct timeb time_end;
+
   Proto_Session s;
   Proto_Msg_Types mt;
   Proto_MT_Handler hdlr;
@@ -244,16 +256,22 @@ proto_server_req_dispatcher(void * arg)
 
   fprintf(stderr, "proto_rpc_dispatcher: %p: Started: fd=%d\n", 
 	  pthread_self(), s.fd);
+  int rcv_msg;
 
   for (;;) {
-    if (proto_session_rcv_msg(&s)==1) {
+    rcv_msg = proto_session_rcv_msg(&s);
+    if (rcv_msg==1) {
         //ADD CODE: Very similar to the dispatcher from client - RC
         mt = proto_session_hdr_unmarshall_type(&s);
         if(mt > PROTO_MT_REQ_BASE_RESERVED_FIRST &&
            mt < PROTO_MT_REQ_BASE_RESERVED_LAST) { // Changed PROTO_MT_EVENT_BASE_RESERVED_FIRST and LAST to REQ, since we are dealing with requests/rpc and not the event channel. -JG
         i=mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
-        hdlr = Proto_Server.base_req_handlers[i]; 
+        hdlr = Proto_Server.base_req_handlers[i];
+        ftime(&time_start);
 	if (hdlr(&s)<0) goto leave;
+        ftime(&time_end);
+        fprintf(stderr, "proto_rpc_dispatcher TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+        fprintf(stderr, "proto_rpc_dispatcher AVG %hd MILLISECONDS\n", avg_rpc(time_end.millitm-time_start.millitm));
       }
     } else {
       goto leave;
@@ -263,6 +281,8 @@ proto_server_req_dispatcher(void * arg)
   //Proto_Server.ADD CODE Not sure but I think that we need to nullify with a -1 the eventsession.fd because we close the session next -RC
   Proto_Server.EventSession.fd = -1;
   close(s.fd);
+  //When we get here on a quit command, the rcv_msg is -1, but they already removed player.
+  proto_server_mt_goodbye_handler(&s);
   return NULL;
 }
 
@@ -316,7 +336,6 @@ proto_server_mt_null_handler(Proto_Session *s)
 {
   int rc=1;
   Proto_Msg_Hdr h;
-  
   fprintf(stderr, "proto_server_mt_null_handler: invoked for session:\n");
   proto_session_dump(s);
 
@@ -355,8 +374,48 @@ proto_server_mt_dump_handler(Proto_Session *s){
   return rc;
 }
 
-/* Handler for returning num_home and num_jail */
 static int
+proto_server_mt_update_map_handler(Proto_Session *s, int *numCellsToUpdate, void **cellsToUpdate){
+  int rc = 1;
+  Proto_Session *se;
+  Proto_Msg_Hdr hdr;
+  
+  fprintf(stderr, "send map handler:\n");
+  
+  se = proto_server_event_session();
+  hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
+  proto_session_hdr_marshall(se, &hdr);
+  //proto_session_body_marshall_bytes(se, getAsciiSize(), mapToASCII()); 
+  //rc = proto_session_send_msg(s, 1); want to post event instead -JG
+  marshall_cells_to_update(se, numCellsToUpdate, cellsToUpdate);
+  marshall_players(se);
+  marshall_flags(se);
+  marshall_hammers(se);
+  proto_server_post_event();
+
+  return rc;
+} 
+
+extern int
+proto_server_mt_post_win_handler(int winner){
+  int rc = 1;
+  Proto_Session *se;
+  Proto_Msg_Hdr hdr;
+
+  fprintf(stderr, "send win handler:\n");
+
+  se = proto_server_event_session();
+  hdr.type = PROTO_MT_EVENT_BASE_WINNER;
+  proto_session_hdr_marshall(se, &hdr);
+  proto_session_body_marshall_int(se, winner); 
+  //rc = proto_session_send_msg(s, 1); want to post event instead -JG
+  proto_server_post_event();
+
+  return rc;
+}
+
+/* Handler for returning num_home and num_jail */
+/*static int
 proto_server_mt_map_info_team_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -388,10 +447,10 @@ proto_server_mt_map_info_team_handler(Proto_Session *s){
   rc=proto_session_send_msg(s,1);
 
   return rc;
-}
+}*/
 
 /* Handler for returning num_walls and num_floor */
-static int
+/*static int
 proto_server_mt_map_info_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -415,10 +474,10 @@ proto_server_mt_map_info_handler(Proto_Session *s){
   rc=proto_session_send_msg(s,1);
 
   return rc;
-}
+}*/
 
 /* Handler for returning dim */
-static int
+/*static int
 proto_server_mt_dim_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -441,10 +500,10 @@ proto_server_mt_dim_handler(Proto_Session *s){
   rc=proto_session_send_msg(s,1);
 
   return rc;
-}
+}*/
 
 /* Handler for returning cinfo */
-static int
+/*static int
 proto_server_mt_cinfo_handler(Proto_Session *s){
   int rc = 1;
   Proto_Msg_Hdr h;
@@ -499,11 +558,155 @@ proto_server_mt_cinfo_handler(Proto_Session *s){
     rc=proto_session_send_msg(s,1);
   }
   return rc;
+}*/
+
+static int proto_server_mt_move_handler(Proto_Session *s){
+  // TODO: For testing the re-painting on client issue
+  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_move_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+
+  Tuple pos = {0, 0};
+  proto_session_body_unmarshall_int(s, 0, &pos.x);
+  proto_session_body_unmarshall_int(s, sizeof(int), &pos.y);
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = move(&pos, (void *)s->extra, numCellsToUpdate, cellsToUpdate);  
+
+  if(ret==1){
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_int(s, pos.x);
+    proto_session_body_marshall_int(s, pos.y);
+
+    rc=proto_session_send_msg(s,1);
+  }
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
+
+  // TODO: SAME AS TODO ABOVE
+  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+
+  return rc;
+}
+static int proto_server_mt_take_hammer_handler(Proto_Session *s){
+  // TODO: For testing the re-painting on client issue
+  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_move_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = takeHammer((void *)s->extra, numCellsToUpdate, cellsToUpdate);
+
+  if(ret >= 0){
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_int(s, ret);
+     fprintf(stderr, "Sending %d as hammer status", ret);
+	
+    rc=proto_session_send_msg(s,1);
+  }
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
+
+  //TODO: SAME AS TODO ABOVE
+  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+
+
+  return rc;
+}
+
+static int proto_server_mt_take_flag_handler(Proto_Session *s){
+  // TODO: For testing the re-painting on client issue
+  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+
+
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_move_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = takeFlag((void *)s->extra, numCellsToUpdate, cellsToUpdate);
+
+  if(ret >= 0){
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_int(s, ret);
+     fprintf(stderr, "Sending %d as flag status", ret);
+
+    rc=proto_session_send_msg(s,1);
+  }
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
+
+  //TODO: SAME TODO AS ABOVE
+  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+
+
+  return rc;
+}
+
+static int proto_server_mt_drop_flag_handler(Proto_Session *s){
+  // TODO: For testing the re-painting on client issue
+  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+
+
+  int rc = 1;
+  Proto_Msg_Hdr h;
+
+  fprintf(stderr, "proto_server_mt_move_handler: invoked for session:\n");
+  proto_session_dump(s);
+
+  bzero(&h, sizeof(s));
+  h.type = proto_session_hdr_unmarshall_type(s);
+  h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = dropFlag((void *)s->extra, numCellsToUpdate, cellsToUpdate);
+
+  if(ret >= 0){
+    proto_session_hdr_marshall(s, &h);
+    proto_session_body_marshall_int(s, ret);
+     fprintf(stderr, "Sending %d as flag status", ret);
+
+    rc=proto_session_send_msg(s,1);
+  }
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
+
+  // TODO: SAME TODO AS ABOVE
+  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+
+
+  return rc;
 }
 
 /* Handler for Connection */
 static int
 proto_server_mt_hello_handler(Proto_Session *s){
+  // TODO: For testing the re-painting on client issue
+  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+
+
   int rc = 1;
   Proto_Msg_Hdr h;
 
@@ -512,22 +715,50 @@ proto_server_mt_hello_handler(Proto_Session *s){
   
   //pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
   //int subscribers = Proto_Server.EventNumSubscribers;
-  
+ 
   bzero(&h, sizeof(s));
   h.type = proto_session_hdr_unmarshall_type(s);
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
 
-  proto_session_hdr_marshall(s, &h);  
-  rc=proto_session_send_msg(s,1);
+  /* Test code for adding player */
+  int id = -1;
+  int team = -1;
+  Tuple pos = {-1, -1};
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once 
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  void *p = (void *)server_init_player(&id, &team, &pos, numCellsToUpdate, cellsToUpdate); 
+  s->extra = p;
   
+  proto_session_hdr_marshall(s, &h);  
+  proto_session_body_marshall_int(s, id);  
+  proto_session_body_marshall_int(s, pos.x);  
+  proto_session_body_marshall_int(s, pos.y);  
+  proto_session_body_marshall_int(s, team);  
+  proto_session_body_marshall_bytes(s, getAsciiSize(), (char *)mapToASCII());
+  marshall_players(s);
+  marshall_flags(s);
+  marshall_hammers(s);
+
+  rc=proto_session_send_msg(s,1);
+  if (id != -1)
+    proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
   //pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+
+  // TODO: SAME TODO AS ABOVE
+  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+
    
   return rc;
 }
 
 /* Handler for Disconnect */
-static int
+int
 proto_server_mt_goodbye_handler(Proto_Session *s){
+  // TODO: For testing the re-painting on client issue
+  //pthread_mutex_lock(&Proto_Server.HandlerUpdateLock);
+
+
   int rc = 1;
   Proto_Msg_Hdr h;
 
@@ -539,11 +770,11 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
   h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
   proto_session_hdr_marshall(s, &h);
 
-  int userfd = s->fd;
-  int i;
+  //int userfd = s->fd;
+  //int i;
   
-  pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
- fprintf(stderr, "looking for %d\n", userfd);
+  /*pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+  fprintf(stderr, "looking for %d\n", userfd);
   for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
     if(Proto_Server.EventSubscribers[i] == userfd-1){
       Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
@@ -559,21 +790,28 @@ proto_server_mt_goodbye_handler(Proto_Session *s){
       break;
     }
   }
-  
-  pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 
+  pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+  */
+  // remove player and update clients
+  void *cellsToUpdate[10]; //TODO: make sure 10 is the max number of cells to update at once
+  int tmp = 0;
+  int *numCellsToUpdate = &tmp;
+  int ret = 1;
+  ret = remove_player((void *)s->extra, numCellsToUpdate, cellsToUpdate);
+  
   Proto_Session *se;
   Proto_Msg_Hdr hdr;
   
-  proto_session_body_marshall_int(s, 1);
+  proto_session_body_marshall_int(s, ret);
   rc=proto_session_send_msg(s,1);
     
   //Post Event Disconnect 
-  se = proto_server_event_session();
-  hdr.type = PROTO_MT_EVENT_BASE_GOODBYE;
-  proto_session_body_marshall_int(se, i);
-  proto_session_hdr_marshall(se, &hdr);
-  proto_server_post_event(); 
+  proto_server_mt_update_map_handler(s, numCellsToUpdate, cellsToUpdate);
+
+  // TODO: SAME TODO AS ABOVE
+  //pthread_mutex_unlock(&Proto_Server.HandlerUpdateLock);
+
 
   return rc;
 }
@@ -601,7 +839,16 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_hello_handler);
     }else if(i == PROTO_MT_REQ_BASE_GOODBYE){
       proto_server_set_req_handler(i, proto_server_mt_goodbye_handler);
-    }else if(i == PROTO_MT_REQ_BASE_MAP_DUMP){
+    }else if(i == PROTO_MT_REQ_BASE_MOVE){
+      proto_server_set_req_handler(i, proto_server_mt_move_handler);
+    }else if(i == PROTO_MT_REQ_BASE_TAKE_HAMMER){
+      proto_server_set_req_handler(i, proto_server_mt_take_hammer_handler);
+    }else if(i == PROTO_MT_REQ_BASE_TAKE_FLAG){
+      proto_server_set_req_handler(i, proto_server_mt_take_flag_handler);
+    }else if(i == PROTO_MT_REQ_BASE_DROP_FLAG){
+      proto_server_set_req_handler(i, proto_server_mt_drop_flag_handler);
+    }
+    /*else if(i == PROTO_MT_REQ_BASE_MAP_DUMP){
       proto_server_set_req_handler(i, proto_server_mt_dump_handler);
     }else if(i == PROTO_MT_REQ_BASE_MAP_INFO_1 || i == PROTO_MT_REQ_BASE_MAP_INFO_2){
       proto_server_set_req_handler(i, proto_server_mt_map_info_team_handler);
@@ -611,15 +858,20 @@ proto_server_init(void)
       proto_server_set_req_handler(i, proto_server_mt_dim_handler);
     }else if(i == PROTO_MT_REQ_BASE_MAP_CINFO){
       proto_server_set_req_handler(i, proto_server_mt_cinfo_handler);
-    }
+    }*/
   }
 
   for (i=0; i<PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
     Proto_Server.EventSubscribers[i]=-1;
   }
   Proto_Server.EventNumSubscribers=0;
+  Proto_Server.numRedPlayers = 0;
+  Proto_Server.numGreenPlayers = 0;
+  Proto_Server.lastTeamAssigned = 0;
+  Proto_Server.lastPlayerId = 0;
   Proto_Server.EventLastSubscriber=0;
   pthread_mutex_init(&Proto_Server.EventSubscribersLock, 0);
+  pthread_mutex_init(&Proto_Server.HandlerUpdateLock, 0);
 
 
   rc=net_setup_listen_socket(&(Proto_Server.RPCListenFD),

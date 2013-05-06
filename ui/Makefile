@@ -1,3 +1,4 @@
+
 # Copyright (C) 2011 by Jonathan Appavoo, Boston University
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,45 +19,45 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-UISYSTEM=$(shell uname)
+targets = $(UILIBFILE)
 
-ifeq ($(UISYSTEM),Darwin)
-  UIINCDIR = -I/opt/local/include -lSDLmain -lSDL -lSDL_image -framework Cocoa
-  UILIBS = -L/opt/local/lib
-else
-  UIINCDIR = 
-  UILIBS = -lSDL
-endif
+include ../config.mk
 
-CFLAGS := -g 
+#UISYSTEM=$(shell uname)
 
-MODULE := $(shell basename $CURDIR)
+#ifeq ($(UISYSTEM),Darwin)
+#  UIINCDIR = -I/opt/local/include
+#  UILIBS = -L/opt/local/lib -lSDLmain -lSDL -lSDL_image -framework Cocoa
+#else
+#  UINCDIR = 
+#  UILIBS = -lSDL
+#endif
 
-DAGAMELIBHDRS := types.h net.h        
-DAGAMELIBFILE := libdagame.a
-DAGAMELIBARCHIVE := ../lib/$(DAGAMELIBFILE)
-DAGAMELIB := -L../lib -ldagame
+CFLAGS := -g $(UIINCDIR) -std=c99
 
-UILIBFILE := libui.a
-UILIBARCHIVE := ../ui/$(UILIBFILE)
-UILIB := -L../ui -lui
+$(UILIBFILE): $(objs)
+	ar -c -r $(UILIBFILE) $(objs)
+
+#all: uitest
+#.PHONY: all
+
+#ttymodse.o: ttymodes.c
+#	gcc $(CFLAGS) ttymodes.c -c
+
+#tty.o: tty.c tty.h ttymodes.h
+#	gcc $(CFLAGS) tty.c -c
+
+#uistandalone.o: uistandalone.c uistandalone.h
+#	gcc ${CFLAGS} uistandalone.c -c
+
+#uitest.o: uitest.c uistandalone.h
+#	gcc $(CFLAGS) uitest.c -c 
+
+#uitest: uistandalone.o uitest.o tty.o ttymodes.o
+#	gcc $(CFLAGS) uistandalone.o uitest.o tty.o ttymodes.o -o uitest ${UILIBS}
+
+#clean:
+#	rm uitest *.o
 
 
-src  = $(wildcard *.c)
-objs = $(patsubst %.c,%.o,$(src))
-
-ifeq ($(MODULE),lib)
-  DAGAMELIBINCS:=$(DAGAMELIBHDRS)
-else
-  DAGAMELIBINCS:=$(addprefix ../lib/,$(DAGAMELIBHDRS))
-endif
-
-
-all: $(targets)
-.PHONY: all
-
-$(objs) : $(src) $(DAGAMELIBINCS)
-
-clean:
-	rm $(objs) $(targets)
 

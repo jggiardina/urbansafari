@@ -25,7 +25,11 @@ include ../config.mk
 
 server_objs = $(objs)
 libs = $(DAGAMELIBDIR) $(DAGAMELIB) -lpthread
+uilibs = $(UILIB)
+
+#CFLAGS := -g $(UIINCDIR) -std=c99
 
 server: $(server_objs) $(DAGAMELIBARCHIVE)
-	gcc $(CFLAGS) -o $@ $(server_objs) $(libs) 
+	gcc $(CFLAGS) -o $@ $(server_objs) $(libs) $(uilibs) $(UILIBS)
+
 

@@ -1,5 +1,5 @@
-#ifndef __MISC_H__
-#define __MISC_H__
+#ifndef __DA_GAME_TYPES_H__
+#define __DA_GAME_TYPES_H__
 /******************************************************************************
 * Copyright (C) 2011 by Jonathan Appavoo, Boston University
 *
@@ -22,12 +22,10 @@
 * THE SOFTWARE.
 *****************************************************************************/
 
-#define NYI fprintf(stderr, "%s: NYI\n", __func__)
+#include <stdint.h>
 
-typedef struct
-{
-  int x;
-  int y;
-} __attribute__((__packed__)) Tuple;
+/* native word sized unsigned and signed values */
+typedef unsigned long uval;
+typedef long sval;
 
-#endif
+#endif /* __DA_GAME_TYPES_H__ */

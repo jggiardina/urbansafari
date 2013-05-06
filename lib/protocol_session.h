@@ -58,6 +58,9 @@ extern int  proto_session_body_unmarshall_ll(Proto_Session *s, int offset,
 extern int  proto_session_body_marshall_int(Proto_Session *s, int v);
 extern int  proto_session_body_unmarshall_int(Proto_Session *s, int offset, 
 					      int *v);
+extern int  proto_session_body_marshall_short_int(Proto_Session *s, short int v);
+extern int  proto_session_body_unmarshall_short_int(Proto_Session *s, int offset,
+                                              short int *v);
 extern int  proto_session_body_marshall_char(Proto_Session *s, char v);
 extern int  proto_session_body_unmarshall_char(Proto_Session *s, int offset,
 					       char *v);

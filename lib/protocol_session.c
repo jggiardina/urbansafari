@@ -37,13 +37,13 @@
 extern void
 proto_session_dump(Proto_Session *s)
 {
-  fprintf(stderr, "Session s=%p:\n", s);
-  fprintf(stderr, " fd=%d, extra=%p slen=%d, rlen=%d\n shdr:\n  ", 
-	  s->fd, s->extra,
-	  s->slen, s->rlen);
-  proto_dump_msghdr(&(s->shdr));
-  fprintf(stderr, " rhdr:\n  ");
-  proto_dump_msghdr(&(s->rhdr));
+  //fprintf(stderr, "Session s=%p:\n", s);
+  //fprintf(stderr, " fd=%d, extra=%p slen=%d, rlen=%d\n shdr:\n  ", 
+	  //s->fd, s->extra,
+	  //s->slen, s->rlen);
+  //proto_dump_msghdr(&(s->shdr));
+  //fprintf(stderr, " rhdr:\n  ");
+  //proto_dump_msghdr(&(s->rhdr));
 }
 
 extern void
@@ -205,6 +205,17 @@ proto_session_body_marshall_int(Proto_Session *s, int v)
   }
   return -1;
 }
+extern int
+proto_session_body_marshall_short_int(Proto_Session *s, short int v)
+{
+  if (s && ((s->slen + sizeof(short int)) < PROTO_SESSION_BUF_SIZE)) {
+    *((int *)(s->sbuf + s->slen)) = htonl(v);
+    s->slen+=sizeof(short int);
+    return 1;
+  }
+  return -1;
+}
+
 
 extern int 
 proto_session_body_unmarshall_int(Proto_Session *s, int offset, int *v)
@@ -216,6 +227,17 @@ proto_session_body_unmarshall_int(Proto_Session *s, int offset, int *v)
   }
   return -1;
 }
+extern int
+proto_session_body_unmarshall_short_int(Proto_Session *s, int offset, short int *v)
+{
+  if (s && ((s->rlen  - (offset + sizeof(short int))) >=0 )) {
+    *v = *((short int *)(s->rbuf + offset));
+    *v = htonl(*v);
+    return offset + sizeof(short int);
+  }
+  return -1;
+}
+
 
 extern int 
 proto_session_body_marshall_char(Proto_Session *s, char v)
@@ -292,7 +314,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
   	//Start of added code
 	int header_length = (sizeof(int) * 10) + sizeof (long long);//length of header; refer to protocol.h for format.-WA
 	n = net_writen(s->fd, &s->shdr, header_length);//write header to body-WA
-	if (n < 0 && proto_debug()) {
+	if (n <= 0 && proto_debug()) {
 		fprintf(stderr, "%p: proto_session_send_msg: write error:\n", pthread_self());
 		return -1;
 	}
@@ -300,7 +322,8 @@ proto_session_send_msg(Proto_Session *s, int reset)
   		n = net_writen(s->fd, &s->sbuf, s->slen);//write body (if it exists) to socket
 		if (n < 0 && proto_debug()) {
                 	fprintf(stderr, "%p: proto_session_send_msg: write error:\n", pthread_self());
-        	}
+        		return -1;
+		}
  	} //end of added code
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
@@ -322,23 +345,26 @@ proto_session_rcv_msg(Proto_Session *s)
   	int n;
 	int header_length = (sizeof(int) * 10) + sizeof(long long);//define header length; it is always a given. -WA
 	n = net_readn(s->fd, &s->rhdr, header_length);//read the header into rhdr -WA
-	if (n < 0 && proto_debug()){
+	if (n <= 0 && proto_debug()){
 		fprintf(stderr, "%p: proto_session_rcv_msg: read error\n", pthread_self());
+		return -1;
 	}
 	s->rlen = ntohl(s->rhdr.blen);
 	if (s->rlen){
     		n = net_readn(s->fd, &s->rbuf, s->rlen); //if a body exists, read it in -WA
 		if (n < 0 && proto_debug()){
                 	fprintf(stderr, "%p: proto_session_rcv_msg: read error\n", pthread_self());
-        	}
+        		return -1;
+		}
 	}
-	//bzero(&s->rbuf, sizeof(s->rbuf));
+	//bzero(&s->rbuf, sizeof(s->rbuf)); can't do this because then we zero out the rbuf before we ever unmarshall it -JG
   //end added code
 
   if (proto_debug()) {
     fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
     proto_session_dump(s);
   }
+
   return 1;
 }
 
