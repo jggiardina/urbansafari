@@ -167,7 +167,7 @@ proto_server_post_event(void)
   int i;
   int num;
   struct timeb time_start;
-
+  struct timeb time_end;
   //ADDED CODE
   struct timeval timeout;//timeout struct -WA
   int ready;//ready int to be used later -WA
@@ -181,14 +181,14 @@ proto_server_post_event(void)
 
   i = 0;
   num = Proto_Server.EventNumSubscribers;
+  ftime(&time_start);
   while (num) {
     Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
     if (Proto_Server.EventSession.fd != -1) {
 	//fprintf(stderr, "fd=%d\n", Proto_Server.EventSession.fd);
       num--;
 	//ADDED CODE -WA
-      ftime(&time_start);
-      proto_session_body_marshall_short_int(&Proto_Server.EventSession, time_start.millitm);
+      //proto_session_body_marshall_short_int(&Proto_Server.EventSession, time_start.millitm);
       if (proto_session_send_msg(&Proto_Server.EventSession, 0)<0) {//here we push to the client the updated state -WA
 	//END ADDED CODE
 	// must have lost an event connection
@@ -228,6 +228,9 @@ proto_server_post_event(void)
     }
     i++;
   }
+  ftime(&time_end);
+        fprintf(stderr, "proto_server_post_event TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+  fprintf(stderr, "proto_server_post_event AVG %hd MILLISECONDS\n", avg_update(time_end.millitm-time_start.millitm));
   proto_session_reset_send(&Proto_Server.EventSession);
   pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 }
@@ -268,6 +271,7 @@ proto_server_req_dispatcher(void * arg)
 	if (hdlr(&s)<0) goto leave;
         ftime(&time_end);
         fprintf(stderr, "proto_rpc_dispatcher TOOK %hd MILLISECONDS\n", (time_end.millitm-time_start.millitm));
+        fprintf(stderr, "proto_rpc_dispatcher AVG %hd MILLISECONDS\n", avg_rpc(time_end.millitm-time_start.millitm));
       }
     } else {
       goto leave;

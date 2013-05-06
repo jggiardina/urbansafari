@@ -82,7 +82,11 @@ int avg_paintmap(int new){
                 ui_globals.total_paint_map+=new;
                 ui_globals.num_paint_map++;
         }
-        return ui_globals.total_paint_map/ui_globals.num_paint_map;
+	if (ui_globals.num_paint_map > 0){
+        	return ui_globals.total_paint_map/ui_globals.num_paint_map;
+	}else{
+		return 0;
+	}
 }
 
 static inline sval 
